@@ -1,0 +1,20 @@
+.idea/*
+.cache/*
+.DS_Store
+*config.yml
+*secrets.yml
+*.pyc
+.venv/*
+venv/*
+.python-version
+.coverage
+errorLog
+tests/errorLog
+tests/stats
+tests/test-reports/
+
+# Used in local development
+temp/
+tmp/
+.pytest_cache
+.devcontainer/

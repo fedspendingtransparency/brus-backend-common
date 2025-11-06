@@ -1,0 +1,19 @@
+version: '3'
+services:
+  # Simple container for development and testing
+  brus-backend-common:
+    container_name: brus-backend-common
+    image: brus-backend-common
+    build:
+      context: ./
+    restart: on-failure:3 # 3 max attempt, and then it will stop restarting
+    command: /bin/sh -c "sleep infinity"
+    ports:
+      - "9998:9998"
+    volumes:
+      - ./:/data-act/backend
+
+  # TODO: Spark container?
+  # TODO: Spark Worker container?
+  # TODO: Minio container?
+  # TODO: AWSGlue container?
