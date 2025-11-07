@@ -1,3 +1,16 @@
+[project]
+name = "brus_backend_common"
+version = "0.0.1"
+authors = [
+  {name = "fedspendingtransparency"},
+]
+description = "A shared package of scripts, models, and libraries to be shared across fedspendingtransparency repos"
+readme = 'README.md'
+dynamic = ["dependencies"]
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
+
 [tool.black]
 line-length = 120
 target-version = ['py312']
