@@ -11,7 +11,7 @@ from deltalake.exceptions import TableNotFoundError
 
 from pyspark.sql import DataFrame, SparkSession
 
-from brus_backend_common import ROOT_PATH
+from brus_backend_common.config import _SRC_ROOT_DIR
 from brus_backend_common.helpers.aws_helpers import get_aws_credentials
 
 
@@ -123,7 +123,7 @@ class DeltaModel(ABC):
             0 - all migrations
             -1 - last migration
         """
-        migrations_dir = os.path.join(ROOT_PATH, "models", "migrations")
+        migrations_dir = os.path.join(_SRC_ROOT_DIR, "models", "migrations")
         for migration in self.migration_history[start:]:
             path = os.path.join(migrations_dir, f"{migration}.sql")
             logger.info(f"Running migration {path} on {self.table_ref}")

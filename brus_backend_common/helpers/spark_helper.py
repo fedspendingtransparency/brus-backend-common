@@ -15,6 +15,7 @@ from pyspark.serializers import read_int, UTF8Deserializer
 from pyspark.sql import SparkSession
 from typing import Dict, List, Optional, Union
 
+from brus_backend_common.config import CONFIG
 from brus_backend_common.helpers.aws_helpers import get_aws_credentials
 
 logger = logging.getLogger(__name__)
@@ -73,9 +74,6 @@ def configure_spark_session(
     log_spark_config_vals: bool = False,
     log_hadoop_config_vals: bool = False,
     enable_hive_support: bool = False,
-    use_aws: bool = False,
-    warehouse_dir: str = None,
-    jdbc_url: str = None,
     **options,
 ) -> SparkSession:
     """Get a SparkSession object with some of the default/boiler-plate config needed for THIS project pre-set
@@ -141,14 +139,13 @@ def configure_spark_session(
     #   the machine
     #   - Still would be ok so long as reads and writes of an "instant" happen from the same session timezone
     conf.set("spark.sql.session.timeZone", "UTC")
-    # TODO: USAspending includes this in their config, defaults to "FIFO" but possibly "FAIR"?
-    conf.set("spark.scheduler.mode", "FIFO")
+    conf.set("spark.scheduler.mode", CONFIG.SPARK_SCHEDULER_MODE)
     # Don't try to re-run the whole job if there's an error
     # Assume that random errors are rare, and jobs have long runtimes, so fail fast, fix and retry manually.
     conf.set("spark.yarn.maxAppAttempts", "1")
-    conf.set("spark.hadoop.fs.s3a.endpoint", "s3.us-gov-west-1.amazonaws.com")
+    conf.set("spark.hadoop.fs.s3a.endpoint", CONFIG.AWS_S3_ENDPOINT)
 
-    if not use_aws:  # i.e. running in a "local" [development] environment
+    if CONFIG.IS_LOCAL:  # i.e. running in a "local" [development] environment
         # Set configs to allow the S3AFileSystem to work against a local MinIO object storage proxy
         conf.set("spark.hadoop.fs.s3a.connection.ssl.enabled", "false")
         # "Enable S3 path style access ie disabling the default virtual hosting behaviour.
@@ -181,12 +178,10 @@ def configure_spark_session(
 
         # Add Spark conf to set the Spark SQL Warehouse to an explicit directory,
         # and to make the Hive metastore_db folder get stored under that warehouse dir
-        spark_warehouse_dir = warehouse_dir
-        spark_hive_metastore_derby_dir = os.path.join(warehouse_dir, "metastore_db")
-        conf.set("spark.sql.warehouse.dir", spark_warehouse_dir)
+        conf.set("spark.sql.warehouse.dir", CONFIG.SPARK_SQL_WAREHOUSE_DIR)
         conf.set(
             "spark.hadoop.javax.jdo.option.ConnectionURL",
-            f"jdbc:derby:;databaseName={spark_hive_metastore_derby_dir};create=true",
+            f"jdbc:derby:;databaseName={CONFIG.HIVE_METASTORE_DERBY_DB_DIR};create=true",
         )
 
     # If the directories don't already exist, Spark will make placeholder "[name]_$folder$" files
@@ -200,9 +195,11 @@ def configure_spark_session(
     # Hint: If connecting to AWS resources when executing program from a local env, and you usually authenticate with
     # an AWS_PROFILE, set each of these config values to empty/None, and ensure your AWS_PROFILE env var is set in
     # the shell when executing this program, and set temporary_creds=True.
-
     configure_s3_credentials(
         conf,
+        CONFIG.AWS_ACCESS_KEY,
+        CONFIG.AWS_SECRET_KEY,
+        CONFIG.AWS_PROFILE,
         temporary_creds=False,
     )
 
@@ -268,7 +265,7 @@ def configure_spark_session(
     )
     logger.info(
         f"Running Job with:\n"
-        f"\tDB = {jdbc_url.rsplit('=', 1)[0] + '=********'}"
+        f"\tDB = {CONFIG.JDBC_DB1_URL.rsplit('=', 1)[0] + '=********'}"
         f"\n\tS3 = {conf.get('spark.hadoop.fs.s3a.endpoint')} with "
         f"spark.hadoop.fs.s3a.access.key='{conf.get('spark.hadoop.fs.s3a.access.key')}' and "
         f"spark.hadoop.fs.s3a.secret.key='{'********' if conf.get('spark.hadoop.fs.s3a.secret.key') else ''}'"

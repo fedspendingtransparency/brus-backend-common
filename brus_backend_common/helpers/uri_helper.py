@@ -144,18 +144,6 @@ class RetrieveFileFromUri:
         return open(file_path, self.mode)
 
 
-def get_db_uri(username, password, host, port, db_name):
-    return f"postgresql://{username}:{password}@{host}:{port}/{db_name}"
-
-
-def get_jdbc_url(username, password, host, port, db_name):
-    return get_jdbc_url_from_pg_uri(get_db_uri(username, password, host, port, db_name))
-
-
-def get_hive_metastore_url(host, port, db_name):
-    return f"jdbc:postgresql://{host}:{port}/{db_name}"
-
-
 def get_jdbc_url_from_pg_uri(pg_uri: str) -> str:
     """Converts the passed-in Postgres DB connection URI to a JDBC-compliant Postgres DB connection string"""
     url_parts, user, password = parse_pg_uri(pg_uri)
