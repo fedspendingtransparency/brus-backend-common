@@ -41,6 +41,8 @@ class DefaultConfig(BaseSettings):
         AWS_ACCESS_KEY: The current AWS access key
         AWS_SECRET_KEY: The current AWS secret key
         AWS_PROFILE: The current AWS profile
+        AWS_REGION: The current AWS region
+        AWS_S3_ENDPOINT: (derived) The current AWS S3 endpoint
 
         # Postgres
         DB1_URL: Postgres url to your applications database
@@ -66,6 +68,10 @@ class DefaultConfig(BaseSettings):
     AWS_ACCESS_KEY: str = ""
     AWS_SECRET_KEY: str = ""
     AWS_PROFILE: str = ""
+    AWS_REGION: str = "us-gov-west-1"
+    @property
+    def AWS_S3_ENDPOINT(self):
+        return f"s3.{AWS_REGION}.amazonaws.com" if AWS_REGION else ""
 
     # Postgres
     DB1_URL: str = ""
