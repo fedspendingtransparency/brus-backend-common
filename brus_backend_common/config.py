@@ -71,7 +71,7 @@ class DefaultConfig(BaseSettings):
     AWS_REGION: str = "us-gov-west-1"
     @property
     def AWS_S3_ENDPOINT(self):
-        return f"s3.{AWS_REGION}.amazonaws.com" if AWS_REGION else ""
+        return f"s3.{self.AWS_REGION}.amazonaws.com" if self.AWS_REGION else ""
 
     # Postgres
     DB1_URL: str = ""
@@ -79,18 +79,18 @@ class DefaultConfig(BaseSettings):
 
     @property
     def JDBC_DB1_URL(self):
-        return get_jdbc_url_from_pg_uri(CONFIG.DB1_URL) if CONFIG.DB1_URL else ""
+        return get_jdbc_url_from_pg_uri(self.DB1_URL) if self.DB1_URL else ""
 
     @property
     def JDBC_DB2_URL(self):
-        return get_jdbc_url_from_pg_uri(CONFIG.DB2_URL) if CONFIG.DB2_URL else ""
+        return get_jdbc_url_from_pg_uri(self.DB2_URL) if self.DB2_URL else ""
 
     # Metastore
     METASTORE_URL: str = ""
 
     @property
     def JDBC_METASTORE_URL(self):
-        return get_jdbc_url_from_pg_uri(CONFIG.METASTORE_URL) if CONFIG.METASTORE_URL else ""
+        return get_jdbc_url_from_pg_uri(self.METASTORE_URL) if self.METASTORE_URL else ""
 
     # Spark
     SPARK_SQL_WAREHOUSE_DIR: str = os.path.join(_SRC_ROOT_DIR, "helpers", "spark-warehouse")
