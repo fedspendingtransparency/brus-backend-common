@@ -10,4 +10,4 @@
 #     TimestampType,
 # )
 #
-# from dataactcore.emr.models.delta_model import DeltaModel
+# from brus_backend_common.models.delta_model import DeltaModel
