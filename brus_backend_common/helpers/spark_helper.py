@@ -65,6 +65,43 @@ def stop_spark_context() -> bool:
     return stopped_without_error
 
 
+class SparkScriptSession:
+    """To prevent duplicate code across all the spark scripts, use this which will keep track of your spark session
+    regardless if it's new or already existing
+
+    Usage:
+        extra_config = {'extra.config.value.for.specific.script': 'true'}
+        with SparkScriptSession(**extra_config) as spark:
+            # script_main_function(spark, ...)
+    """
+
+    def __init__(self, **extra_conf):
+        self.extra_conf = {
+            # Config for Delta Lake tables and SQL. Need these to keep Dela table metadata in the metastore
+            "spark.sql.extensions": "io.delta.sql.DeltaSparkSessionExtension",
+            "spark.sql.catalog.spark_catalog": "org.apache.spark.sql.delta.catalog.DeltaCatalog",
+            # See comment below about old date and time values cannot parsed without these
+            "spark.sql.legacy.parquet.datetimeRebaseModeInWrite": "LEGACY",  # for dates at/before 1900
+            "spark.sql.legacy.parquet.int96RebaseModeInWrite": "LEGACY",  # for timestamps at/before 1900
+            "spark.sql.jsonGenerator.ignoreNullFields": "false",  # keep nulls in our json
+        }
+        if extra_conf:
+            self.extra_conf.update(extra_conf)
+        self.spark = None
+        self.spark_created_by_script = False
+
+    def __enter__(self):
+        self.spark = get_active_spark_session()
+        if not self.spark:
+            self.spark_created_by_script = True
+            self.spark = configure_spark_session(**self.extra_conf, spark_context=self.spark)
+        return self.spark
+
+    def __exit__(self):
+        if self.spark_created_by_script:
+            self.spark.stop()
+
+
 def configure_spark_session(
     java_gateway: JavaGateway = None,
     spark_context: Union[SparkContext, SparkSession] = None,
