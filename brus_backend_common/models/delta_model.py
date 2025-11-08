@@ -84,10 +84,10 @@ class DeltaModel(ABC):
     def initialize(self, recreate=False):
         logger.info(f"Initializing {self.table_ref}")
         self._register_table_hive(recreate=recreate)
-        # if not self.dt:
-        #     self.dt = DeltaTable(self.table_path, storage_options=get_storage_options())
-        # else:
-        #     logger.info(f'{self.table_path} already initialized')
+        if not self.dt:
+            self.dt = DeltaTable(self.table_path, storage_options=get_storage_options())
+        else:
+            logger.info(f'{self.table_path} already initialized')
 
     def _register_table_hive(self, recreate=False):
         self.spark.sql(
