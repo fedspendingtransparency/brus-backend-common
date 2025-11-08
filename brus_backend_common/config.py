@@ -69,6 +69,7 @@ class DefaultConfig(BaseSettings):
     AWS_SECRET_KEY: str = ""
     AWS_PROFILE: str = ""
     AWS_REGION: str = "us-gov-west-1"
+
     @property
     def AWS_S3_ENDPOINT(self):
         return f"s3.{self.AWS_REGION}.amazonaws.com" if self.AWS_REGION else ""
