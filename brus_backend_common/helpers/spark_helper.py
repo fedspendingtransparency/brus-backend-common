@@ -97,7 +97,7 @@ class SparkScriptSession:
             self.spark = configure_spark_session(**self.extra_conf, spark_context=self.spark)
         return self.spark
 
-    def __exit__(self):
+    def __exit__(self, exc_type, exc_val, exc_tb):
         if self.spark_created_by_script:
             self.spark.stop()
 
