@@ -2,15 +2,13 @@ import argparse
 import logging
 
 from brus_backend_common.models import DELTA_MODELS
-from brus_backend_common.helpers.spark_helper import (
-    configure_spark_session,
-    get_active_spark_session,
-)
+from brus_backend_common.helpers.spark_helper import SparkScriptSession
 
 logger = logging.getLogger(__name__)
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Create or migrate delta tables")
+
+def setup_parser(parser):
+    """Separating parser functionality as USAS uses Django Commands"""
     parser.add_argument(
         "--table",
         "-t",
@@ -37,38 +35,29 @@ if __name__ == "__main__":
         "Must be negative values pulling from the end of the history "
         "(0 = all, -1 = last, -2 = 2nd from last, last). ",
     )
+    return parser
+
+
+def main(table, recreate=False, migrate=None):
+    with SparkScriptSession() as spark:
+        model = DELTA_MODELS[table](spark=spark)
+        table_exists = model.exists()
+        if migrate and not table_exists:
+            raise ValueError("Migration provided but table doesn't exist.")
+        elif migrate and migrate > 0:
+            raise ValueError("Migration provided but not a negative value.")
+        elif migrate and (-1 * migrate > len(model.migration_history)):
+            raise ValueError("Migration exceeds the amount of table migrations available.")
+
+        if table_exists and migrate:
+            model.migrate(migrate)
+        else:
+            model.initialize(recreate=recreate)
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Create or migrate delta tables")
+    parser = setup_parser(parser)
     args = parser.parse_args()
 
-    extra_conf = {
-        # Config for Delta Lake tables and SQL. Need these to keep Dela table metadata in the metastore
-        "spark.sql.extensions": "io.delta.sql.DeltaSparkSessionExtension",
-        "spark.sql.catalog.spark_catalog": "org.apache.spark.sql.delta.catalog.DeltaCatalog",
-        # See comment below about old date and time values cannot parsed without these
-        "spark.sql.legacy.parquet.datetimeRebaseModeInWrite": "LEGACY",  # for dates at/before 1900
-        "spark.sql.legacy.parquet.int96RebaseModeInWrite": "LEGACY",  # for timestamps at/before 1900
-        "spark.sql.jsonGenerator.ignoreNullFields": "false",  # keep nulls in our json
-    }
-    spark = get_active_spark_session()
-    spark_created_by_command = False
-    if not spark:
-        spark_created_by_command = True
-        spark = configure_spark_session(**extra_conf, spark_context=spark)
-
-    model = DELTA_MODELS[args.table](spark=spark)
-    table_exists = model.exists()
-    recreate = args.recreate
-    migrate = args.migrate
-    if migrate and not table_exists:
-        raise ValueError("Migration provided but table doesn't exist.")
-    elif migrate and migrate > 0:
-        raise ValueError("Migration provided but not a negative value.")
-    elif migrate and (-1 * migrate > len(model.migration_history)):
-        raise ValueError("Migration exceeds the amount of table migrations available.")
-
-    if table_exists and migrate:
-        model.migrate(migrate)
-    else:
-        model.initialize(recreate=recreate)
-
-    if spark_created_by_command:
-        spark.stop()
+    main(args.table, args.recreate, args.migrate)
