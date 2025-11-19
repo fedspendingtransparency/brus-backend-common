@@ -44,6 +44,9 @@ class DefaultConfig(BaseSettings):
         AWS_REGION: The current AWS region
         AWS_S3_ENDPOINT: (derived) The current AWS S3 endpoint
 
+        # Buckets
+        DATA_SOURCES_BUCKET: The S3 data sources bucket name
+
         # Postgres
         DB1_URL: Postgres url to your applications database
         DB2_URL: Postgres url to another application database
@@ -73,6 +76,9 @@ class DefaultConfig(BaseSettings):
     @property
     def AWS_S3_ENDPOINT(self):
         return f"s3.{self.AWS_REGION}.amazonaws.com" if self.AWS_REGION else ""
+
+    # Buckets
+    DATA_SOURCES_BUCKET: str = ""
 
     # Postgres
     DB1_URL: str = ""
