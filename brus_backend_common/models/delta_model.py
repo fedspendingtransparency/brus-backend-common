@@ -33,6 +33,7 @@ class DeltaModel(ABC):
     s3_bucket: str
     database: str
     table_name: str
+    format: str = "delta"
     pk: str
     unique_constraints: [(str,)]
     migration_history: [str]
@@ -58,11 +59,13 @@ class DeltaModel(ABC):
 
     @property
     def table_path(self):
-        return f"s3://{self.s3_bucket}/data/delta/{self.database}/{self.table_name}"
+        csv_extension = f"/{self.table_name}.csv" if self.format == "csv" else ""
+        return f"s3://{self.s3_bucket}/data/delta/{self.database}/{self.table_name}{csv_extension}"
 
     @property
     def table_path_hadoop(self):
-        return f"s3a://{self.s3_bucket}/data/delta/{self.database}/{self.table_name}"
+        csv_extension = f"/{self.table_name}.csv" if self.format == "csv" else ""
+        return f"s3a://{self.s3_bucket}/data/delta/{self.database}/{self.table_name}{csv_extension}"
 
     @property
     def table_ref(self):
@@ -87,7 +90,7 @@ class DeltaModel(ABC):
         if not self.dt:
             self.dt = DeltaTable(self.table_path, storage_options=get_storage_options())
         else:
-            logger.info(f'{self.table_path} already initialized')
+            logger.info(f"{self.table_path} already initialized")
 
     def _register_table_hive(self, recreate=False):
         self.spark.sql(
@@ -99,14 +102,19 @@ class DeltaModel(ABC):
         df = self.spark.createDataFrame([], self.structure)
         if recreate:
             (
-                df.write.format("delta")
+                df.write.format(self.format)
                 .option("path", self.table_path_hadoop)
                 .option("overwriteSchema", "true")
                 .mode("overwrite")
                 .saveAsTable(self.table_ref)
             )
         else:
-            (df.write.format("delta").mode("ignore").option("path", self.table_path_hadoop).saveAsTable(self.table_ref))
+            (
+                df.write.format(self.format)
+                .option("path", self.table_path_hadoop)
+                .mode("ignore")
+                .saveAsTable(self.table_ref)
+            )
         # TODO: This *should* allow one to run `ALTER TABLE DROP COLUMN ...` commands
         #       but we ran into issues when trying it.
         # self.spark.sql(f"""
@@ -185,3 +193,9 @@ class DeltaModel(ABC):
             source_alias="s",
             target_alias="t",
         ).when_matched_update_all().when_not_matched_insert_all().execute()
+
+    def delete(self, predicate: str = None):
+        if not self.dt:
+            raise Exception("Table not instantiated")
+
+        self.dt.delete(predicate=predicate)
