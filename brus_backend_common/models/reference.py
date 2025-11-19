@@ -18,6 +18,7 @@ class DEFCDeltaRaw(DeltaModel):
     s3_bucket = REFERENCE_S3_BUCKET
     database = "raw"
     table_name = "defc"
+    csv_name = "DEFC_LIST_FOR_USAS.csv"
     format = "csv"
     pk = "DEFC_CODE"
     unique_constraints = []

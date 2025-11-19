@@ -33,6 +33,7 @@ class DeltaModel(ABC):
     s3_bucket: str
     database: str
     table_name: str
+    csv_name: str = ""
     format: str = "delta"
     pk: str
     unique_constraints: [(str,)]
@@ -59,7 +60,7 @@ class DeltaModel(ABC):
 
     @property
     def table_path(self):
-        csv_extension = f"/{self.table_name}.csv" if self.format == "csv" else ""
+        csv_extension = f'/{self.csv_name or f"{self.table_name}.csv"}' if self.format == "csv" else ""
         return f"s3://{self.s3_bucket}/data/delta/{self.database}/{self.table_name}{csv_extension}"
 
     @property
