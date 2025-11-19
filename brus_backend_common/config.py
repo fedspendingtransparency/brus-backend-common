@@ -79,6 +79,8 @@ class DefaultConfig(BaseSettings):
 
     # Buckets
     DATA_SOURCES_BUCKET: str = ""
+    PUBLIC_FILES_BUCKET: str = ""
+    METRICS_BUCKET: str = ""
 
     # Postgres
     DB1_URL: str = ""
