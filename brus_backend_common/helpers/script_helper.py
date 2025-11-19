@@ -7,8 +7,18 @@ import xmltodict
 from requests.exceptions import ConnectionError, ReadTimeout
 from urllib3.exceptions import ReadTimeoutError
 
+from brus_backend_common.config import CONFIG
+from brus_backend_common.models import ExternalDataLoadDateDelta
+
 logger = logging.getLogger(__name__)
 logging.getLogger("requests").setLevel(logging.WARNING)
+
+""" A simple way of keeping track of the count when raising the Exception to the main script """
+
+
+class FailureThresholdExceededError(Exception):
+    def __init__(self, count):
+        self.count = count
 
 
 def list_data(data):
@@ -182,3 +192,31 @@ def flatten_json(json_obj):
 
     _flatten(json_obj)
     return out
+
+
+def update_external_data_load_date(spark, data_type, start_time, end_time):
+    """Update the external_data_load_date table with the start and end times for the given data type
+
+    Args:
+        spark: current spark connection
+        data_type: a string indicating the data type of the external data load
+        start_time: a datetime object indicating the start time of the external data load
+        end_time: a datetime object indicating the end time of the external data load
+    """
+    df = ExternalDataLoadDateDelta(spark).to_pandas_df()
+    last_stored_obj = df[df.name == data_type]
+    if last_stored_obj.empty:
+        raise ValueError("Data type not found in external data load date table/csv. Please update it beforehand.")
+    last_stored_obj.last_load_date_start = start_time
+    last_stored_obj.last_load_date_end = end_time
+    df.merge(last_stored_obj)
+
+
+def log_blank_file():
+    """Helper function for specific reused log message"""
+    logger.error("File was blank! Not loaded, routine aborted.")
+
+
+def exit_if_nonlocal(exit_code):
+    if not CONFIG.IS_LOCAL:
+        sys.exit(exit_code)
