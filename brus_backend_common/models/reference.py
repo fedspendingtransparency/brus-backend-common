@@ -11,9 +11,11 @@ from pyspark.sql.types import (
 )
 from brus_backend_common.models.delta_model import DeltaModel
 
+REFERENCE_S3_BUCKET = "dti-delta-reference-nonprod"  # TODO: edit for prod/nonprod
+
 
 class DEFCDeltaRaw(DeltaModel):
-    s3_bucket = "dti-delta-reference-nonprod"  # TODO: edit for prod/nonprod
+    s3_bucket = REFERENCE_S3_BUCKET
     database = "raw"
     table_name = "defc"
     format = "csv"
@@ -32,7 +34,7 @@ class DEFCDeltaRaw(DeltaModel):
 
 
 class DEFCDeltaInt(DeltaModel):
-    s3_bucket = "dti-delta-reference-nonprod"  # TODO: edit for prod/nonprod
+    s3_bucket = REFERENCE_S3_BUCKET
     database = "int"
     table_name = "defc"
     pk = "defc_id"
@@ -58,7 +60,7 @@ class DEFCDeltaInt(DeltaModel):
 
 
 class ExternalDataLoadDateDelta(DeltaModel):
-    s3_bucket = "dti-delta-reference-nonprod"  # TODO: edit for prod/nonprod
+    s3_bucket = REFERENCE_S3_BUCKET
     database = "int"
     table_name = "external_data_load_date"
     format = "csv"
