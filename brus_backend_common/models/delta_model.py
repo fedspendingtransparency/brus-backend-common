@@ -10,6 +10,7 @@ from deltalake import DeltaTable  # , QueryBuilder, Field, schema
 from deltalake.exceptions import TableNotFoundError
 
 from pyspark.sql import DataFrame, SparkSession
+from pyspark.sql.types import StructType
 
 from brus_backend_common.config import _SRC_ROOT_DIR
 from brus_backend_common.helpers.aws_helpers import get_aws_credentials
@@ -30,54 +31,63 @@ def get_storage_options():
 
 
 class DeltaModel(ABC):
-    s3_bucket: str
-    database: str
-    table_name: str
-    csv_name: str = ""
-    format: str = "delta"
-    pk: str
-    unique_constraints: [(str,)]
-    migration_history: [str]
+    S3_BUCKET: str
+    DATABASE: str
+    TABLE_NAME: str
+    CSV_NAME: str
+    FORMAT: str = "delta"
+    PK: str
+    UNIQUE_CONSTRAINTS: [(str,)]
+    MIGRATION_HISTORY: [str]
+
+    @classmethod
+    @property
+    def DATABASE_PATH(cls):
+        return f"s3://{cls.S3_BUCKET}/data/delta/{cls.DATABASE}"
+
+    @classmethod
+    @property
+    def DATABASE_PATH_HADOOP(cls):
+        return f"s3a://{cls.S3_BUCKET}/data/delta/{cls.DATABASE}"
+
+    @classmethod
+    @property
+    def TABLE_PATH(cls):
+        _csv_extension = f'/{cls.CSV_NAME or f"{cls.TABLE_NAME}.csv"}' if cls.FORMAT == "csv" else ""
+        return f"s3://{cls.S3_BUCKET}/data/delta/{cls.DATABASE}/{cls.TABLE_NAME}{_csv_extension}"
+
+    @classmethod
+    @property
+    def TABLE_PATH_HADOOP(cls):
+        _csv_extension = f'/{cls.CSV_NAME or f"{cls.TABLE_NAME}.csv"}' if cls.FORMAT == "csv" else ""
+        return f"s3a://{cls.S3_BUCKET}/data/delta/{cls.DATABASE}/{cls.TABLE_NAME}{_csv_extension}"
+
+    @classmethod
+    @property
+    def TABLE_REF(cls):
+        return f"{cls.DATABASE}.{cls.TABLE_NAME}"
+
+    # The schema/structure of the delta table as StructType with StructFields
+    STRUCTURE: StructType
+
+    # Used to repopulate the table from scratch
+    # If the text is too large for the model, pull the text from a separate script.
+    REPOPULATE_QUERY: str | Callable[[SparkSession], DataFrame]
+
+    # Used to increment to the table
+    # If the text is too large for the model, pull the text from a separate script.
+    INCREMENT_QUERY: str | Callable[[SparkSession], DataFrame]
 
     def __init__(self, spark=None):
         self.spark = spark
 
         try:
-            self.dt = DeltaTable(self.table_path, storage_options=get_storage_options())
+            self.dt = DeltaTable(self.TABLE_PATH, storage_options=get_storage_options())
         except TableNotFoundError:
             self.dt = None
 
     def exists(self):
         return self.dt is not None
-
-    @property
-    def database_path(self):
-        return f"s3://{self.s3_bucket}/data/delta/{self.database}"
-
-    @property
-    def database_path_hadoop(self):
-        return f"s3a://{self.s3_bucket}/data/delta/{self.database}"
-
-    @property
-    def table_path(self):
-        csv_extension = f'/{self.csv_name or f"{self.table_name}.csv"}' if self.format == "csv" else ""
-        return f"s3://{self.s3_bucket}/data/delta/{self.database}/{self.table_name}{csv_extension}"
-
-    @property
-    def table_path_hadoop(self):
-        csv_extension = f"/{self.table_name}.csv" if self.format == "csv" else ""
-        return f"s3a://{self.s3_bucket}/data/delta/{self.database}/{self.table_name}{csv_extension}"
-
-    @property
-    def table_ref(self):
-        return f"{self.database}.{self.table_name}"
-
-    @property
-    def structure(self):
-        """
-        The schema/structure of the delta table as StructType with StructFields
-        """
-        raise NotImplementedError("Structure/schema not implemented.")
 
     def to_pandas_df(self):
         return self.dt.to_pyarrow_table().to_pandas()
@@ -86,40 +96,40 @@ class DeltaModel(ABC):
         return pl.from_arrow(self.dt.to_pyarrow_table())
 
     def initialize(self, recreate=False):
-        logger.info(f"Initializing {self.table_ref}")
+        logger.info(f"Initializing {self.TABLE_REF}")
         self._register_table_hive(recreate=recreate)
         if not self.dt:
-            self.dt = DeltaTable(self.table_path, storage_options=get_storage_options())
+            self.dt = DeltaTable(self.TABLE_PATH, storage_options=get_storage_options())
         else:
-            logger.info(f"{self.table_path} already initialized")
+            logger.info(f"{self.TABLE_PATH} already initialized")
 
     def _register_table_hive(self, recreate=False):
         self.spark.sql(
             rf"""
-            CREATE DATABASE IF NOT EXISTS {self.database}
-            LOCATION '{self.database_path_hadoop}'
+            CREATE DATABASE IF NOT EXISTS {self.DATABASE}
+            LOCATION '{self.DATABASE_PATH_HADOOP}'
         """
         )
-        df = self.spark.createDataFrame([], self.structure)
+        df = self.spark.createDataFrame([], self.STRUCTURE)
         if recreate:
             (
-                df.write.format(self.format)
-                .option("path", self.table_path_hadoop)
+                df.write.format(self.FORMAT)
+                .option("path", self.TABLE_PATH_HADOOP)
                 .option("overwriteSchema", "true")
                 .mode("overwrite")
-                .saveAsTable(self.table_ref)
+                .saveAsTable(self.TABLE_REF)
             )
         else:
             (
-                df.write.format(self.format)
-                .option("path", self.table_path_hadoop)
+                df.write.format(self.FORMAT)
+                .option("path", self.TABLE_PATH_HADOOP)
                 .mode("ignore")
-                .saveAsTable(self.table_ref)
+                .saveAsTable(self.TABLE_REF)
             )
         # TODO: This *should* allow one to run `ALTER TABLE DROP COLUMN ...` commands
         #       but we ran into issues when trying it.
         # self.spark.sql(f"""
-        #     ALTER TABLE {self.table_ref} SET TBLPROPERTIES (
+        #     ALTER TABLE {self.TABLE_REF} SET TBLPROPERTIES (
         #       'delta.minReaderVersion' = '2',
         #       'delta.minWriterVersion' = '5',
         #       'delta.columnMapping.mode' = 'name'
@@ -133,9 +143,9 @@ class DeltaModel(ABC):
             -1 - last migration
         """
         migrations_dir = os.path.join(_SRC_ROOT_DIR, "models", "migrations")
-        for migration in self.migration_history[start:]:
+        for migration in self.MIGRATION_HISTORY[start:]:
             path = os.path.join(migrations_dir, f"{migration}.sql")
-            logger.info(f"Running migration {path} on {self.table_ref}")
+            logger.info(f"Running migration {path} on {self.TABLE_REF}")
             if not os.path.exists(path):
                 raise FileNotFoundError(f"Migration {migration} not found.")
             with open(path, "r") as f:
@@ -145,27 +155,11 @@ class DeltaModel(ABC):
             else:
                 logger.info(f"No SQL found in {path}.")
 
-    @property
-    def repopulate_query(self):
-        """
-        Can be a string or returning a callable, dataframe.
-        If the text is too large for the model, pull the text from a separate script.
-        """
-        raise NotImplementedError("Repopulate query not implemented.")
-
     def repopulate(self):
-        self.load_query(self.repopulate_query)
-
-    @property
-    def increment_query(self):
-        """
-        Can be a string or returning a callable, dataframe.
-        If the text is too large for the model, pull the text from a separate script.
-        """
-        raise NotImplementedError("Increment query not implemented.")
+        self.load_query(self.REPOPULATE_QUERY)
 
     def increment(self):
-        self.load_query(self.increment_query)
+        self.load_query(self.INCREMENT_QUERY)
 
     def load_query(self, query: str | Callable[[SparkSession], DataFrame]):
         if isinstance(query, str):
@@ -175,8 +169,8 @@ class DeltaModel(ABC):
                 query(self.spark)
                 .write.format("delta")
                 .mode("overwrite")
-                .option("path", self.table_path_hadoop)
-                .saveAsTable(self.table_ref)
+                .option("path", self.TABLE_PATH_HADOOP)
+                .saveAsTable(self.TABLE_REF)
             )
         else:
             raise ArgumentTypeError(f"Invalid query. `{query}` must be a string or a Callable.")
@@ -190,7 +184,7 @@ class DeltaModel(ABC):
 
         self.dt.merge(
             source=df,
-            predicate=f"s.{self.pk} = t.{self.pk}",
+            predicate=f"s.{self.PK} = t.{self.PK}",
             source_alias="s",
             target_alias="t",
         ).when_matched_update_all().when_not_matched_insert_all().execute()

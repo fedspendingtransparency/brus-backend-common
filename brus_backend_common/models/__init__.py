@@ -13,5 +13,5 @@ DELTA_MODEL_CLASSES = [
 DELTA_MODELS = {}
 for model in DELTA_MODEL_CLASSES:
     # force call of the @property getter instead of the simpler list comprehension
-    table_ref = model.table_ref
+    table_ref = model.TABLE_REF
     DELTA_MODELS[table_ref] = model

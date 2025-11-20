@@ -15,70 +15,64 @@ REFERENCE_S3_BUCKET = "dti-delta-reference-nonprod"  # TODO: edit for prod/nonpr
 
 
 class DEFCDeltaRaw(DeltaModel):
-    s3_bucket = REFERENCE_S3_BUCKET
-    database = "raw"
-    table_name = "defc"
-    csv_name = "DEFC_LIST_FOR_USAS.csv"
-    format = "csv"
-    pk = "DEFC_CODE"
-    unique_constraints = []
-    migration_history = []
+    S3_BUCKET = REFERENCE_S3_BUCKET
+    DATABASE = "raw"
+    TABLE_NAME = "defc"
+    CSV_NAME = "DEFC_LIST_FOR_USAS.csv"
+    FORMAT = "csv"
+    PK = "DEFC_CODE"
+    UNIQUE_CONSTRAINTS = []
+    MIGRATION_HISTORY = []
 
-    @property
-    def structure(self):
-        return StructType(
-            [
-                StructField("DEFC_CODE", StringType(), False),
-                StructField("DEFC_TITLE", StringType(), False),
-            ]
-        )
+    STRUCTURE = StructType(
+        [
+            StructField("DEFC_CODE", StringType(), False),
+            StructField("DEFC_TITLE", StringType(), False),
+        ]
+    )
 
 
 class DEFCDeltaInt(DeltaModel):
-    s3_bucket = REFERENCE_S3_BUCKET
-    database = "int"
-    table_name = "defc"
-    pk = "defc_id"
-    unique_constraints = ["code"]
-    migration_history = ["add_test_column", "drop_test_column"]
+    S3_BUCKET = REFERENCE_S3_BUCKET
+    DATABASE = "int"
+    TABLE_NAME = "defc"
+    PK = "defc_id"
+    UNIQUE_CONSTRAINTS = ["code"]
+    MIGRATION_HISTORY = []
 
-    @property
-    def structure(self):
-        return StructType(
-            [
-                StructField("created_at", TimestampType(), True),
-                StructField("updated_at", TimestampType(), True),
-                StructField("defc_id", IntegerType(), False),
-                StructField("code", StringType(), False),
-                StructField("public_laws", ArrayType(StringType(), True), True),
-                StructField("public_law_short_titles", ArrayType(StringType(), True), True),
-                StructField("group", StringType(), True),
-                StructField("urls", ArrayType(StringType(), True), True),
-                StructField("is_valid", BooleanType(), False),
-                StructField("earliest_pl_action_date", TimestampType(), True),
-            ]
-        )
+    STRUCTURE = StructType(
+        [
+            StructField("created_at", TimestampType(), True),
+            StructField("updated_at", TimestampType(), True),
+            StructField("defc_id", IntegerType(), False),
+            StructField("code", StringType(), False),
+            StructField("public_laws", ArrayType(StringType(), True), True),
+            StructField("public_law_short_titles", ArrayType(StringType(), True), True),
+            StructField("group", StringType(), True),
+            StructField("urls", ArrayType(StringType(), True), True),
+            StructField("is_valid", BooleanType(), False),
+            StructField("earliest_pl_action_date", TimestampType(), True),
+        ]
+    )
 
 
 class ExternalDataLoadDateDelta(DeltaModel):
-    s3_bucket = REFERENCE_S3_BUCKET
-    database = "int"
-    table_name = "external_data_load_date"
-    format = "csv"
-    pk = "external_data_load_date_id"
-    unique_constraints = ["name"]
-    migration_history = []
+    S3_BUCKET = REFERENCE_S3_BUCKET
+    DATABASE = "int"
+    TABLE_NAME = "external_data_load_date"
+    FORMAT = "csv"
+    PK = "external_data_load_date_id"
+    UNIQUE_CONSTRAINTS = ["name"]
+    MIGRATION_HISTORY = []
 
-    @property
-    def structure(self):
-        return StructType(
-            [
-                StructField("created_at", TimestampType(), True),
-                StructField("updated_at", TimestampType(), True),
-                StructField("external_data_load_date_id", IntegerType(), False),
-                StructField("name", StringType(), False),
-                StructField("description", StringType(), False),
-                StructField("last_load_date_start", TimestampType(), False),
-                StructField("last_load_date_end", TimestampType(), False),
-            ]
-        )
+    STRUCTURE = StructType(
+        [
+            StructField("created_at", TimestampType(), True),
+            StructField("updated_at", TimestampType(), True),
+            StructField("external_data_load_date_id", IntegerType(), False),
+            StructField("name", StringType(), False),
+            StructField("description", StringType(), False),
+            StructField("last_load_date_start", TimestampType(), False),
+            StructField("last_load_date_end", TimestampType(), False),
+        ]
+    )
