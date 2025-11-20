@@ -9,4 +9,7 @@ DELTA_MODEL_CLASSES = [
     DEFCDeltaInt,
     ExternalDataLoadDateDelta,
 ]
-DELTA_MODELS = {model.table_ref: model for model in DELTA_MODEL_CLASSES}
+for model in DELTA_MODEL_CLASSES:
+    # force call of the @property getter instead of the simpler list comprehension
+    table_ref = model.table_ref
+    DELTA_MODELS[table_ref] = model
