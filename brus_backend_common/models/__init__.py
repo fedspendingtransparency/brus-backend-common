@@ -9,4 +9,4 @@ DELTA_MODEL_CLASSES = [
     DEFCDeltaInt,
     ExternalDataLoadDateDelta,
 ]
-DELTA_MODELS = {model.table_name: model for model in DELTA_MODEL_CLASSES}
+DELTA_MODELS = {model.table_ref: model for model in DELTA_MODEL_CLASSES}
