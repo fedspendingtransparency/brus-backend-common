@@ -9,17 +9,16 @@ from pyspark.sql.types import (
     StructType,
     TimestampType,
 )
-from brus_backend_common.models.delta_model import DeltaModel
+from brus_backend_common.models.delta_model import DeltaModel, CSVModel
 
 REFERENCE_S3_BUCKET = "dti-delta-reference-nonprod"  # TODO: edit for prod/nonprod
 
 
-class DEFCDeltaRaw(DeltaModel):
+class DEFCDeltaRaw(CSVModel):
     S3_BUCKET = REFERENCE_S3_BUCKET
     DATABASE = "raw"
     TABLE_NAME = "defc"
     CSV_NAME = "DEFC_LIST_FOR_USAS.csv"
-    FORMAT = "csv"
     PK = "DEFC_CODE"
     UNIQUE_CONSTRAINTS = []
     MIGRATION_HISTORY = []
