@@ -53,13 +53,15 @@ class DeltaModel(ABC):
     @classmethod
     @property
     def TABLE_PATH(cls):
-        _csv_extension = f'/{cls.CSV_NAME or f"{cls.TABLE_NAME}.csv"}' if cls.FORMAT == "csv" else ""
+        # _csv_extension = f'/{cls.CSV_NAME or f"{cls.TABLE_NAME}.csv"}' if cls.FORMAT == "csv" else ""
+        _csv_extension = ''
         return f"s3://{cls.S3_BUCKET}/data/delta/{cls.DATABASE}/{cls.TABLE_NAME}{_csv_extension}"
 
     @classmethod
     @property
     def TABLE_PATH_HADOOP(cls):
-        _csv_extension = f'/{cls.CSV_NAME or f"{cls.TABLE_NAME}.csv"}' if cls.FORMAT == "csv" else ""
+        # _csv_extension = f'/{cls.CSV_NAME or f"{cls.TABLE_NAME}.csv"}' if cls.FORMAT == "csv" else ""
+        _csv_extension = ''
         return f"s3a://{cls.S3_BUCKET}/data/delta/{cls.DATABASE}/{cls.TABLE_NAME}{_csv_extension}"
 
     @classmethod
