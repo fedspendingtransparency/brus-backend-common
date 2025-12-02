@@ -1,4 +1,6 @@
 import boto3
+import botocore
+import io
 import os
 import logging
 import pandas as pd
@@ -9,6 +11,7 @@ from typing import Callable
 
 from deltalake import DeltaTable  # , QueryBuilder, Field, schema
 from deltalake.exceptions import TableNotFoundError
+from deltalake.writer import write_deltalake
 
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.types import StructType
@@ -175,15 +178,15 @@ class EMRModel(ABC):
         else:
             raise ArgumentTypeError(f"Invalid query. `{query}` must be a string or a Callable.")
 
-    def merge(self):
-        raise NotImplementedError()
-
-    def delete(self, predicate: str = None):
+    def save(self, df: [pd.DataFrame, pl.DataFrame]):
+        # Easier to do the data manipulation/transformation on the pulled dataframes and simply save it instead of
+        # implementing the merge/deletes for different data types (delta, parquet, csv).
+        # TODO: how to update/delete a small portion of massive deltatable/csv via streaming?
         raise NotImplementedError()
 
 
 class DeltaModel(EMRModel):
-    FORMAT = 'delta'
+    FORMAT = "delta"
 
     def __init__(self, spark=None):
         super().__init__(spark)
@@ -210,88 +213,58 @@ class DeltaModel(EMRModel):
         else:
             logger.info(f"{self.TABLE_PATH} already initialized")
 
-    def merge(self, df: [pd.DataFrame, pl.DataFrame]):
-        if isinstance(df, pd.DataFrame):
-            df = pl.from_pandas(df)
-
-        if not self.dt:
-            raise Exception("Table not instantiated")
-
-        self.dt.merge(
-            source=df,
-            predicate=f"s.{self.PK} = t.{self.PK}",
-            source_alias="s",
-            target_alias="t",
-        ).when_matched_update_all().when_not_matched_insert_all().execute()
-
-    def delete(self, predicate: str = None):
-        if not self.dt:
-            raise Exception("Table not instantiated")
-
-        self.dt.delete(predicate=predicate)
+    def save(self, df: [pd.DataFrame, pl.DataFrame]):
+        write_deltalake(table_or_uri=self.TABLE_PATH, data=df, mode="overwrite")
 
 
 class CSVModel(EMRModel):
-    FORMAT = 'csv'
+    FORMAT = "csv"
 
-    CSV_NAME: str = f"{TABLE_NAME}.csv"
+    CSV_NAME: str = None
 
     @classmethod
     @property
     def RELATIVE_CSV_PATH(cls):
-        return f'{self.RELATIVE_TABLE_PATH}/{cls.CSV_NAME}'
+        return f"{cls.RELATIVE_TABLE_PATH}/{cls.CSV_NAME}"
 
     @classmethod
     @property
     def CSV_PATH(cls):
-        return f'{self.TABLE_PATH}/{cls.CSV_NAME}'
+        return f"{cls.TABLE_PATH}/{cls.CSV_NAME}"
 
     @classmethod
     @property
     def CSV_PATH_HADOOP(cls):
-        return f'{self.TABLE_PATH_HADOOP}/{cls.CSV_NAME}'
-
+        return f"{cls.TABLE_PATH_HADOOP}/{cls.CSV_NAME}"
 
     def __init__(self, spark=None):
         super().__init__(spark)
 
-        # Check that it exists in the S3 bucket
+        self._s3_object = None
         s3 = boto3.client("s3", region_name=CONFIG.AWS_REGION)
         try:
-            s3.head_object(Bucket=self.S3_BUCKET, Key=self.CSV_PATH)
+            self._s3_object = s3.get_object(Bucket=self.S3_BUCKET, Key=self.RELATIVE_CSV_PATH)
         except botocore.exceptions.ClientError as e:
-            if e.response['Error']['Code'] == "404":
-                # The key does not exist.
-                ...
-            elif e.response['Error']['Code'] == 403:
-                # Unauthorized, including invalid bucket
-                ...
+            if e.response["Error"]["Code"] == "404":
+                raise FileNotFoundError(f"{self.CSV_PATH} not found")
             else:
-                # Something else has gone wrong.
-                raise
-        self.csv = None
+                raise e
 
     def exists(self):
-        # TODO: boto3 to check, or check metastore
-        pass
+        return self._s3_object is not None
 
     def to_pandas_df(self):
-        # TODO: boto3 to check, or check metastore
-        pass
+        return pd.read_csv(io.BytesIO(self._s3_object["Body"].read()))
 
     def to_polars_df(self):
-        # TODO: boto3 to check, or check metastore
-        pass
+        return pl.read_csv(self.CSV_PATH)
 
     def initialize(self, recreate=False):
         super().initialize(recreate)
 
-        # TODO: boto3 to check, or check metastore
+    def save(self, df: [pd.DataFrame, pl.DataFrame]):
+        # Using pandas with its built-in S3 support
+        if isinstance(df, pl.DataFrame):
+            df = df.to_pandas()
 
-    def merge(self):
-        # TODO: boto3 to check, or check metastore
-        pass
-
-    def delete(self, predicate: str = None):
-        # TODO: boto3 to check, or check metastore
-        pass
+        df.to_csv(self.CSV_PATH, index=False)
