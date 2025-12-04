@@ -34,7 +34,7 @@ def get_storage_options():
     }
 
 
-class EMRModel(ABC):
+class LakeHouseModel(ABC):
     S3_BUCKET: str
     DATABASE: str
     TABLE_NAME: str
@@ -185,7 +185,7 @@ class EMRModel(ABC):
         raise NotImplementedError()
 
 
-class DeltaModel(EMRModel):
+class DeltaModel(LakeHouseModel):
     FORMAT = "delta"
 
     def __init__(self, spark=None):
@@ -217,7 +217,7 @@ class DeltaModel(EMRModel):
         write_deltalake(table_or_uri=self.TABLE_PATH, data=df, mode="overwrite")
 
 
-class CSVModel(EMRModel):
+class CSVModel(LakeHouseModel):
     FORMAT = "csv"
 
     CSV_NAME: str = None
