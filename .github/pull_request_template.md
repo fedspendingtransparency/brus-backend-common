@@ -12,18 +12,15 @@
 <!-- Items that aren't relevant should be marked as N/A and explained below as needed. -->
 
 1. [ ] Unit & integration tests updated
-2. [ ] API documentation updated (examples listed below)
-    1. API Contracts
-    2. API UI
-    3. Comments
+2. [ ] Documentation updated
 3. [ ] Data validation completed (examples listed below)
-    1. Does this work well with the current frontend? Or is the frontend aware of a needed change?
-    2. Is performance impacted in the changes (e.g., API, pipeline, downloads, etc.)?
-    3. Is the expected data returned with the expected format?
+    1. Is performance impacted in the changes (e.g., API, pipeline, downloads, etc.)?
+    2. Is the expected data returned with the expected format?
 4. [ ] Appropriate Operations ticket(s) created
 5. [ ] Jira Ticket(s)
     1. [DEV-0](https://federal-spending-transparency.atlassian.net/browse/DEV-0)
-6. [ ] Broker Developer Review
-7. [ ] USAS Developer Review
+6. Developer Reviews
+    - [ ] Broker Developer Review
+    - [ ] USAS Developer Review
 
 ### Explain N/A in above checklist:

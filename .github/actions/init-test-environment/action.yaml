@@ -1,0 +1,58 @@
+name: Initialize Test Environment
+
+inputs:
+  is-integration-test:
+    description: Triggers build steps needed to support integration tests
+    required: true
+  is-spark-test:
+    description: Triggers build steps needed to support tests that utilize Spark
+    required: true
+  working-directory:
+    description: Directory where the requirements can be found; used when multiple repos are checked out
+    default: ""
+
+runs:
+  using: composite
+  steps:
+    - name: Set combined ENV
+      shell: bash
+      run: |
+        echo "MINIO_DATA_DIR=$HOME/Development/data/brus-backend-common/docker/brus-backend-common-s3" >> $GITHUB_ENV
+
+    # The conditionals below this all check against a string because inputs for actions are actually
+    # strings, not booleans: https://github.com/actions/runner/issues/1483
+    - name: Create directories needed for Minio
+      if: ${{ inputs.is-integration-test == 'true' }}
+      shell: bash
+      run: mkdir -p "$MINIO_DATA_DIR"
+
+    - name: Create directories needed for Spark
+      if: ${{ inputs.is-spark-test == 'true' }}
+      shell: bash
+      run: mkdir -p "$HOME/.ivy2"
+
+    - name: Build docker containers for Minio
+      working-directory: ${{ inputs.working-directory }}
+      if: ${{ inputs.is-integration-test == 'true' }}
+      shell: bash
+      run: docker compose up -d minio
+
+    - name: Capture SPARK_HOME environment variable
+      if: ${{ inputs.is-spark-test == 'true' }}
+      shell: bash
+      run: echo "SPARK_HOME=$(python -c "import site;print(f'{site.getsitepackages()[0]}/pyspark')")" >> $GITHUB_ENV
+#
+#    - name: install basic jars
+#      if: ${{ inputs.is-spark-test == 'true' }}
+#      shell: bash
+#      run: >
+#        pyspark --packages
+#        "org.apache.hadoop:hadoop-aws:$HADOOP_VERSION,io.delta:delta-spark_$SCALA_VERSION:$DELTA_VERSION,org.apache.spark:spark-hive_$SCALA_VERSION:$SPARK_VERSION"
+
+    - name: Run initial test to trigger JAR download
+      if: ${{ inputs.is-spark-test == 'true' }}
+      working-directory: ${{ inputs.working-directory }}
+      shell: bash
+      run: >
+        pytest --numprocesses logical --no-cov --disable-warnings -r=fEs --verbosity=3
+        "brus_backend_common/tests/integration/test_setup_of_spark_dependencies.py::test_preload_spark_jars"

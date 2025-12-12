@@ -4,6 +4,9 @@
 *config.yml
 *secrets.yml
 *.pyc
+.env
+coverage.xml
+derby.log
 .venv/*
 venv/*
 .python-version
@@ -16,5 +19,6 @@ tests/test-reports/
 # Used in local development
 temp/
 tmp/
+.ivy2.5.2/*
 .pytest_cache
 .devcontainer/

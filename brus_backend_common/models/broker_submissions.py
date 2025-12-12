@@ -10,6 +10,6 @@
 #     TimestampType,
 # )
 #
-# from brus_backend_common.models.delta_model import DeltaModel
-
-BROKER_SUBMISSIONS_S3_BUCKET = "dti-delta-broker-submissions-nonprod"  # TODO: edit for prod/nonprod
+# from brus_backend_common.models.lakehouse_model import LakeHouseModel, LakeHouseDatabase
+# from brus_backend_common.config import CONFIG
+# CONFIG.BROKER_SUBMISSIONS_S3_BUCKET
