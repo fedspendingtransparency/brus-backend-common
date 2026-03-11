@@ -32,7 +32,7 @@ def main(table, incremental=False):
         model = LAKEHOUSE_MODELS[table](spark=spark)
         table_exists = model.exists()
         if not table_exists:
-            raise ValueError("Table doesn't exist. Use create_migrate_delta_table beforehand.")
+            raise ValueError("Table doesn't exist. Use create_migrate_lakehouse_table beforehand.")
 
         if incremental:
             model.increment()
@@ -41,7 +41,7 @@ def main(table, incremental=False):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Populate a delta table with its designated query.")
+    parser = argparse.ArgumentParser(description="Populate a lakehouse table with its designated query.")
     parser = setup_parser(parser)
     args = parser.parse_args()
 

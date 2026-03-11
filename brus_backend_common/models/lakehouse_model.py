@@ -263,10 +263,16 @@ class DeltaModel(LakeHouseModel):
             # """)
 
     def repopulate(self) -> None:
-        self.load_queries(self.REPOPULATE_QUERIES)
+        if self.REPOPULATE_QUERIES:
+            self.load_queries(self.REPOPULATE_QUERIES)
+        else:
+            raise NotImplementedError(f'No repopulate queries provided for {self.TABLE_REF}')
 
     def increment(self) -> None:
-        self.load_queries(self.INCREMENT_QUERIES)
+        if self.INCREMENT_QUERIES:
+            self.load_queries(self.INCREMENT_QUERIES)
+        else:
+            raise NotImplementedError(f'No increment queries provided for {self.TABLE_REF}')
 
     def load_queries(self, queries: list[str | Callable[[SparkSession, str, str], None]]) -> None:
         for index, query in enumerate(queries):
