@@ -17,8 +17,7 @@ def setup_parser(parser):
         help="The destination LakeHouse Table to write the data",
         choices=list(LAKEHOUSE_MODELS.keys()),
     )
-    behavior = parser.add_mutually_exclusive_group(required=False)
-    behavior.add_argument(
+    parser.add_argument(
         "--recreate",
         "-r",
         action="store_true",
@@ -26,7 +25,7 @@ def setup_parser(parser):
         help="If the table already exists, recreate it as a way of updating it to the latest. "
         "Note: this will obviously remove the table in its current state.",
     )
-    behavior.add_argument(
+    parser.add_argument(
         "--migrate",
         "-m",
         type=int,
@@ -41,22 +40,18 @@ def setup_parser(parser):
 def main(table, recreate=False, migrate=None):
     with SparkScriptSession() as spark:
         model = LAKEHOUSE_MODELS[table](spark=spark)
-        table_exists = model.exists()
-        if migrate and not table_exists:
-            raise ValueError("Migration provided but table doesn't exist.")
-        elif migrate and migrate > 0:
+
+        model.initialize(recreate=recreate)
+
+        if migrate and migrate > 0:
             raise ValueError("Migration provided but not a negative value.")
         elif migrate and (-1 * migrate > len(model.migration_history)):
             raise ValueError("Migration exceeds the amount of table migrations available.")
-
-        if table_exists and migrate:
+        elif migrate:
             model.migrate(migrate)
-        else:
-            model.initialize(recreate=recreate)
-
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Create or migrate delta tables")
+    parser = argparse.ArgumentParser(description="Create or migrate lakehouse tables")
     parser = setup_parser(parser)
     args = parser.parse_args()
 
