@@ -1,0 +1,28 @@
+name: Build Docker Image for Test
+
+on:
+  workflow_call:
+
+jobs:
+  Run:
+    name: Run
+    runs-on: ${{ vars.RUNNER_VERSION }}
+    steps:
+      - name: Checkout Backend
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker Image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./brus-backend-common
+          tags: brus-backend-common:latest
+          outputs: type=docker,dest=/tmp/brus-backend-common.tar
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: brus-backend-common
+          path: /tmp/brus-backend-common.tar

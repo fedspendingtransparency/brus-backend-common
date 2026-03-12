@@ -37,26 +37,26 @@ jobs:
     name: Run
     runs-on: ${{ vars.RUNNER_VERSION }}
     container:
-      image: apache/spark:3.5.6-scala2.12-java17-python3-r-ubuntu
+      image: brus-backend-common
       # Optional: set user to root if permissions are needed
       options: --user root
     steps:
-      - name: Checkout Source Repository
-        uses: actions/checkout@v4
-        with:
-          path: brus-backend-common
-
-      - name: Init Python Environment
-        uses: ./brus-backend-common/.github/actions/init-python-environment
-        with:
-          working-directory: ./brus-backend-common
-
-      - name: Init Test Environment
-        uses: ./brus-backend-common/.github/actions/init-test-environment
-        with:
-          is-integration-test: true
-          is-spark-test: false
-          working-directory: ./brus-backend-common
+#      - name: Checkout Source Repository
+#        uses: actions/checkout@v4
+#        with:
+#          path: brus-backend-common
+#
+#      - name: Init Python Environment
+#        uses: ./brus-backend-common/.github/actions/init-python-environment
+#        with:
+#          working-directory: ./brus-backend-common
+#
+#      - name: Init Test Environment
+#        uses: ./brus-backend-common/.github/actions/init-test-environment
+#        with:
+#          is-integration-test: true
+#          is-spark-test: false
+#          working-directory: ./brus-backend-common
 
       - name: Run Test Cases
         uses: ./brus-backend-common/.github/actions/run-pytest

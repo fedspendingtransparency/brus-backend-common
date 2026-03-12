@@ -37,6 +37,18 @@ runs:
       shell: bash
       run: docker compose up -d minio
 
+    - name: Download docker image
+      if: ${{ inputs.is-integration-test == 'true' }}
+      uses: actions/download-artifact@v4
+      with:
+        name: brus-backend-common
+        path: /tmp
+
+    - name: Load docker image
+      shell: bash
+      if: ${{ inputs.is-integration-test == 'true' }}
+      run: docker load --input /tmp/brus-backend-common.tar
+
     - name: Capture SPARK_HOME environment variable
       if: ${{ inputs.is-spark-test == 'true' }}
       shell: bash

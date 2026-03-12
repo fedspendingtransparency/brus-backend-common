@@ -14,26 +14,26 @@ jobs:
     name: Run
     runs-on: ${{ vars.RUNNER_VERSION }}
     container:
-      image: apache/spark:3.5.6-scala2.12-java17-python3-r-ubuntu
+      image: brus-backend-common
       # Optional: set user to root if permissions are needed
       options: --user root
     steps:
-      - name: Checkout Source Repository
-        uses: actions/checkout@v4
-
-      - name: Set Combined ENV
-        run: |
-          echo "MINIO_DATA_DIR=$HOME/Development/data/brus-backend-common/docker/brus-backend-common-s3" >> $GITHUB_ENV
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: latest
+#      - name: Checkout Source Repository
+#        uses: actions/checkout@v4
+#
+#      - name: Set Combined ENV
+#        run: |
+#          echo "MINIO_DATA_DIR=$HOME/Development/data/brus-backend-common/docker/brus-backend-common-s3" >> $GITHUB_ENV
+#
+#      - name: Setup Node
+#        uses: actions/setup-node@v4
+#        with:
+#          node-version: latest
 
       # While we could adjust this to only install necessary packages for linting, the benefit of doing
       # all packages is that it will cache the entirety of the required packages for the downstream tests.
-      - name: Init Python Environment
-        uses: ./.github/actions/init-python-environment
+#      - name: Init Python Environment
+#        uses: ./.github/actions/init-python-environment
 
       # Ideal but mypy (and most python static type checkers) generally struggle with inheritance leading to include
       # more ignoring exceptions than worth its value. At least not a required check for now.
