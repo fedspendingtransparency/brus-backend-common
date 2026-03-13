@@ -1,5 +1,5 @@
 # Note: docker-compose automagically pulls the current directory's .env as environment variables to use here
-# TODO: When upgrading to Spark 4.0, replace the .ivy with .ivy2.5.2
+# TODO: When upgrading to Spark 4.0, replace the .ivy2 with .ivy2.5.2
 
 services:
   # Simple container for development and testing
@@ -33,8 +33,8 @@ services:
         target: /project
         read_only: false
       - type: bind
-        source: ${pwd}/.ivy
-        target: /root/.ivy
+        source: ${pwd}/.ivy2
+        target: /root/.ivy2
         read_only: false
 
   minio:
@@ -231,8 +231,8 @@ services:
       # Mount the JAR dependencies local repo on host into container to take advantage of caching/reuse
       # i.e., to download the dependencies only once and reuse on subsequent docker compose run calls
       - type: bind
-        source: ${pwd}/.ivy
-        target: /root/.ivy
+        source: ${pwd}/.ivy2
+        target: /root/.ivy2
         read_only: false
 
   brus-backend-common-ci:
@@ -260,8 +260,8 @@ services:
         target: /project
         read_only: false
       - type: bind
-        source: ${pwd}/.ivy
-        target: /root/.ivy
+        source: ${pwd}/.ivy2
+        target: /root/.ivy2
         read_only: false
     environment:
       AWS_ACCESS_KEY: ${MINIO_ROOT_USER:-minio_user}
