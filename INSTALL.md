@@ -92,7 +92,7 @@ Since changes to mounted files on containers cannot affect the source files on t
 * install `uv` locally (depending on your host machine)
 * remove the containers (see above)
 * run `uv sync` in this directory to update the uv.lock file
-* and `rm -r .venv/*` to clear out the extra directories generated from the sync.
+* and `rm -r .venv` to clear out the extra directories generated from the sync.
 * reinstall the containers
 
 ### Debugging

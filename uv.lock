@@ -230,7 +230,7 @@ requires-dist = [
     { name = "boto3", specifier = "==1.34.58" },
     { name = "boto3-stubs", extras = ["s3"], marker = "extra == 'dev'", specifier = "==1.34.58" },
     { name = "botocore", git = "https://github.com/fedspendingtransparency/botocore-python39-md5.git?rev=md5-fix-1-34-58" },
-    { name = "delta-spark", marker = "extra == 'spark'", specifier = "==3.3.2" },
+    { name = "delta-spark", marker = "extra == 'spark'", specifier = "==2.4.0" },
     { name = "deltalake", specifier = "==1.1.4" },
     { name = "docker", marker = "extra == 'dev'", specifier = "==7.0.0" },
     { name = "flake8", marker = "extra == 'dev'", specifier = "==7.0.0" },
@@ -278,7 +278,7 @@ requires-dist = [
     { name = "pyarrow-stubs", marker = "extra == 'dev'", specifier = "==10.0.1.9" },
     { name = "pydantic", extras = ["dotenv"], specifier = "==1.9.*" },
     { name = "pyhive", extras = ["hive-pure-sasl"], specifier = "==0.7.0" },
-    { name = "pyspark", marker = "extra == 'spark'", specifier = "==3.5.6" },
+    { name = "pyspark", marker = "extra == 'spark'", specifier = "==3.4.1" },
     { name = "pytest", marker = "extra == 'dev'", specifier = "==8.0.2" },
     { name = "pytest-cov", marker = "extra == 'dev'", specifier = "==4.1.0" },
     { name = "pytest-pretty", marker = "extra == 'dev'", specifier = "==1.3.0" },
@@ -569,15 +569,15 @@ wheels = [
 
 [[package]]
 name = "delta-spark"
-version = "3.3.2"
+version = "2.4.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "importlib-metadata" },
     { name = "pyspark" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/8e/c9/a4d34fee1dafcad33d4e810ff2ce14a9f6e8e7af9797a9de79ebc3334987/delta_spark-3.3.2.tar.gz", hash = "sha256:f3e89ec4a15a541988f9d6496016a67cf619475e8eeca71da5e073f6ba0da845", size = 23066, upload-time = "2025-05-29T22:25:49.412Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/7c/2b/9f7b4759059d51bffa1e2e36c37e5ba21f12475560ca751c62e4985243a5/delta-spark-2.4.0.tar.gz", hash = "sha256:ef776e325e80d98e3920cab982c747b094acc46599d62dfcdc9035fb112ba6a9", size = 17919, upload-time = "2023-05-25T21:37:57.751Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/4b/b7/f484bca84628f9f7a9a16ecfd8b010edbda9fa3f5e3918e967ddd69bf6af/delta_spark-3.3.2-py3-none-any.whl", hash = "sha256:0a34c720b4368f1655e2348e380b5b3baaca0f2b3d519a3198208f00f65e4062", size = 22024, upload-time = "2025-05-29T22:25:48.008Z" },
+    { url = "https://files.pythonhosted.org/packages/fa/57/1ab4169a02ec876c71a0db765c2f149f435497ca2472c08188a418fbb835/delta_spark-2.4.0-py3-none-any.whl", hash = "sha256:7204142a97ef16367403b020d810d0c37f4ae8275b4997de4056423cf69b3a4b", size = 20999, upload-time = "2023-05-25T21:37:56.037Z" },
 ]
 
 [[package]]
@@ -1638,12 +1638,12 @@ hive-pure-sasl = [
 
 [[package]]
 name = "pyspark"
-version = "3.5.6"
+version = "3.4.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "py4j" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/2e/62/36e50d38e5fe158e97cddec983b44f9417b1e205b02320e3c463b5f802fa/pyspark-3.5.6.tar.gz", hash = "sha256:f8b1c4360e41ab398c64904fae08740503bcb6bd389457d659fa6d9f2952cc48", size = 317359167, upload-time = "2025-05-27T08:24:20.82Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/0c/66/3cf748ba7cd7c6a4a46ffcc8d062f11ddc24b786c5b82936c857dc13b7bd/pyspark-3.4.1.tar.gz", hash = "sha256:72cd66ab8cf61a75854e5a753f75bea35ee075c3a96f9de4e2a66d02ec7fc652", size = 310780928, upload-time = "2023-06-23T08:30:15.636Z" }
 
 [[package]]
 name = "pytest"

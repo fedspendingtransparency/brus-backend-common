@@ -87,8 +87,8 @@ dev = [
     "types-xmltodict==1.0.1.20260113",
 ]
 spark = [
-    "delta-spark==3.3.2",
-    "pyspark==3.5.6",
+    "delta-spark==2.4.0",
+    "pyspark==3.4.1",
 ]
 awscli = [
     "awscli==1.32.58",

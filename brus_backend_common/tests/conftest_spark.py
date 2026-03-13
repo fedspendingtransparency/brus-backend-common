@@ -4,6 +4,7 @@ import pytest
 import uuid
 from typing import TYPE_CHECKING, Generator, List
 
+import pyspark
 from botocore.errorfactory import ClientError
 
 from brus_backend_common.helpers.spark import (
@@ -148,25 +149,7 @@ def spark(tmp_path_factory: pytest.TempPathFactory) -> Generator["SparkSession",
         **extra_conf,  # type: ignore
     )  # type: SparkSession
 
-    # Cut down spark logs to warning, overwrites each time
-    spark_home = os.environ.get("SPARK_HOME")
-    if spark_home:
-        noe4j_conf_dir = os.path.join(spark_home, "conf")
-        neo4j_properties_path = os.path.join(noe4j_conf_dir, "log4j2.properties")
-        if not os.path.exists(noe4j_conf_dir):
-            os.mkdir(noe4j_conf_dir)
-        neo4j_properties_config = {
-            "appender.console.type": "Console",
-            "appender.console.name": "CONSOLE",
-            "appender.console.layout.type": "PatternLayout",
-            "appender.console.layout.pattern": "[%d{yyyy-MM-dd HH:mm:ss.SSS}][%p] - %m%n",
-            "rootLogger.level": "WARN",
-            "rootLogger.appenderRef.0.ref": "CONSOLE",
-            "rootLogger.appenderRef.0.level": "WARN",
-        }
-        with open(neo4j_properties_path, "w") as neo4j_properties:
-            for k, v in neo4j_properties_config.items():
-                neo4j_properties.write(f"{k} = {v}\n")
+    spark.sparkContext.setLogLevel('WARN')
 
     yield spark
 

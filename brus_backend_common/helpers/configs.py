@@ -10,7 +10,8 @@ SPARK_SESSION_JARS = [
     # COMPATIBLE with it (so that should not  be set as a dependent package by us)
     f"org.apache.hadoop:hadoop-aws:{CONFIG.HADOOP_VERSION}",
     # "org.postgresql:postgresql:42.2.23",
-    f"io.delta:delta-spark_{CONFIG.SCALA_VERSION}:{CONFIG.DELTA_VERSION}",
+    # f"io.delta:delta-spark_{CONFIG.SCALA_VERSION}:{CONFIG.DELTA_VERSION}",  # TODO: Use for Delta > 2.4.0
+    f"io.delta:delta-core_{CONFIG.SCALA_VERSION}:{CONFIG.DELTA_VERSION}",  # Use for Delta <= 2.4.0
     f"org.apache.spark:spark-hive_{CONFIG.SCALA_VERSION}:{CONFIG.SPARK_VERSION}",
 ]
 OPTIONAL_SPARK_HIVE_JAR = f"org.apache.spark:spark-hive_{CONFIG.SCALA_VERSION}:{CONFIG.SPARK_VERSION}"
