@@ -22,6 +22,8 @@ inputs:
   working-directory:
     description: Directory where the requirements can be found; used when multiple repos are checked out
     default: "."
+  container:
+    description: Name of existing docker container to run in.
 
 runs:
   using: composite
@@ -42,7 +44,8 @@ runs:
       shell: bash
       run: >
         echo pytest-command=$(python -c 'import os;print(
-        "pytest
+        "{container}
+        pytest
         -r=fEs
         -x
         --cov=brus_backend_common
@@ -57,6 +60,7 @@ runs:
         {marker}
         {ignore_glob}
         ".format(
+        container=f'docker run {os.environ["CONTAINER"]}:latest' if os.environ.get("CONTAINER") else "",
         cov_report_name=os.environ["COV_REPORT_NAME"],
         ignore_glob="--ignore-glob=\"{}\"".format(os.environ["IGNORE_GLOB"]) if os.environ.get("IGNORE_GLOB") else "",
         include_glob=os.environ["INCLUDE_GLOB"],

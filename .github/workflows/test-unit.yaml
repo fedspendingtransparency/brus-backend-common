@@ -31,10 +31,6 @@ jobs:
   Run:
     name: Run
     runs-on: ${{ vars.RUNNER_VERSION }}
-    container:
-      image: brus-backend-common
-      # Optional: set user to root if permissions are needed
-      options: --user root
     steps:
 #      - name: Checkout Source Repository
 #        uses: actions/checkout@v4
@@ -45,13 +41,13 @@ jobs:
 #        uses: ./brus-backend-common/.github/actions/init-python-environment
 #        with:
 #          working-directory: ./brus-backend-common
-#
-#      - name: Init Test Environment
-#        uses: ./brus-backend-common/.github/actions/init-test-environment
-#        with:
-#          is-integration-test: false
-#          is-spark-test: false
-#          working-directory: ./brus-backend-common
+
+      - name: Init Test Environment
+        uses: ./brus-backend-common/.github/actions/init-test-environment
+        with:
+          is-integration-test: false
+          is-spark-test: false
+          working-directory: ./brus-backend-common
 
       - name: Run Test Cases
         id: run-test-cases
@@ -62,3 +58,4 @@ jobs:
           include-glob: 'test_*.py *_test.py'
           marker: '(not signal_handling)'
           working-directory: ./brus-backend-common
+          container: 'brus-backend-common'
