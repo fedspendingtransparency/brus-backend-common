@@ -11,10 +11,6 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Reinstall lsb-release
-      shell: bash
-      run: apt-get update && apt-get install -y lsb-release && apt-get clean all
-
     - name: Install Python
       uses: actions/setup-python@v5
       with:
