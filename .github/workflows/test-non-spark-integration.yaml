@@ -1,29 +1,5 @@
 name: Non-Spark Integration Tests
 
-env:
-  IS_LOCAL: true
-
-  AWS_ACCESS_KEY_ID: minio_user
-  AWS_SECRET_ACCESS_KEY: minio_secret
-  AWS_REGION: us-gov-west-1
-
-  DATA_SOURCES_BUCKET: data-sources-test
-  PUBLIC_FILES_BUCKET: public-files-test
-  BROKER_EXTERNAL_S3_BUCKET: broker-external-test
-  BROKER_SUBMISSIONS_S3_BUCKET: broker-submissions-test
-  REFERENCE_S3_BUCKET: reference-test
-  USAS_S3_BUCKET: usas-test
-  METRICS_BUCKET: metrics-test
-
-  JAVA_VERSION: 17
-  SPARK_VERSION: 3.5.6
-  HADOOP_VERSION: 3.4.0
-  SCALA_VERSION: 2.12
-  DELTA_VERSION: 3.3.2
-  MINIO_HOST: localhost
-  MINIO_ROOT_USER: minio_user
-  MINIO_ROOT_PASSWORD: minio_secret
-
 on:
   workflow_call:
 
