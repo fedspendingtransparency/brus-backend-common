@@ -47,6 +47,7 @@ jobs:
     name: Run Spark Integration Other Tests
     needs:
       - Run-Code-Style-Checks
+      - Build-Docker-Image
     if: ${{ !failure() && !cancelled() }}
     uses: ./.github/workflows/test-spark-integration-other.yaml
 
@@ -54,6 +55,7 @@ jobs:
     name: Run Non-Spark Integration Tests
     needs:
       - Run-Code-Style-Checks
+      - Build-Docker-Image
     if: ${{ !failure() && !cancelled() }}
     uses: ./.github/workflows/test-non-spark-integration.yaml
 
@@ -61,17 +63,22 @@ jobs:
     name: Run Non-Spark Integration Tests With Signal Handling
     needs:
       - Run-Code-Style-Checks
+      - Build-Docker-Image
     if: ${{ !failure() && !cancelled() }}
     uses: ./.github/workflows/test-non-spark-integration-signal-handling.yaml
 
   Run-Unit-Tests:
     name: Run Unit Tests
-    needs: Run-Code-Style-Checks
+    needs:
+      - Run-Code-Style-Checks
+      - Build-Docker-Image
     if: ${{ !failure() && !cancelled() }}
     uses: ./.github/workflows/test-unit.yaml
 
   Run-Unit-Tests-With-Signal-Handling:
     name: Run Unit Tests With Signal Handling
-    needs: Run-Code-Style-Checks
+    needs:
+      - Run-Code-Style-Checks
+      - Build-Docker-Image
     if: ${{ !failure() && !cancelled() }}
     uses: ./.github/workflows/test-unit-signal-handling.yaml
