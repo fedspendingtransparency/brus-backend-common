@@ -1,10 +1,8 @@
 import logging
-import os
 import pytest
 import uuid
 from typing import TYPE_CHECKING, Generator, List
 
-import pyspark
 from botocore.errorfactory import ClientError
 
 from brus_backend_common.helpers.spark import (
