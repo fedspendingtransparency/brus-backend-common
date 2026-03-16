@@ -50,6 +50,7 @@ def main(table, recreate=False, migrate=None):
         elif migrate:
             model.migrate(migrate)
 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Create or migrate lakehouse tables")
     parser = setup_parser(parser)

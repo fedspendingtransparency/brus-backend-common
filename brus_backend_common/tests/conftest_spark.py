@@ -149,7 +149,7 @@ def spark(tmp_path_factory: pytest.TempPathFactory) -> Generator["SparkSession",
         **extra_conf,  # type: ignore
     )  # type: SparkSession
 
-    spark.sparkContext.setLogLevel('WARN')
+    spark.sparkContext.setLogLevel("WARN")
 
     yield spark
 
