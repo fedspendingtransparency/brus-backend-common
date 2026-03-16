@@ -20,21 +20,28 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-#      - name: Build Docker Image
-#        uses: docker/build-push-action@v6
-#        with:
-#          context: ./brus-backend-common
-#          tags: brus-backend-common:latest
-#          outputs: type=docker,dest=/tmp/brus-backend-common.tar
-
       - name: Build Docker Image
-        uses: docker/bake-action@v7
+        uses: docker/build-push-action@v6
         with:
-          source: ./brus-backend-common
-          push: true
-          set: |
-            *.tags=brus-backend-common:latest
-            *.output=type=docker,dest=/tmp/brus-backend-common.tar
+          context: ./brus-backend-common
+          tags: brus-backend-common:latest
+          outputs: type=docker,dest=/tmp/brus-backend-common.tar
+          build-args: |
+            PYTHON_VERSION=3.12
+            JAVA_VERSION=1.8.0
+            HADOOP_VERSION=3.3.4
+            SPARK_VERSION=3.4.1
+            SCALA_VERSION=2.12
+            DELTA_VERSION=2.4.0
+
+#      - name: Build Docker Image
+#        uses: docker/bake-action@v7
+#        with:
+#          source: ./brus-backend-common
+#          push: true
+#          set: |
+#            *.tags=brus-backend-common:latest
+#            *.output=type=docker,dest=/tmp/brus-backend-common.tar
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
