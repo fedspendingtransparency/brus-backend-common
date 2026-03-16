@@ -37,6 +37,7 @@ runs:
         echo "KEYWORD=${{ inputs.keyword }}" >> $GITHUB_ENV
         echo "MARKER=${{ inputs.marker }}" >> $GITHUB_ENV
         echo "NUM_PROCESSES=${{ inputs.num-processes }}" >> $GITHUB_ENV
+        echo "CONTAINER=${{ inputs.container }}" >> $GITHUB_ENV
 
     - name: Build pytest command
       working-directory: ${{ inputs.working-directory }}
