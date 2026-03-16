@@ -19,6 +19,7 @@ tests/test-reports/
 # Used in local development
 temp/
 tmp/
+.ivy2/*
 .ivy2.5.2/*
 .pytest_cache
 .devcontainer/
