@@ -12,10 +12,10 @@ jobs:
     name: Run
     runs-on: ${{ vars.RUNNER_VERSION }}
     steps:
-#      - name: Checkout Source Repository
-#        uses: actions/checkout@v4
-#        with:
-#          path: brus-backend-common
+      - name: Checkout Source Repository
+        uses: actions/checkout@v4
+        with:
+          path: brus-backend-common
 #
 #      - name: Init Python Environment
 #        uses: ./brus-backend-common/.github/actions/init-python-environment
