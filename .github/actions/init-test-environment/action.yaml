@@ -16,8 +16,10 @@ runs:
   steps:
     - name: Set combined ENV
       shell: bash
+      # MINIO_HOST check will be localhost cause we're still outside the docker containers
       run: |
         echo "MINIO_DATA_DIR=$HOME/Development/data/brus-backend-common/docker/brus-backend-common-s3" >> $GITHUB_ENV
+        echo "MINIO_HOST=localhost" >> $GITHUB_ENV
 
     # The conditionals below this all check against a string because inputs for actions are actually
     # strings, not booleans: https://github.com/actions/runner/issues/1483
@@ -36,7 +38,7 @@ runs:
       if: ${{ inputs.is-integration-test == 'true' }}
       shell: bash
       run: |
-        ttl=30; echo "Try minio conn from container for $ttl seconds"; until [ $ttl -le 0 ] || curl localhost:10002; do echo $ttl; ((ttl--)); sleep 1; done; [ $ttl -gt 0 ]
+        ttl=30; echo "Try minio conn from container for $ttl seconds"; until [ $ttl -le 0 ] || curl $MINIO_HOST:10002; do echo $ttl; ((ttl--)); sleep 1; done; [ $ttl -gt 0 ]
 
 #    - name: Create directories needed for Spark
 #      if: ${{ inputs.is-spark-test == 'true' }}
