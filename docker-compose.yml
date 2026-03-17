@@ -237,7 +237,7 @@ services:
 
   brus-backend-common-ci:
     profiles:
-      - brus-backend-common
+      - test
       - spark
       - ci  # must pass --profile ci to docker compose for this to come up, or use docker compose run
     image: brus-backend-common  # when an image by this name is not found in the local repo, and it is forced to build, it will use this as the tag
