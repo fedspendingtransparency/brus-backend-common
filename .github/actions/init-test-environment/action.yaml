@@ -28,11 +28,14 @@ runs:
       shell: bash
       run: mkdir -p "$MINIO_DATA_DIR"
 
+    - name: Create a custom Docker network
+      run: docker network create test-network
+
     - name: Build docker containers for Minio
       working-directory: ${{ inputs.working-directory }}
       if: ${{ inputs.is-integration-test == 'true' }}
       shell: bash
-      run: docker compose up -d minio
+      run: docker compose up -d minio --network test-network
 
     - name: Wait on minio container to be available
       if: ${{ inputs.is-integration-test == 'true' }}
