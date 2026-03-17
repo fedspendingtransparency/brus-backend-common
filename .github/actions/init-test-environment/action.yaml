@@ -29,7 +29,6 @@ runs:
       run: mkdir -p "$MINIO_DATA_DIR"
 
     - name: Create a custom Docker network
-      shell: bash
       run: docker network create test-network
 
     - name: Build docker containers for Minio
