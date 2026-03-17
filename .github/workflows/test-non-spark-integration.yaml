@@ -36,4 +36,5 @@ jobs:
           cov-report-name: 'non-spark-integration-tests'
           include-glob: '**/tests/integration/*'
           marker: '(not signal_handling and not spark)'
+          num-processes: 0
           working-directory: ./brus-backend-common
