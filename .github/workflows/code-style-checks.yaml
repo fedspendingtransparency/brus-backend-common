@@ -1,8 +1,5 @@
 name: Code Style Checks
 
-env:
-  MINIO_HOST: localhost
-
 on:
   workflow_call:
 
