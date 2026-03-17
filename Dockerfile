@@ -81,7 +81,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --extra awscli --extra dev --extra spark --locked --no-install-project
 
 # Download the spark jars and stored them in the image (/root/.ivy2), primarily to save time for github actions
-RUN if [ "${DOWNLOAD_JARS}" == "true" ]; then \
+RUN if [ "${DOWNLOAD_JARS}" = "true" ]; then \
     pytest --numprocesses logical --no-cov --disable-warnings -r=fEs --verbosity=3 \
     "brus_backend_common/tests/integration/test_setup_of_spark_dependencies.py::test_preload_spark_jars" ; \
     fi
