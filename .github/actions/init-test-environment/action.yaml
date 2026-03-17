@@ -57,6 +57,12 @@ runs:
       if: ${{ inputs.is-spark-test == 'true' }}
       run: docker load --input /tmp/brus-backend-common.tar
 
+    - name: Build docker containers for Minio
+      working-directory: ${{ inputs.working-directory }}
+      if: ${{ inputs.is-spark-test == 'true' }}
+      shell: bash
+      run: docker compose up -d brus-backend-common
+
     - name: Capture SPARK_HOME environment variable
       if: ${{ inputs.is-spark-test == 'true' }}
       shell: bash
