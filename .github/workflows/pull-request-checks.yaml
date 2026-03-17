@@ -55,7 +55,6 @@ jobs:
     name: Run Non-Spark Integration Tests
     needs:
       - Run-Code-Style-Checks
-      - Build-Docker-Image
     if: ${{ !failure() && !cancelled() }}
     uses: ./.github/workflows/test-non-spark-integration.yaml
 
@@ -63,7 +62,6 @@ jobs:
     name: Run Non-Spark Integration Tests With Signal Handling
     needs:
       - Run-Code-Style-Checks
-      - Build-Docker-Image
     if: ${{ !failure() && !cancelled() }}
     uses: ./.github/workflows/test-non-spark-integration-signal-handling.yaml
 
@@ -71,7 +69,6 @@ jobs:
     name: Run Unit Tests
     needs:
       - Run-Code-Style-Checks
-      - Build-Docker-Image
     if: ${{ !failure() && !cancelled() }}
     uses: ./.github/workflows/test-unit.yaml
 
@@ -79,6 +76,5 @@ jobs:
     name: Run Unit Tests With Signal Handling
     needs:
       - Run-Code-Style-Checks
-      - Build-Docker-Image
     if: ${{ !failure() && !cancelled() }}
     uses: ./.github/workflows/test-unit-signal-handling.yaml
