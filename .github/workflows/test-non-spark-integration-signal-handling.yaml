@@ -37,4 +37,3 @@ jobs:
           marker: '(signal_handling and not spark)'
           num-processes: 0
           working-directory: ./brus-backend-common
-          container: 'brus-backend-common'

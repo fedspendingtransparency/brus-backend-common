@@ -34,4 +34,3 @@ jobs:
           include-glob: 'test_*.py *_test.py'
           marker: '(not signal_handling)'
           working-directory: ./brus-backend-common
-          container: 'brus-backend-common'

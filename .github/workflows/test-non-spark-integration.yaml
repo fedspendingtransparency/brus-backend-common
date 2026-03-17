@@ -37,4 +37,3 @@ jobs:
           include-glob: '**/tests/integration/*'
           marker: '(not signal_handling and not spark)'
           working-directory: ./brus-backend-common
-          container: 'brus-backend-common'
