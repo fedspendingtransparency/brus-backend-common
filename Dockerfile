@@ -5,6 +5,7 @@ ARG JAVA_VERSION
 ARG HADOOP_VERSION
 ARG SPARK_VERSION
 ARG PROJECT_LOG_DIR=/logs
+ARG DOWNLOAD_JARS=false
 
 COPY --from=ghcr.io/astral-sh/uv:0.7.19 /uv /uvx /bin/
 
@@ -78,5 +79,11 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=uv.lock,target=uv.lock \
     --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
     uv sync --extra awscli --extra dev --extra spark --locked --no-install-project
+
+# Download the spark jars and stored them in the image (/root/.ivy2), primarily to save time for github actions
+RUN if [ "${DOWNLOAD_JARS}" == 'true' ]; then \
+    pytest --numprocesses logical --no-cov --disable-warnings -r=fEs --verbosity=3 \
+    "brus_backend_common/tests/integration/test_setup_of_spark_dependencies.py::test_preload_spark_jars" ; \
+    fi
 
 CMD /bin/sh

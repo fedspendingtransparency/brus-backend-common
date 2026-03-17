@@ -26,6 +26,7 @@ jobs:
           context: ./brus-backend-common
           tags: brus-backend-common:latest
           outputs: type=docker,dest=/tmp/brus-backend-common.tar
+          # TODO: Dynamically pull these from .env.test
           build-args: |
             PYTHON_VERSION=3.12
             JAVA_VERSION=1.8.0
@@ -33,6 +34,7 @@ jobs:
             SPARK_VERSION=3.4.1
             SCALA_VERSION=2.12
             DELTA_VERSION=2.4.0
+            DOWNLOAD_JARS=true
 
 #      - name: Build Docker Image
 #        uses: docker/bake-action@v7
