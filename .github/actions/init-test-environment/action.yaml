@@ -32,6 +32,12 @@ runs:
       shell: bash
       run: docker compose up -d minio
 
+    - name: Wait on minio container to be available
+      if: ${{ inputs.is-integration-test == 'true' }}
+      shell: bash
+      run: |
+        ttl=30; echo "Try minio conn from container for $ttl seconds"; until [ $ttl -le 0 ] || curl localhost:10002; do echo $ttl; ((ttl--)); sleep 1; done; [ $ttl -gt 0 ]
+
 #    - name: Create directories needed for Spark
 #      if: ${{ inputs.is-spark-test == 'true' }}
 #      shell: bash
