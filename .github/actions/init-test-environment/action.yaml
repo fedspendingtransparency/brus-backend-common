@@ -69,6 +69,14 @@ runs:
 #        pyspark --packages
 #        "org.apache.hadoop:hadoop-aws:$HADOOP_VERSION,io.delta:delta-spark_$SCALA_VERSION:$DELTA_VERSION,org.apache.spark:spark-hive_$SCALA_VERSION:$SPARK_VERSION"
 
+    # Have to do this again as its a separate job
+    - name: Build test .env off .env.template
+      shell: bash
+      run: cp ./brus-backend-common/.github/.env.test .env
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
     - name: Use cached image in test job
       uses: docker/bake-action@v7
       with:
