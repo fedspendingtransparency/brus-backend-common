@@ -89,7 +89,7 @@ runs:
       if: ${{ inputs.is-spark-test == 'true' }}
       uses: actions/download-artifact@v4
       with:
-        name: brus-backend-common
+        name: brus-backend-common.tar
         path: /tmp
 
     - name: Load docker image
