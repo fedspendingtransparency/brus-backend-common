@@ -44,7 +44,7 @@ jobs:
         uses: docker/bake-action@v7
         with:
           source: .
-          files: ./docker-compose.yml
+          files: ./brus-backend-common/docker-compose.yml
           set: |
             brus-backend-common.cache-to=type=gha,scope=brus-backend-common-app,mode=max
           # don't need to build minio/s3 as it has a prepackaged image
