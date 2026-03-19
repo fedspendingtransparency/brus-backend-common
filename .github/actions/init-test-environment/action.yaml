@@ -86,7 +86,7 @@ runs:
 #        load: true
 
     - name: Download docker image
-      if: ${{ inputs.is-spark-test == 'true' }}
+      if: ${{ inputs.is-integration-test == 'true' }}
       uses: actions/download-artifact@v4
       with:
         name: brus-backend-common
@@ -94,11 +94,11 @@ runs:
 
     - name: Load docker image
       shell: bash
-      if: ${{ inputs.is-spark-test == 'true' }}
+      if: ${{ inputs.is-integration-test == 'true' }}
       run: docker image import /tmp/brus-backend-common.tar brus-backend-common:latest
 
     - name: Run services with Docker Compose
-      if: ${{ inputs.is-spark-test == 'true' }}
+      if: ${{ inputs.is-integration-test == 'true' }}
       uses: hoverkraft-tech/compose-action@v2.5.0
       with:
         compose-file: ./brus-backend-common/docker-compose.yml
