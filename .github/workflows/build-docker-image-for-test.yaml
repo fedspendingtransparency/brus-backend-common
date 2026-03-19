@@ -37,7 +37,7 @@ jobs:
 #            DOWNLOAD_JARS=true
 
       - name: Build images with Bake
-        uses: docker/bake-action@v4
+        uses: docker/bake-action@v7
         with:
           set: |
             *.cache-from=type=gha,scope=brus-backend-common-app

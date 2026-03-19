@@ -70,7 +70,7 @@ runs:
 #        "org.apache.hadoop:hadoop-aws:$HADOOP_VERSION,io.delta:delta-spark_$SCALA_VERSION:$DELTA_VERSION,org.apache.spark:spark-hive_$SCALA_VERSION:$SPARK_VERSION"
 
     - name: Use cached image in test job
-        uses: docker/bake-action@v4
+        uses: docker/bake-action@v7
         with:
           targets: |
             brus-backend-common
