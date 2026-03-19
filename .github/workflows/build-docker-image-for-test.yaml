@@ -39,6 +39,7 @@ jobs:
       - name: Build images with Bake
         uses: docker/bake-action@v7
         with:
+          file: docker-compose.yml
           set: |
             *.cache-from=type=gha,scope=brus-backend-common-app
             *.cache-to=type=gha,scope=brus-backend-common-app,mode=max
