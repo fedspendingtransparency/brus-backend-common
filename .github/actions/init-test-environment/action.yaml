@@ -72,13 +72,18 @@ runs:
     - name: Use cached image in test job
         uses: docker/bake-action@v7
         with:
-          targets: |
-            brus-backend-common
-            s3
+          targets: brus-backend-common
           set: |
             *.cache-from=type=gha,scope=brus-backend-common-app
-          # Load the image into the local Docker daemon for use in subsequent steps
           load: true
+
+    - name: Run services with Docker Compose
+      uses: hoverkraft-tech/compose-action@v2.5.0
+      with:
+        compose-file: './docker-compose.yml'
+        # Use --no-build as the images are already built by the bake action
+        up-flags: 'brus-backend-common minio --no-build'
+
 
     - name: Wait on minio container to be available
       if: ${{ inputs.is-integration-test == 'true' }}
