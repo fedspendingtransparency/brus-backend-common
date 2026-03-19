@@ -95,7 +95,7 @@ runs:
     - name: Load docker image
       shell: bash
       if: ${{ inputs.is-spark-test == 'true' }}
-      run: docker load --input /tmp/brus-backend-common.tar
+      run: docker image import /tmp/brus-backend-common.tar brus-backend-common:latest
 
     - name: Run services with Docker Compose
       uses: hoverkraft-tech/compose-action@v2.5.0
