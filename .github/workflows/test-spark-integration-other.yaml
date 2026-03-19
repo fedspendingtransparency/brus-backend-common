@@ -37,3 +37,4 @@ jobs:
           marker: 'spark'
           working-directory: ./brus-backend-common
           container: 'brus-backend-common'
+          num_processes: 0
