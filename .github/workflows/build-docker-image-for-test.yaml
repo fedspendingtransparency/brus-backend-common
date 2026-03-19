@@ -40,7 +40,7 @@ jobs:
         uses: docker/bake-action@v7
         with:
           set: |
-            brus-backend-common.cache-to: type=gha,scope=brus-backend-common-app,mode=max
+            brus-backend-common.cache-to=type=gha,scope=brus-backend-common-app,mode=max
           # don't need to build minio/s3 as it has a prepackaged image
           targets: brus-backend-common
           # Set to false to avoid pushing to registry
