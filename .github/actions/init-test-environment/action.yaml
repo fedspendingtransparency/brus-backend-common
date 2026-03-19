@@ -21,52 +21,46 @@ runs:
         echo "MINIO_DATA_DIR=$HOME/Development/data/brus-backend-common/docker/brus-backend-common-s3" >> $GITHUB_ENV
         echo "MINIO_HOST=localhost" >> $GITHUB_ENV
 
-    # The conditionals below this all check against a string because inputs for actions are actually
-    # strings, not booleans: https://github.com/actions/runner/issues/1483
-    - name: Create directories needed for Minio
-      if: ${{ inputs.is-integration-test == 'true' }}
-      shell: bash
-      run: mkdir -p "$MINIO_DATA_DIR"
+#    # The conditionals below this all check against a string because inputs for actions are actually
+#    # strings, not booleans: https://github.com/actions/runner/issues/1483
+#    - name: Create directories needed for Minio
+#      if: ${{ inputs.is-integration-test == 'true' }}
+#      shell: bash
+#      run: mkdir -p "$MINIO_DATA_DIR"
 
-    - name: Build docker containers for Minio
-      working-directory: ${{ inputs.working-directory }}
-      if: ${{ inputs.is-integration-test == 'true' }}
-      shell: bash
-      run: docker compose up -d minio
-
-    - name: Wait on minio container to be available
-      if: ${{ inputs.is-integration-test == 'true' }}
-      shell: bash
-      run: |
-        ttl=30; echo "Try minio conn from container for $ttl seconds"; until [ $ttl -le 0 ] || curl $MINIO_HOST:10002; do echo $ttl; ((ttl--)); sleep 1; done; [ $ttl -gt 0 ]
+#    - name: Build docker containers for Minio
+#      working-directory: ${{ inputs.working-directory }}
+#      if: ${{ inputs.is-integration-test == 'true' }}
+#      shell: bash
+#      run: docker compose up -d minio
 
 #    - name: Create directories needed for Spark
 #      if: ${{ inputs.is-spark-test == 'true' }}
 #      shell: bash
 #      run: mkdir -p "$HOME/.ivy2"
 
-    - name: Download docker image
-      if: ${{ inputs.is-spark-test == 'true' }}
-      uses: actions/download-artifact@v4
-      with:
-        name: brus-backend-common
-        path: /tmp
+#    - name: Download docker image
+#      if: ${{ inputs.is-spark-test == 'true' }}
+#      uses: actions/download-artifact@v4
+#      with:
+#        name: brus-backend-common
+#        path: /tmp
 
-    - name: Load docker image
-      shell: bash
-      if: ${{ inputs.is-spark-test == 'true' }}
-      run: docker load --input /tmp/brus-backend-common.tar
+#    - name: Load docker image
+#      shell: bash
+#      if: ${{ inputs.is-spark-test == 'true' }}
+#      run: docker load --input /tmp/brus-backend-common.tar
 
-    - name: Build docker containers for Minio
-      working-directory: ${{ inputs.working-directory }}
-      if: ${{ inputs.is-spark-test == 'true' }}
-      shell: bash
-      run: docker compose up -d brus-backend-common
+#    - name: Build docker containers for Minio
+#      working-directory: ${{ inputs.working-directory }}
+#      if: ${{ inputs.is-spark-test == 'true' }}
+#      shell: bash
+#      run: docker compose up -d brus-backend-common
 
-    - name: Capture SPARK_HOME environment variable
-      if: ${{ inputs.is-spark-test == 'true' }}
-      shell: bash
-      run: echo "SPARK_HOME=$(python -c "import site;print(f'{site.getsitepackages()[0]}/pyspark')")" >> $GITHUB_ENV
+#    - name: Capture SPARK_HOME environment variable
+#      if: ${{ inputs.is-spark-test == 'true' }}
+#      shell: bash
+#      run: echo "SPARK_HOME=$(python -c "import site;print(f'{site.getsitepackages()[0]}/pyspark')")" >> $GITHUB_ENV
 #
 #    - name: install basic jars
 #      if: ${{ inputs.is-spark-test == 'true' }}
@@ -74,3 +68,20 @@ runs:
 #      run: >
 #        pyspark --packages
 #        "org.apache.hadoop:hadoop-aws:$HADOOP_VERSION,io.delta:delta-spark_$SCALA_VERSION:$DELTA_VERSION,org.apache.spark:spark-hive_$SCALA_VERSION:$SPARK_VERSION"
+
+    - name: Use cached image in test job
+        uses: docker/bake-action@v4
+        with:
+          targets: |
+            brus-backend-common
+            minio
+          set: |
+            *.cache-from=type=gha,scope=brus-backend-common-app
+          # Load the image into the local Docker daemon for use in subsequent steps
+          load: true
+
+    - name: Wait on minio container to be available
+      if: ${{ inputs.is-integration-test == 'true' }}
+      shell: bash
+      run: |
+        ttl=30; echo "Try minio conn from container for $ttl seconds"; until [ $ttl -le 0 ] || curl $MINIO_HOST:10002; do echo $ttl; ((ttl--)); sleep 1; done; [ $ttl -gt 0 ]

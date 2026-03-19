@@ -20,33 +20,57 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build Docker Image
-        uses: docker/build-push-action@v6
+#      - name: Build Docker Image
+#        uses: docker/build-push-action@v6
+#        with:
+#          context: ./brus-backend-common
+#          tags: brus-backend-common:latest
+#          outputs: type=docker,dest=/tmp/brus-backend-common.tar
+#          # TODO: Dynamically pull these from .env.test
+#          build-args: |
+#            PYTHON_VERSION=3.12
+#            JAVA_VERSION=1.8.0
+#            HADOOP_VERSION=3.3.4
+#            SPARK_VERSION=3.4.1
+#            SCALA_VERSION=2.12
+#            DELTA_VERSION=2.4.0
+#            DOWNLOAD_JARS=true
+
+      - name: Build images with Bake
+        uses: docker/bake-action@v4
         with:
-          context: ./brus-backend-common
-          tags: brus-backend-common:latest
-          outputs: type=docker,dest=/tmp/brus-backend-common.tar
-          # TODO: Dynamically pull these from .env.test
-          build-args: |
-            PYTHON_VERSION=3.12
-            JAVA_VERSION=1.8.0
-            HADOOP_VERSION=3.3.4
-            SPARK_VERSION=3.4.1
-            SCALA_VERSION=2.12
-            DELTA_VERSION=2.4.0
-            DOWNLOAD_JARS=true
+          set: |
+            *.cache-from=type=gha,scope=brus-backend-common-app
+            *.cache-to=type=gha,scope=brus-backend-common-app,mode=max
+          targets: |
+            brus-backend-common
+            minio
+          # Set to false to avoid pushing to registry
+          push: false
+
+#      - name: Save images to a tar file
+#        run: |
+#          IMAGES=$(docker images --format "{{.Repository}}:{{.Tag}}" | grep -v "<none>")
+#          docker save -o /tmp/brus-backend-common.tar $IMAGES
+#
+#      - name: Upload the tar artifact
+#        uses: actions/upload-artifact@v4
+#        with:
+#          name: docker-images-tarball
+#          path: images.tar
 
 #      - name: Build Docker Image
 #        uses: docker/bake-action@v7
 #        with:
+#          files: docker-compose.yml
 #          source: ./brus-backend-common
 #          push: true
 #          set: |
 #            *.tags=brus-backend-common:latest
 #            *.output=type=docker,dest=/tmp/brus-backend-common.tar
 
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: brus-backend-common
-          path: /tmp/brus-backend-common.tar
+#      - name: Upload Artifact
+#        uses: actions/upload-artifact@v4
+#        with:
+#          name: brus-backend-common
+#          path: /tmp/brus-backend-common.tar
