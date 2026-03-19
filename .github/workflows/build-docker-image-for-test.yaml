@@ -58,7 +58,7 @@ jobs:
       - name: Upload the tar artifact
         uses: actions/upload-artifact@v4
         with:
-          name: docker-images-tarball
+          name: brus-backend-common
           path: /tmp/brus-backend-common.tar
 
 #      - name: Build Docker Image
