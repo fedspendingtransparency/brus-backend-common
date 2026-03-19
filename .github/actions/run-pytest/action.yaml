@@ -49,13 +49,13 @@ runs:
         pytest
         -r=fEs
         -x
-        --cov=brus_backend_common
-        --cov-report term
-        --cov-report xml:{cov_report_name}
+#        --cov=brus_backend_common
+#        --cov-report term
+#        --cov-report xml:{cov_report_name}
         --dist worksteal
         --durations 50
-        --numprocesses {num_processes}
-        --override-ini=python_files=\"{include_glob}\"
+#        --numprocesses {num_processes}
+#        --override-ini=python_files=\"{include_glob}\"
         --verbosity=1
         {keyword}
         {marker}
