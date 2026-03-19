@@ -59,7 +59,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: docker-images-tarball
-          path: images.tar
+          path: /tmp/brus-backend-common.tar
 
 #      - name: Build Docker Image
 #        uses: docker/bake-action@v7
