@@ -88,7 +88,7 @@ runs:
     - name: Run services with Docker Compose
       uses: hoverkraft-tech/compose-action@v2.5.0
       with:
-        compose-file: './docker-compose.yml'
+        compose-file: ./brus-backend-common/docker-compose.yml
         # Use --no-build as the images are already built by the bake action
         up-flags: 'brus-backend-common minio --no-build'
 
