@@ -82,7 +82,7 @@ runs:
       with:
         targets: brus-backend-common
         set: |
-          *.cache-from=type=gha,scope=brus-backend-common-app
+          brus-backend-common.cache-from: type=gha
         load: true
 
     - name: Run services with Docker Compose
