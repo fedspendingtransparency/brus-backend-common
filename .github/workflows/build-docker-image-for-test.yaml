@@ -45,6 +45,8 @@ jobs:
         with:
           source: .
           set: |
+            brus-backend-common.context=.
+            brus-backend-common.dockerfile=./Dockerfile
             brus-backend-common.no-cache=true
             brus-backend-common.cache-to=type=gha,scope=brus-backend-common-app,mode=max
           # don't need to build minio/s3 as it has a prepackaged image
