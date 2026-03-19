@@ -74,7 +74,7 @@ runs:
         with:
           targets: |
             brus-backend-common
-            minio
+            s3
           set: |
             *.cache-from=type=gha,scope=brus-backend-common-app
           # Load the image into the local Docker daemon for use in subsequent steps

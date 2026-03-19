@@ -44,7 +44,7 @@ jobs:
             *.cache-to=type=gha,scope=brus-backend-common-app,mode=max
           targets: |
             brus-backend-common
-            minio
+            s3
           # Set to false to avoid pushing to registry
           push: false
 
