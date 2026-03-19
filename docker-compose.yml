@@ -19,6 +19,7 @@ services:
         HADOOP_VERSION: ${HADOOP_VERSION}
         SCALA_VERSION: ${SCALA_VERSION}
         DELTA_VERSION: ${DELTA_VERSION}
+        DOWNLOAD_JARS: ${DOWNLOAD_JARS}
     restart: on-failure:3 # 3 max attempt, and then it will stop restarting
     command: /bin/sh -c "sleep infinity"
     ports:
