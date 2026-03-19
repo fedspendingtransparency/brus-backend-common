@@ -61,7 +61,7 @@ runs:
         {marker}
         {ignore_glob}
         ".format(
-        container="docker exec -it {}".format(os.environ["CONTAINER"]) if os.environ.get("CONTAINER") else "",
+        container="docker exec {}".format(os.environ["CONTAINER"]) if os.environ.get("CONTAINER") else "",
         cov_report_name=os.environ["COV_REPORT_NAME"],
         ignore_glob="--ignore-glob=\"{}\"".format(os.environ["IGNORE_GLOB"]) if os.environ.get("IGNORE_GLOB") else "",
         include_glob=os.environ["INCLUDE_GLOB"],
