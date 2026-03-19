@@ -43,6 +43,7 @@ jobs:
       - name: Build images with Bake
         uses: docker/bake-action@v7
         with:
+          source: .
           set: |
             brus-backend-common.no-cache=true
             brus-backend-common.cache-to=type=gha,scope=brus-backend-common-app,mode=max
