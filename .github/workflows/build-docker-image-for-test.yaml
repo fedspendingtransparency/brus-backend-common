@@ -43,8 +43,7 @@ jobs:
       - name: Build images with Bake
         uses: docker/bake-action@v7
         with:
-          source: .
-          files: ./brus-backend-common/docker-compose.yml
+          source: ./brus-backend-common
           set: |
             brus-backend-common.cache-to=type=gha,scope=brus-backend-common-app,mode=max
           # don't need to build minio/s3 as it has a prepackaged image
