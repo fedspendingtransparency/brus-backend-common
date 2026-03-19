@@ -105,6 +105,10 @@ runs:
         # Use --no-build as the images are already built by the bake action
         up-flags: 'brus-backend-common minio --no-build'
 
+    - name: Copy .env to running docker
+      if: ${{ inputs.is-integration-test == 'true' }}
+      shell: bash
+      run: docker cp .env brus-backend-common:/project/.env
 
     - name: Wait on minio container to be available
       if: ${{ inputs.is-integration-test == 'true' }}
