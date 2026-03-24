@@ -186,9 +186,8 @@ class HasStr(Protocol):
     def __str__(self) -> str: ...
 
 
-def clean_col_names(field: HasStr) -> str:
-    """Define some data-munging functions that can be applied to pandas
-    dataframes as necessary"""
+def clean_name(field: HasStr) -> str:
+    """Define some data-munging functions that can be applied to pandas dataframes as necessary"""
     return str(field).lower().strip().replace(" ", "_").replace(",", "_")
 
 
@@ -214,6 +213,8 @@ def clean_data(
     field_options: dict[str, dict[Literal["pad_to_length", "keep_null", "skip_duplicate", "strip_commas"], Any]],
     required_values: list | None = None,
     return_dropped_count: bool = False,
+    clean_col_names: bool = True,
+    add_dates: bool = True,
 ) -> pd.DataFrame | tuple[int, pd.DataFrame]:
     """Cleans up a dataframe that contains domain values.
 
@@ -225,10 +226,11 @@ def clean_data(
              "pad_to_length" which if present will pad the field with leading zeros up to
             specified length
             "keep_null" when set to true, empty fields will not be padded
-            "skip_duplicate" which ignores subsequent lines that repeat values
             "strip_commas" which removes commas
         required_values: list of required values
         return_dropped_count: flag to return dropped count
+        clean_col_names: flag to rename cols, lowercased and replacing with underscores
+        add_dates: flag to add created_at, updated_at cols
 
     Returns:
         Dataframe conforming to requirements, and additionally the number of rows dropped for missing value
@@ -239,68 +241,48 @@ def clean_data(
            Also fail if the file is blank.
 
     """
-    # incoming .csvs often have extraneous blank rows at the end,
-    # so get rid of those
-    clean_df = data.copy(deep=True)
-    clean_df.dropna(inplace=True, how="all")
 
-    # clean the dataframe column names
-    clean_df.rename(columns=clean_col_names, inplace=True)
-    # make sure all values in fieldMap parameter are in the dataframe/csv file
-    column_diff = set(field_map) - set(clean_df.columns)
+    def apply_options(col):
+        options = field_options.get(col.name)
+        if not options:
+            return col
+        if "pad_to_length" in options and options.get("keep_null"):
+            col = col.str.zfill(options.get("pad_to_length"))
+        elif "pad_to_length" in options and not options.get("keep_null"):
+            col = col.fillna("").str.zfill(options.get("pad_to_length"))
+        if options.get("strip_commas"):
+            col = col.str.replace(",", "")
+        return col
+
+    raw_df = data.dropna(how="all")
+
+    if clean_col_names:
+        raw_df.rename(columns=clean_name, inplace=True)
+
+    column_diff = set(field_map) - set(raw_df.columns)
     if column_diff:
         raise ValueError(f"The following fields are required per field_map: {column_diff}")
-    # toss out any columns from the csv that aren't in the fieldMap parameter
-    clean_df = clean_df[list(field_map.keys())]
-    # rename columns as specified in fieldMap
-    clean_df = clean_df.rename(columns=field_map)
 
-    # trim all columns
-    clean_df = clean_df.map(lambda x: trim_item(x) if len(str(x).strip()) else None)
+    clean_df = (
+        raw_df.drop([col for col in raw_df.columns if col not in field_map], axis="columns")
+        .rename(columns=field_map)
+        .apply(lambda x: x.astype(str).str.strip())
+        .replace("nan", np.nan)
+        .replace("", None)
+        .dropna(subset=required_values)
+        .apply(apply_options)
+    )
+    if add_dates:
+        now = get_utc_now()
+        clean_df = clean_df.assign(created_at=now, updated_at=now)
 
-    if required_values is None:
-        required_values = []
-    if len(required_values) > 0:
-        # if file is blank, immediately fail
-        if clean_df.empty or len(clean_df.shape) < 2:
-            raise FailureThresholdExceededError(0)
-        # check the columns that must have a valid value, and if they have white space,
-        # replace with NaN so that dropna finds them.
-        for value in required_values:
-            clean_df[value].replace("", np.nan, inplace=True)
-        # drop any rows that are missing required data
-        cleaned = clean_df.dropna(subset=required_values)
-        dropped = clean_df[np.invert(clean_df.index.isin(cleaned.index))]
-        # log every dropped row
-        for index, row in dropped.iterrows():
-            logger.info(
-                f"Dropped row due to faulty data: "
-                f"fyq:{row['fiscal_year_period']}"
-                f"--agency:{row['agency_id']}"
-                f"--alloc:{row['allocation_transfer_id']}"
-                f"--account:{row['account_number']}"
-                f"--pa_code:{row['program_activity_code']}"
-                f"--pa_name:{row['program_activity_name']}"
-            )
+    dropped = raw_df.loc[~raw_df.index.isin(clean_df.index)]
+    for _, row in dropped.iterrows():
+        logger.info(f"Dropped row due to faulty data: {row}")
 
-        if (len(dropped.index) / len(clean_df.index)) > FAILURE_THRESHOLD_PERCENTAGE:
-            raise FailureThresholdExceededError(len(dropped.index))
-        logger.info(f"{len(dropped.index)} total rows dropped due to faulty data")
-        clean_df = cleaned
+    if clean_df.empty or len(dropped) / len(raw_df) > FAILURE_THRESHOLD_PERCENTAGE:
+        raise FailureThresholdExceededError(len(dropped.index))
 
-    # apply column options as specified in fieldOptions param
-    for col, options in field_options.items():
-        if "pad_to_length" in options:
-            # pad to specified length
-            clean_df[col] = clean_df[col].apply(pad_function, args=(options["pad_to_length"], options.get("keep_null")))
-        if options.get("strip_commas"):
-            # remove commas for specified column
-            # get rid of commas in dollar amounts
-            clean_df[col] = clean_df[col].str.replace(",", "")
-
-    # add created_at and updated_at columns
-    now = get_utc_now()
-    clean_df = clean_df.assign(created_at=now, updated_at=now)
-    if return_dropped_count:
-        return len(dropped.index), clean_df
+    if not dropped.empty:
+        return len(dropped), clean_df
     return clean_df
