@@ -8,7 +8,7 @@ import pandas as pd
 logger = logging.getLogger(__name__)
 
 
-def convert_timestamp_df(dt: datetime):
+def convert_timestamp_df(dt: datetime) -> np.datetime64:
     """Simply converts datetime's to datetime64[us] for dataframes"""
     return np.datetime64(dt).astype("datetime64[us]")
 
@@ -20,7 +20,7 @@ def check_dataframe_diff(
     sort_cols: List[str],
     lambda_funcs: List[tuple[str, Callable]] = None,
     date_format: str = "%m/%d/%Y",
-):
+) -> bool:
     """Checks if 2 dataframes (the new data and the existing data for a model) are different.
 
     Args:
@@ -38,25 +38,25 @@ def check_dataframe_diff(
     if not lambda_funcs:
         lambda_funcs = {}
 
-    def apply_lambdas(df: pd.DataFrame, lambda_funcs: List[tuple[str, Callable]]):
+    def apply_lambdas(df: pd.DataFrame) -> pd.DataFrame:
         if not df.empty:
             for col_name, lambda_func in lambda_funcs:
                 df[col_name] = df.apply(lambda_func, axis=1)
         return df
 
-    def convert_dates(df: pd.DataFrame, date_format: str):
+    def convert_dates(df: pd.DataFrame) -> pd.DataFrame:
         for col in df.select_dtypes(include=["datetime64"]).columns.tolist():
             df[col] = df[col].dt.strftime(date_format)
         return df
 
-    def sort_df_cols(df: pd.DataFrame):
+    def sort_df_cols(df: pd.DataFrame) -> pd.DataFrame:
         cols = df.columns.tolist()
         cols.sort()
         return df[cols]
 
     new_data_copy = (
         new_data.drop(["created_at", "updated_at"], axis=1, errors="ignore")
-        .pipe(convert_dates, date_format)
+        .pipe(convert_dates)
         .replace(np.nan, "")
         .astype(str)
         .replace("[Nn]a[Tn]", "", regex=True)
@@ -69,8 +69,8 @@ def check_dataframe_diff(
 
     current_data_copy = (
         current_data.drop(["created_at", "updated_at"] + del_cols, axis=1, errors="ignore")
-        .pipe(apply_lambdas, lambda_funcs)
-        .pipe(convert_dates, date_format)
+        .pipe(apply_lambdas)
+        .pipe(convert_dates)
         .replace(np.nan, "")
         .astype(str)
         .replace("[Nn]a[Tn]", "", regex=True)

@@ -323,8 +323,8 @@ def configure_spark_session(
 
 
 def read_java_gateway_connection_info(
-    gateway_conn_info_path,
-):  # pragma: no cover -- useful development util
+    gateway_conn_info_path: os.PathLike,
+) -> tuple[int, str]:  # pragma: no cover -- useful development util
     """Read the port and auth token from a file holding connection info to a running spark-submit process
 
     Args:
@@ -340,8 +340,8 @@ def read_java_gateway_connection_info(
 
 
 def attach_java_gateway(
-    gateway_port,
-    gateway_auth_token,
+    gateway_port: int,
+    gateway_auth_token: str,
 ) -> JavaGateway:  # pragma: no cover -- useful development util
     """Create a new JavaGateway that latches onto the port of a running spark-submit process
 
@@ -388,7 +388,7 @@ def attach_java_gateway(
     return gateway
 
 
-def get_jdbc_connection_properties(fix_strings=True) -> dict:
+def get_jdbc_connection_properties(fix_strings: bool = True) -> dict:
     SPARK_PARTITION_ROWS = 10000
     jdbc_props = {
         "driver": "org.postgresql.Driver",
@@ -403,7 +403,7 @@ def get_jdbc_connection_properties(fix_strings=True) -> dict:
     return jdbc_props
 
 
-def log_java_exception(logger, exc, err_msg=""):
+def log_java_exception(logger: logging.Logger, exc: Exception, err_msg: str = "") -> None:
     if exc and (isinstance(exc, Py4JJavaError) or hasattr(exc, "java_exception")):
         logger.error(f"{err_msg}\n{str(exc.java_exception)}")
     elif exc and hasattr(exc, "printStackTrace"):
@@ -421,7 +421,7 @@ def configure_s3_credentials(
     secret_key: str | None = None,
     profile: str | None = None,
     temporary_creds: bool = False,
-):
+) -> None:
     """Set Spark config values allowing authentication to S3 for bucket data
 
     See Also:
@@ -463,14 +463,14 @@ def configure_s3_credentials(
         conf.set("spark.hadoop.fs.s3a.assumed.role.sts.endpoint.region", CONFIG.AWS_REGION)
 
 
-def log_spark_config(spark: SparkSession, config_key_contains=""):
+def log_spark_config(spark: SparkSession, config_key_contains: str = "") -> None:
     """Log at log4j INFO the values of the SparkConf object in the current SparkSession"""
     for item in spark.sparkContext.getConf().getAll():
         if config_key_contains in item[0]:
             logger.info(f"{item[0]}={item[1]}")
 
 
-def log_hadoop_config(spark: SparkSession, config_key_contains=""):
+def log_hadoop_config(spark: SparkSession, config_key_contains: str = "") -> None:
     """Print out to the log the current config values for hadoop. Limit to only those whose key contains the string
     provided to narrow in on a particular subset of config values.
     """

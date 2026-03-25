@@ -123,7 +123,7 @@ def get_with_exception_hand(
     return return_val
 
 
-def trim_nested_obj(obj: Any):
+def trim_nested_obj(obj: Any) -> Any:
     """A recursive version to trim all the values in a nested object
 
     Args:
@@ -141,7 +141,7 @@ def trim_nested_obj(obj: Any):
     return obj
 
 
-def flatten_json(json_obj: dict):
+def flatten_json(json_obj: dict) -> dict:
     """Flatten a JSON object into a single row.
         {'a': {'b': '1', 'c': ['d', 'e']}} => {'a_b': '1', 'a_c_1': 'd', 'a_c_2': 'e'}
 
@@ -242,7 +242,7 @@ def clean_data(
 
     """
 
-    def apply_options(col: pd.Series):
+    def apply_options(col: pd.Series) -> pd.Series:
         options = field_options.get(col.name)
         if not options:
             return col
@@ -254,35 +254,35 @@ def clean_data(
             col = col.str.replace(",", "")
         return col
 
-    def rename_cols(df: pd.DataFrame, clean_col_names: bool):
+    def rename_cols(df: pd.DataFrame) -> pd.DataFrame:
         return df.rename(columns=clean_name) if clean_col_names else df
 
-    def check_cols(df: pd.DataFrame, field_map: dict[str, str]):
+    def check_cols(df: pd.DataFrame) -> pd.DataFrame:
         column_diff = set(field_map) - set(df.columns)
         if column_diff:
             raise ValueError(f"The following fields are required per field_map: {column_diff}")
         return df
 
-    def drop_cols(df: pd.DataFrame, field_map: dict[str, str]):
+    def drop_cols(df: pd.DataFrame) -> pd.DataFrame:
         return df.drop([col for col in df.columns if col not in field_map], axis="columns")
 
-    def add_meta_dates(df: pd.DataFrame, add_dates: bool):
+    def add_meta_dates(df: pd.DataFrame) -> pd.DataFrame:
         now = get_utc_now()
         return df.assign(created_at=now, updated_at=now) if add_dates else df
 
     raw_df = data.dropna(how="all")
 
     clean_df = (
-        raw_df.pipe(rename_cols, clean_col_names)
-        .pipe(check_cols, field_map)
-        .pipe(drop_cols, field_map)
+        raw_df.pipe(rename_cols)
+        .pipe(check_cols)
+        .pipe(drop_cols)
         .rename(columns=field_map)
         .apply(lambda x: x.astype(str).str.strip())
         .replace("[Nn]a[Tn]", np.nan, regex=True)
         .replace("", None)
         .dropna(subset=required_values)
         .apply(apply_options)
-        .pipe(add_meta_dates, add_dates)
+        .pipe(add_meta_dates)
     )
 
     dropped = raw_df.loc[~raw_df.index.isin(clean_df.index)]
