@@ -242,7 +242,7 @@ def clean_data(
 
     """
 
-    def apply_options(col):
+    def apply_options(col: pd.Series):
         options = field_options.get(col.name)
         if not options:
             return col
@@ -254,27 +254,36 @@ def clean_data(
             col = col.str.replace(",", "")
         return col
 
+    def rename_cols(df: pd.DataFrame, clean_col_names: bool):
+        return df.rename(columns=clean_name) if clean_col_names else df
+
+    def check_cols(df: pd.DataFrame, field_map: dict[str, str]):
+        column_diff = set(field_map) - set(df.columns)
+        if column_diff:
+            raise ValueError(f"The following fields are required per field_map: {column_diff}")
+        return df
+
+    def drop_cols(df: pd.DataFrame, field_map: dict[str, str]):
+        return df.drop([col for col in df.columns if col not in field_map], axis="columns")
+
+    def add_meta_dates(df: pd.DataFrame, add_dates: bool):
+        now = get_utc_now()
+        return df.assign(created_at=now, updated_at=now) if add_dates else df
+
     raw_df = data.dropna(how="all")
 
-    if clean_col_names:
-        raw_df.rename(columns=clean_name, inplace=True)
-
-    column_diff = set(field_map) - set(raw_df.columns)
-    if column_diff:
-        raise ValueError(f"The following fields are required per field_map: {column_diff}")
-
     clean_df = (
-        raw_df.drop([col for col in raw_df.columns if col not in field_map], axis="columns")
+        raw_df.pipe(rename_cols, clean_col_names)
+        .pipe(check_cols, field_map)
+        .pipe(drop_cols, field_map)
         .rename(columns=field_map)
         .apply(lambda x: x.astype(str).str.strip())
-        .replace("nan", np.nan)
+        .replace("[Nn]a[Tn]", np.nan, regex=True)
         .replace("", None)
         .dropna(subset=required_values)
         .apply(apply_options)
+        .pipe(add_meta_dates, add_dates)
     )
-    if add_dates:
-        now = get_utc_now()
-        clean_df = clean_df.assign(created_at=now, updated_at=now)
 
     dropped = raw_df.loc[~raw_df.index.isin(clean_df.index)]
     for _, row in dropped.iterrows():
@@ -283,6 +292,6 @@ def clean_data(
     if clean_df.empty or len(dropped) / len(raw_df) > FAILURE_THRESHOLD_PERCENTAGE:
         raise FailureThresholdExceededError(len(dropped.index))
 
-    if not dropped.empty:
+    if return_dropped_count and not dropped.empty:
         return len(dropped), clean_df
     return clean_df
