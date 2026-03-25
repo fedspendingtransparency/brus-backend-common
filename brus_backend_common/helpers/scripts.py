@@ -123,7 +123,7 @@ def get_with_exception_hand(
     return return_val
 
 
-def trim_nested_obj(obj):
+def trim_nested_obj(obj: Any):
     """A recursive version to trim all the values in a nested object
 
     Args:
@@ -141,7 +141,7 @@ def trim_nested_obj(obj):
     return obj
 
 
-def flatten_json(json_obj):
+def flatten_json(json_obj: dict):
     """Flatten a JSON object into a single row.
         {'a': {'b': '1', 'c': ['d', 'e']}} => {'a_b': '1', 'a_c_1': 'd', 'a_c_2': 'e'}
 
@@ -210,7 +210,7 @@ def pad_function(field: Any, pad_to: int, keep_null: bool) -> str | None:
 def clean_data(
     data: pd.DataFrame,
     field_map: dict[str, str],
-    field_options: dict[str, dict[Literal["pad_to_length", "keep_null", "skip_duplicate", "strip_commas"], Any]],
+    field_options: dict[str, dict[Literal["pad_to_length", "keep_null", "strip_commas"], Any]],
     required_values: list | None = None,
     return_dropped_count: bool = False,
     clean_col_names: bool = True,
