@@ -23,13 +23,6 @@ from brus_backend_common.helpers.aws import get_aws_credentials
 logger = logging.getLogger(__name__)
 
 
-def get_active_spark_context() -> SparkContext | None:
-    """Returns the active ``SparkContext`` if there is one and it's not stopped, otherwise returns None"""
-    if is_spark_context_stopped():
-        return None
-    return SparkContext._active_spark_context
-
-
 def get_active_spark_session() -> SparkSession | None:
     """Returns the active ``SparkSession`` if there is one and it's not stopped, otherwise returns None"""
     if is_spark_context_stopped():
@@ -141,7 +134,7 @@ def configure_spark_session(
         app_name (str): The name given to the app running in this SparkSession. This is not a modifiable property,
             and can only be set if creating a brand new SparkContext and SparkSession.
 
-        log_level (str): Set the log level. Only set AFTER construction of the SparkContext, unfortunately.
+        log_level (int): Set the log level. Only set AFTER construction of the SparkContext, unfortunately.
             Values are one of: logging.ERROR, logging.WARN, logging.WARNING, logging.INFO, logging.DEBUG
 
         log_spark_config_vals (bool): If True, log at INFO the current spark config property values
@@ -356,34 +349,6 @@ def attach_java_gateway(
     os.environ["PYSPARK_GATEWAY_SECRET"] = gateway_auth_token
 
     gateway = launch_gateway()
-
-    # ALTERNATIVE IMPL BELOW, THAT WOULD ALLOW SETTING THE IP ADDRESS WHERE THE JAVA GATEWAY CAN BE FOUND
-    #     - HOWEVER APPEARS TO NOT WORK FROM OUTSIDE-IN OF A CONTAINER, PROBABLY DUE TO IT NOT BEING ABLE TO CALLBACK
-    #       TO THE PYTHON PROCESS SINCE IT IS HARD-CODED TO LOOK AT LOCALHOST
-    # gateway = JavaGateway(
-    #     gateway_parameters=GatewayParameters(
-    #         address=gateway_address,
-    #         port=gateway_port,
-    #         auth_token=gateway_auth_token,
-    #         auto_convert=True))
-    #
-    # gateway.proc = None  # no self-started process, latching on to externally started gateway process
-    #
-    # # CAUTION: These imports were copied from pyspark/java_gateway.py -> launch_gateway(). They should be checked for
-    # #          change if an error occurs
-    #
-    # # Import the classes used by PySpark
-    # java_import(gateway.jvm, "org.apache.spark.SparkConf")
-    # java_import(gateway.jvm, "org.apache.spark.api.java.*")
-    # java_import(gateway.jvm, "org.apache.spark.api.python.*")
-    # java_import(gateway.jvm, "org.apache.spark.ml.python.*")
-    # java_import(gateway.jvm, "org.apache.spark.mllib.api.python.*")
-    # java_import(gateway.jvm, "org.apache.spark.resource.*")
-    # # TODO(davies): move into sql
-    # java_import(gateway.jvm, "org.apache.spark.sql.*")
-    # java_import(gateway.jvm, "org.apache.spark.sql.api.python.*")
-    # java_import(gateway.jvm, "org.apache.spark.sql.hive.*")
-    # java_import(gateway.jvm, "scala.Tuple2")
 
     return gateway
 

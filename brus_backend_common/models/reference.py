@@ -1,8 +1,6 @@
 from pyspark.sql.types import (
     ArrayType,
     BooleanType,
-    # DateType,
-    # DecimalType,
     IntegerType,
     StringType,
     StructField,

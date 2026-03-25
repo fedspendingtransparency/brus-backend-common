@@ -69,7 +69,7 @@ def test_load_defc(
     assert int_defc_model.exists()
     df = int_defc_model.to_pandas_df()
     assert df is not None and not df.empty
-    assert list(df.loc[df["code"] == "L", "public_laws"].values[0]) == ["Emergency P.L. 116-123"]
+    assert df.loc[df["code"] == "L", "public_laws"].values[0] == "Emergency P.L. 116-123"
 
     # Confirming the external load date was updated
     edld_model = LAKEHOUSE_MODELS["raw.external_data_load_date"]()

@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 VALID_HEADERS = {"DEFC_CODE", "DEFC_TITLE"}
 
 
-def apply_defc_derivations(defc_df: pd.DataFrame, group_mapping: dict[str, list[str]]):
+def apply_defc_derivations(defc_df: pd.DataFrame, group_mapping: dict[str, list[str]]) -> pd.DataFrame:
     """Given a base DEFC dataframe with 'DEFC' and 'Public Law', generate a dataframe with the derived elements
 
     Args:
@@ -57,7 +57,7 @@ def apply_defc_derivations(defc_df: pd.DataFrame, group_mapping: dict[str, list[
     return defc_df
 
 
-def derive_pls_data(public_law: str):
+def derive_pls_data(public_law: str) -> pd.Series:
     """Generates a series of the public law data derived from the public laws string
 
     Args:
@@ -105,7 +105,7 @@ def derive_pls_data(public_law: str):
     )
 
 
-def derive_pl_data(public_law: str):
+def derive_pl_data(public_law: str) -> tuple[str, str, str]:
     """Looks up the public law data from GovInfo and Congress.gov
 
     Args:
@@ -137,7 +137,7 @@ def derive_pl_data(public_law: str):
     return short_title, url, date_approved
 
 
-def add_defc_outliers(defc_df: pd.DataFrame, group_mapping: dict[str, list[str]]):
+def add_defc_outliers(defc_df: pd.DataFrame, group_mapping: dict[str, list[str]]) -> pd.DataFrame:
     """Given a DEFC dataframe, generate a dataframe with manually added records
 
     Args:
@@ -188,7 +188,7 @@ def add_defc_outliers(defc_df: pd.DataFrame, group_mapping: dict[str, list[str]]
     return defc_df
 
 
-def setup_parser(parser: argparse.ArgumentParser):
+def setup_parser(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     """Separating parser functionality as USAS uses Django Commands"""
     parser.add_argument(
         "--local_file",
@@ -279,7 +279,7 @@ def main(local_file: str | None = None, force_reload: bool = False, metrics_json
             "earliest_public_law_enactment_date": "earliest_pl_action_date",
         }
         data = clean_data(raw_data, defc_mapping, {})
-        diff_found = check_dataframe_diff(data, int_model, ["defc_id"], ["code"], date_format="%Y-%m-%d")
+        diff_found = check_dataframe_diff(data, int_model.to_pandas_df(), ["defc_id"], ["code"], date_format="%Y-%m-%d")
         if force_reload or diff_found:
 
             # The only diff should be whenever a new code is added. Noting it here

@@ -1,3 +1,4 @@
+import io
 from typing import Any, Tuple
 
 import boto3
@@ -17,7 +18,7 @@ SCHEMA_HELP_TEXT = """
 )
 
 
-def parse_http_url(http_url) -> Tuple[Any, Any | None, Any]:
+def parse_http_url(http_url: str) -> Tuple[Any, Any | None, Any]:
     """Use the urlparse lib to parse out parts of an HTTP(s) URL string
 
     Supports ``username:password`` format or if ``?username=...&password=...`` format
@@ -41,7 +42,7 @@ def parse_http_url(http_url) -> Tuple[Any, Any | None, Any]:
     return url_parts, user, password
 
 
-def parse_pg_uri(pg_uri) -> Tuple[Any, Any | None, Any]:
+def parse_pg_uri(pg_uri: str) -> Tuple[Any, Any | None, Any]:
     """Use the urlparse lib to parse out parts of a PostgreSQL URI connection string
 
     Supports ``username:password`` format or if ``?username=...&password=...`` format
@@ -52,7 +53,7 @@ def parse_pg_uri(pg_uri) -> Tuple[Any, Any | None, Any]:
 
 
 class RetrieveFileFromUri:
-    def __init__(self, ruri, binary_data=True):
+    def __init__(self, ruri: str, binary_data: bool = True):
         """Class to return a temporary file object representing the file specified by the URI
 
         Attributes:
@@ -63,13 +64,13 @@ class RetrieveFileFromUri:
         self.mode = "rb" if binary_data else "r"
         self._validate_url()
 
-    def _validate_url(self):
+    def _validate_url(self) -> None:
         """Parses and validates the URI provided"""
 
         self.parsed_url_obj = urllib.parse.urlparse(self.uri)
         self._test_approved_scheme()
 
-    def _test_approved_scheme(self):
+    def _test_approved_scheme(self) -> None:
         """Validate the URI scheme provided
 
         Raises:
@@ -80,7 +81,7 @@ class RetrieveFileFromUri:
             msg = "Scheme '{}' isn't supported. Try one of these: {}"
             raise NotImplementedError(msg.format(self.parsed_url_obj.scheme, VALID_SCHEMES))
 
-    def get_file_object(self):
+    def get_file_object(self) -> [io.BytesIO, io.StringIO]:
         """Provide a file object (aka file handler) representing the URI provided.
         Note that this simply opens the file so recommendation is to use this method as a context manager
 
@@ -99,7 +100,7 @@ class RetrieveFileFromUri:
         else:
             raise NotImplementedError("No handler for scheme: {}!".format(self.parsed_url_obj.scheme))
 
-    def _handle_s3(self):
+    def _handle_s3(self) -> [io.BytesIO, io.StringIO]:
         """Handler for S3 URIs
 
         Returns:
@@ -122,7 +123,7 @@ class RetrieveFileFromUri:
         f.seek(0)
         return f
 
-    def _handle_http(self):
+    def _handle_http(self) -> [io.BytesIO, io.StringIO]:
         """Handler for HTTP URIs
 
         Returns:
@@ -135,7 +136,7 @@ class RetrieveFileFromUri:
         f.seek(0)
         return f
 
-    def _handle_file(self):
+    def _handle_file(self) -> [io.BytesIO, io.StringIO]:
         """File handler for file URIs
 
         Returns:

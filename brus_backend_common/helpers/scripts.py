@@ -241,6 +241,8 @@ def clean_data(
            Also fail if the file is blank.
 
     """
+    if not required_values:
+        required_values = []
 
     def apply_options(col: pd.Series) -> pd.Series:
         options = field_options.get(col.name)
@@ -266,6 +268,19 @@ def clean_data(
     def drop_cols(df: pd.DataFrame) -> pd.DataFrame:
         return df.drop([col for col in df.columns if col not in field_map], axis="columns")
 
+    def required_values_check(df: pd.DataFrame) -> pd.DataFrame:
+        if len(required_values) > 0:
+            # if file is blank, immediately fail
+            if df.empty or len(df.shape) < 2:
+                raise FailureThresholdExceededError(0)
+            # check the columns that must have a valid value, and if they have white space,
+            # replace with NaN so that dropna finds them.
+            for value in required_values:
+                df[value].replace("", np.nan, inplace=True)
+            # drop any rows that are missing required data
+            df = df.dropna(subset=required_values)
+        return df
+
     def add_meta_dates(df: pd.DataFrame) -> pd.DataFrame:
         now = get_utc_now()
         return df.assign(created_at=now, updated_at=now) if add_dates else df
@@ -277,10 +292,8 @@ def clean_data(
         .pipe(check_cols)
         .pipe(drop_cols)
         .rename(columns=field_map)
-        .apply(lambda x: x.astype(str).str.strip())
-        .replace("[Nn]a[Tn]", np.nan, regex=True)
-        .replace("", None)
-        .dropna(subset=required_values)
+        .map(lambda x: trim_item(x) if len(str(x).strip()) else None)
+        .pipe(required_values_check)
         .apply(apply_options)
         .pipe(add_meta_dates)
     )
