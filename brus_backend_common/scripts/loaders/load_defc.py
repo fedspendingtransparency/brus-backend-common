@@ -188,25 +188,6 @@ def add_defc_outliers(defc_df: pd.DataFrame, group_mapping: dict[str, list[str]]
     return defc_df
 
 
-def setup_parser(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
-    """Separating parser functionality as USAS uses Django Commands"""
-    parser.add_argument(
-        "--local_file",
-        "-f",
-        type=str,
-        required=False,
-        help="Load from a local file instead of pulling from S3",
-    )
-    parser.add_argument(
-        "--force_reload",
-        "-f",
-        required=False,
-        action="store_true",
-        help="Force reload of the data",
-    )
-    return parser
-
-
 def main(local_file: str | None = None, force_reload: bool = False, metrics_json: dict = None) -> dict:
     """Loads the Raw DEFC model into the Int DEFC model. Exports int DEFC csv to Public Files bucket if successful.
 
@@ -334,6 +315,25 @@ def main(local_file: str | None = None, force_reload: bool = False, metrics_json
         metrics_json["exit_code"] = 3
 
     return metrics_json
+
+
+def setup_parser(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
+    """Separating parser functionality as USAS uses Django Commands"""
+    parser.add_argument(
+        "--local_file",
+        "-f",
+        type=str,
+        required=False,
+        help="Load from a local file instead of pulling from S3",
+    )
+    parser.add_argument(
+        "--force_reload",
+        "-f",
+        required=False,
+        action="store_true",
+        help="Force reload of the data",
+    )
+    return parser
 
 
 if __name__ == "__main__":
