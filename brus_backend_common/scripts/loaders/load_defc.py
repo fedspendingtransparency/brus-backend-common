@@ -321,7 +321,7 @@ def setup_parser(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     """Separating parser functionality as USAS uses Django Commands"""
     parser.add_argument(
         "--local_file",
-        "-f",
+        "-l",
         type=str,
         required=False,
         help="Load from a local file instead of pulling from S3",
