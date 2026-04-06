@@ -58,7 +58,7 @@ dependencies = [
     # Keeping pyarrow at this earlier version as pip doesn't seem to store the compiled packages for higher versions
     "pyarrow==15.0.1",
     "pyarrow-stubs==10.0.1.9",
-    "pydantic[dotenv]==1.9.*",
+    "pydantic[dotenv]==1.9.2",
     "pyhive[hive_pure_sasl]==0.7.0",
     "python-dateutil==2.9.0",
     "requests==2.31.0",
