@@ -2,7 +2,7 @@
 
 [![python: 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/) [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/python/black) [![Pull Request Checks](https://github.com/fedspendingtransparency/brus-backend-common/actions/workflows/pull-request-checks.yaml/badge.svg)](https://github.com/fedspendingtransparency/brus-backend-common/actions/workflows/pull-request-checks.yaml)
 
-This repository will act as place to share libraries, models, helpers, and scripts between the [Data Broker](https://github.com/fedspendingtransparency/data-act-broker-backend) and [USAspending](https://github.com/fedspendingtransparency/data-act-broker-backend) applications.
+This repository will act as place to share libraries, models, helpers, and scripts between the [Data Broker](https://github.com/fedspendingtransparency/data-act-broker-backend) and [USAspending](https://github.com/fedspendingtransparency/usaspending-api) applications.
 
 ## Structure
 

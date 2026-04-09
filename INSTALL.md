@@ -1,7 +1,7 @@
 
 ## Local Development Environment Setup
 
-This setup should provide containers to develop and test common scripts, models, etc. shared between the [Data Broker](https://github.com/fedspendingtransparency/data-act-broker-backend) and [USAspending](https://github.com/fedspendingtransparency/data-act-broker-backend) applications.
+This setup should provide containers to develop and test common scripts, models, etc. shared between the [Data Broker](https://github.com/fedspendingtransparency/data-act-broker-backend) and [USAspending](https://github.com/fedspendingtransparency/usaspending-api) applications.
 
 Ensure the following dependencies are installed and working prior to continuing:
 
