@@ -230,7 +230,7 @@ requires-dist = [
     { name = "boto3-stubs", extras = ["s3"], specifier = "==1.34.58" },
     { name = "botocore", git = "https://github.com/fedspendingtransparency/botocore-python39-md5.git?rev=md5-fix-1-34-58" },
     { name = "delta-spark", marker = "extra == 'spark'", specifier = "==2.4.0" },
-    { name = "deltalake", specifier = "==1.1.4" },
+    { name = "deltalake", specifier = "==1.5.0" },
     { name = "docker", marker = "extra == 'dev'", specifier = "==7.0.0" },
     { name = "flake8", marker = "extra == 'dev'", specifier = "==7.0.0" },
     { name = "flake8-pyproject", marker = "extra == 'dev'", specifier = "==1.2.4" },
@@ -580,21 +580,20 @@ wheels = [
 
 [[package]]
 name = "deltalake"
-version = "1.1.4"
+version = "1.5.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "arro3-core" },
     { name = "deprecated" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/3b/04/b905b40ac511155944c25bd0c541a9b82d456ee35e7859be25e788ae8bff/deltalake-1.1.4.tar.gz", hash = "sha256:2e978950d420e050bbdcb5f62e3be93d331cb516ab4c9b1694cf1a7887c63e25", size = 5097828, upload-time = "2025-08-08T10:13:35.504Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/1c/bf/906ff8f875847bb2d2cf9f612d4de6e775ace366c04ad6356b6666504e6a/deltalake-1.5.0.tar.gz", hash = "sha256:cdea832ebcadd9f6ccedfcf023f244f2830152fd82b2f78b42e701989dd73b2d", size = 5326885, upload-time = "2026-03-12T14:59:22.366Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/8d/e8/aaf28573d6c29faccd69a55763aab77c33ef383122e5e57b90f4bb1b65d5/deltalake-1.1.4-cp39-abi3-macosx_10_12_x86_64.whl", hash = "sha256:2fb21d2405928db57c56f9b459b5d0cec9cdbbcb882bfea1de1e98d9dc6c9f3d", size = 43310898, upload-time = "2025-08-08T10:10:09.855Z" },
-    { url = "https://files.pythonhosted.org/packages/71/3e/d1fc3685a3414e61a764a0698df5342f67f28b102387cc4482cfc5544518/deltalake-1.1.4-cp39-abi3-macosx_11_0_arm64.whl", hash = "sha256:8ad7d2a19b5e76aad43ea359305c892b014bc07f85e71beb95b6e9c672d116ee", size = 39906549, upload-time = "2025-08-08T10:18:36.631Z" },
-    { url = "https://files.pythonhosted.org/packages/d6/94/18f5cf3d50a1aca6759f1e61ad23608bbd1aa3bfe2fc247858c5a1367cc6/deltalake-1.1.4-cp39-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:af269b95fc858134a051fd08da294e8a3d64301f61f99ed0c54269fc6c177c6e", size = 41789854, upload-time = "2025-08-08T10:14:32.351Z" },
-    { url = "https://files.pythonhosted.org/packages/24/00/24dbce2a5c13c69b04dba718e64e4f74d5882ac94350228a004a27e5975c/deltalake-1.1.4-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:7f28480d3a19f93a75687a1a2a4449b3a6b7355243b765e4379f501dcac03eea", size = 53068945, upload-time = "2025-08-08T10:13:32.735Z" },
-    { url = "https://files.pythonhosted.org/packages/92/e3/6a2a8ea39e16441825f7348a1d130653415c85a59355ee064dc5f0932f22/deltalake-1.1.4-cp39-abi3-manylinux_2_28_aarch64.whl", hash = "sha256:17986efcf450ba54245d8cb41a947434ebb1a866e8746129075d49c504300cd9", size = 41800723, upload-time = "2025-08-08T10:15:16.568Z" },
-    { url = "https://files.pythonhosted.org/packages/65/95/6e7a30c3d97593539411c3afb2331f0ed9e4c8115bea540ddd23a6b9155e/deltalake-1.1.4-cp39-abi3-musllinux_1_2_x86_64.whl", hash = "sha256:fe441bf4e81df7ff8d9069677cd9e8e9e2e7020ec80bed2f7feefba617f3c2f9", size = 45420869, upload-time = "2025-08-08T10:14:18.531Z" },
-    { url = "https://files.pythonhosted.org/packages/b8/9f/3e8218adab1e8681c9de1835a8a08592214e5e0da4d1e220f59c20112b00/deltalake-1.1.4-cp39-abi3-win_amd64.whl", hash = "sha256:62ad8443cda6ec7b826c1bfe7e935d02df86670d8c7c1d9909744f07cb20a887", size = 43867754, upload-time = "2025-08-08T10:27:08.862Z" },
+    { url = "https://files.pythonhosted.org/packages/9c/75/ae5593e1836ea81ab14ab9a58e81e25f351597cb6a66d9e84e9d40a99d21/deltalake-1.5.0-cp310-abi3-macosx_10_12_x86_64.whl", hash = "sha256:b13c693989f50b3ec6e6a7ebeb3ca4ef7cb3f340b8fe8e1a0e0767319c5f0bf5", size = 37946411, upload-time = "2026-03-12T15:06:43.069Z" },
+    { url = "https://files.pythonhosted.org/packages/ff/b6/2c983a79593b5fdda60fc49b4f15be360b102212561bcf7a6bf05e12ed61/deltalake-1.5.0-cp310-abi3-macosx_11_0_arm64.whl", hash = "sha256:db388bd519c327953e6ccd688f0cf132c9186362b54d0323d0d5ffeb00cfcde1", size = 34817619, upload-time = "2026-03-12T15:25:22.443Z" },
+    { url = "https://files.pythonhosted.org/packages/14/6a/e0d363f25e422a185d3b771da4b7eecb230a77c37260f13ddc0c31dafef1/deltalake-1.5.0-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:b2fe5d6fe4eb20781ae593659f77a382079503c06f3525691c8fee2815de2322", size = 38744214, upload-time = "2026-03-12T14:59:19.793Z" },
+    { url = "https://files.pythonhosted.org/packages/c8/4c/fc68c0c053f3acc53264e84e1447f70d4a06a7489df78161a0d0fc786c47/deltalake-1.5.0-cp310-abi3-manylinux_2_28_aarch64.whl", hash = "sha256:7baa94c7f8234c0840627e8f2f5e3f88a02ff011a2991b8e034c187ffafcb3a0", size = 37338903, upload-time = "2026-03-12T14:47:41.005Z" },
+    { url = "https://files.pythonhosted.org/packages/a9/20/82929cf32aab56ad8f8350279b4c42cd14e8d0db97826d5bea1d246b9262/deltalake-1.5.0-cp310-abi3-musllinux_1_2_x86_64.whl", hash = "sha256:cfc7b124dc22e885c0af413c9a3f1c4a5fd52ec78bce6fd957a78a90c7943e1b", size = 38742962, upload-time = "2026-03-12T14:58:07.976Z" },
+    { url = "https://files.pythonhosted.org/packages/a2/84/6dd4fb8d0fee8e2533a80afd8b9c57dc442138152e57a41c7b8f986b8a64/deltalake-1.5.0-cp310-abi3-win_amd64.whl", hash = "sha256:2ad8f11a64c0477be57d310aa9b470a7c3c3ba2a4e4e86ad92c7ca3554c539f2", size = 41044010, upload-time = "2026-03-12T15:25:13.975Z" },
 ]
 
 [[package]]
