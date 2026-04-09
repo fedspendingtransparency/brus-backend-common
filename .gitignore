@@ -1,25 +1,68 @@
-.idea/*
-.cache/*
+# OS Files
 .DS_Store
-*config.yml
-*secrets.yml
-*.pyc
-.env
-coverage.xml
-derby.log
-.venv/*
-venv/*
-.python-version
+
+# IDEs
+.idea/*
+**/.idea/
+\.vscode
+
+# Temporary and generated files
+log/**
+logs/**
+temp/**
+tmp/**
+brus_backend_common/logs/**
+!brus_backend_common/logs/spark-events/README.md
+spark-warehouse/**
+
+# pyenv ignores
+\.python-version
+pyvenv.cfg
+
+# pytest
+.pytest_cache
 .coverage
+coverage.xml
+
+# tests
 errorLog
 tests/errorLog
 tests/stats
 tests/test-reports/
 
-# Used in local development
-temp/
-tmp/
+# pip files
+*\.egg-info/
+pip-selfcheck.json
+build/
+
+# spark related
+derby.log
+brus_backend_common/logs/spark-events/
+tempo-data/
 .ivy2/*
 .ivy2.5.2/*
-.pytest_cache
+
+# for a project-local (rather than home-dir based) virtual environment directory
+\.venv/
+venv/*
+
+# .env files for env vars
+\.env
+\.env.*
+!\.env.template
+*.env
+
+# direnv ignores
+\.direnv/
+\.envrc
+
+# Other
+\.pgdump
+\.ipynb
+\.lprof
+libs/**
+__pycache__
+*.pyc
+*.swp
+\.cache
 .devcontainer/
