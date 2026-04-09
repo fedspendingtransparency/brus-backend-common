@@ -8,7 +8,7 @@ import pandas as pd
 import re
 from datetime import datetime
 
-from brus_backend_common.models import DEFCRaw, DEFCInt, DEFCGroup
+from brus_backend_common.models import DEFCBronze, DEFCSilver, DEFCGroup
 from brus_backend_common.models.lakehouse_model import update_external_data_load_date
 from brus_backend_common.helpers.aws import _get_boto3
 from brus_backend_common.helpers.spark import SparkScriptSession
@@ -204,7 +204,7 @@ def main(local_file: str | None = None, force_reload: bool = False, metrics_json
     s3 = _get_boto3("client", "s3")
 
     with SparkScriptSession() as spark:
-        raw_model = DEFCRaw()
+        raw_model = DEFCBronze()
         if not raw_model.exists():
             raise ValueError(f"{raw_model.TABLE_REF} doesn't exist. Use create_migrate_delta_table beforehand.")
 
@@ -212,7 +212,7 @@ def main(local_file: str | None = None, force_reload: bool = False, metrics_json
         if not group_model.exists():
             raise ValueError(f"{group_model.TABLE_REF} doesn't exist. Use create_migrate_delta_table beforehand.")
 
-        int_model = DEFCInt(spark=spark)
+        int_model = DEFCSilver(spark=spark)
         if not int_model.exists():
             raise ValueError(f"{int_model.TABLE_REF} doesn't exist. Use create_migrate_delta_table beforehand.")
 
