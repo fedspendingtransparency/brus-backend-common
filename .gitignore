@@ -11,6 +11,7 @@ derby.log
 venv/*
 .python-version
 .coverage
+brus_backend_common/logs/spark-events/
 errorLog
 tests/errorLog
 tests/stats
