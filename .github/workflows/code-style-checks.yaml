@@ -14,10 +14,6 @@ jobs:
       - name: Checkout Source Repository
         uses: actions/checkout@v4
 
-#      - name: Set Combined ENV
-#        run: |
-#          echo "MINIO_DATA_DIR=$HOME/Development/data/brus-backend-common/docker/brus-backend-common-s3" >> $GITHUB_ENV
-#
       - name: Setup Node
         uses: actions/setup-node@v4
         with:

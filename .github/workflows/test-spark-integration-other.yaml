@@ -16,11 +16,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           path: brus-backend-common
-#
-#      - name: Init Python Environment
-#        uses: ./brus-backend-common/.github/actions/init-python-environment
-#        with:
-#          working-directory: ./brus-backend-common
 
       - name: Init Test Environment
         uses: ./brus-backend-common/.github/actions/init-test-environment
