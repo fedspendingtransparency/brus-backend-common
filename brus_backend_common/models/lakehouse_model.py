@@ -43,9 +43,9 @@ class LakeHouseModelFormat(Enum):
 
 
 class LakeHouseDatabase(Enum):
-    RAW = "raw"
-    INT = "int"
-    RPT = "rpt"
+    BRONZE = "bronze"
+    SILVER = "silver"
+    GOLD = "gold"
 
 
 class LakeHouseModel(ABC):
@@ -370,7 +370,7 @@ class CSVModel(LakeHouseModel):
 
 class LakeHouseCurrentMigration(CSVModel):
     BUCKET_NAME = CONFIG.REFERENCE_S3_BUCKET
-    DATABASE_NAME = LakeHouseDatabase.RAW
+    DATABASE_NAME = LakeHouseDatabase.BRONZE
     TABLE_NAME = "migrations"
     DESCRIPTION = "Keeps track of migrations for all Lakehouse Models"
     CSV_NAME = "current_migrations.csv"
@@ -391,7 +391,7 @@ class LakeHouseCurrentMigration(CSVModel):
 
 class ExternalDataLoadDate(CSVModel):
     BUCKET_NAME = CONFIG.REFERENCE_S3_BUCKET
-    DATABASE_NAME = LakeHouseDatabase.RAW
+    DATABASE_NAME = LakeHouseDatabase.BRONZE
     TABLE_NAME = "external_data_load_date"
     DESCRIPTION = "Keeps track of load dates of certain external data Lakehouse models"
     CSV_NAME = "external_load_date.csv"

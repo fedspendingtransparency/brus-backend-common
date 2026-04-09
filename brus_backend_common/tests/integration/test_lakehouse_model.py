@@ -12,7 +12,7 @@ def test_csv_initialize(spark: SparkSession, setup_teardown_buckets):  # hive_un
     # doesn't *need* spark but calling the script uses spark, so import that as well
 
     # Using DEFC as it is a relatively small easy example
-    csv_model_name = "raw.defc"
+    csv_model_name = "bronze.defc"
     csv_model = LAKEHOUSE_MODELS[csv_model_name]()
 
     # Create an empty CSV model in local S3

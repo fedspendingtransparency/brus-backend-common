@@ -337,7 +337,7 @@ def setup_parser(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Process the raw.defc data into the int.defc table.")
+    parser = argparse.ArgumentParser(description="Process the bronze defc data into the silver defc table.")
     parser = setup_parser(parser)
     args = parser.parse_args()
 
