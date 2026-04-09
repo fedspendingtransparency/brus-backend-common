@@ -14,7 +14,7 @@ import deltalake
 import pyarrow as pa
 import pandas as pd
 import polars as pl
-from deltalake import DeltaTable  # , QueryBuilder, Field, schema
+from deltalake import DeltaTable, QueryBuilder  # Field, schema
 from deltalake.writer import write_deltalake
 from mypy_boto3_s3 import S3Client
 from pyspark.sql import DataFrame, SparkSession
@@ -79,15 +79,10 @@ class LakeHouseModel(ABC):
         raise NotImplementedError()
 
     def count(self) -> int:
-        count = -1
-        df = self.to_pandas_df()
-        if df is not None:
-            count = len(df)
-        return count
+        raise NotImplementedError()
 
     def next_id(self) -> int:
-        df = self.to_pandas_df()
-        return df[self.PK].max() + 1 if df is not None else -1
+        raise NotImplementedError()
 
     def to_pandas_df(self) -> pd.DataFrame | None:
         raise NotImplementedError()
@@ -188,6 +183,24 @@ class DeltaModel(LakeHouseModel):
                 raise e
 
         return self.dt is not None
+
+    def count(self) -> int:
+        return self.dt.count() if self.dt is not None else -1
+
+    def next_id(self) -> int:
+        next_id = -1
+        if self.exists() and self.dt is not None:
+            # QueryBuilder needs a separate alias to the table
+            table_ref_alias = self.TABLE_REF.replace(".", "_")
+            max_id = (
+                QueryBuilder()
+                .register(table_ref_alias, self.dt)
+                .execute(f"SELECT MAX({self.PK}) AS max_id FROM {table_ref_alias}")
+                .read_all()["max_id"][0]
+                .as_py()
+            )
+            next_id = max_id + 1
+        return next_id
 
     def to_pandas_df(self) -> pd.DataFrame | None:
         df = None
@@ -315,6 +328,28 @@ class CSVModel(LakeHouseModel):
         self.CSV_PATH: str = f"{self.TABLE_PATH}/{self.CSV_NAME}"
         self.CSV_PATH_HADOOP: str = f"{self.TABLE_PATH_HADOOP}/{self.CSV_NAME}"
 
+    def exists(self) -> bool:
+        self._s3_object = None
+        try:
+            self._s3_object = self._s3_client.get_object(Bucket=self.BUCKET_NAME, Key=self.RELATIVE_CSV_PATH)[
+                "Body"
+            ].read()
+        except self._s3_client.exceptions.NoSuchKey:
+            logger.warning(f"CSV not found. Please run initialize recreate or upload the file to {self.CSV_PATH}")
+
+        return self._s3_object is not None
+
+    def count(self) -> int:
+        count = -1
+        df = self.to_pandas_df()
+        if df is not None:
+            count = len(df)
+        return count
+
+    def next_id(self) -> int:
+        df = self.to_pandas_df()
+        return df[self.PK].max() + 1 if df is not None else -1
+
     def initialize(self, recreate: bool = False) -> None:
         logger.info(f"Initializing {self.TABLE_REF}")
         if not recreate and not self.exists():
@@ -334,17 +369,6 @@ class CSVModel(LakeHouseModel):
             blank_csv = os.path.join(temp_dir, self.CSV_NAME)
             df.to_csv(blank_csv, index=False)
             self._s3_client.upload_file(blank_csv, self.BUCKET_NAME, self.RELATIVE_CSV_PATH)
-
-    def exists(self) -> bool:
-        self._s3_object = None
-        try:
-            self._s3_object = self._s3_client.get_object(Bucket=self.BUCKET_NAME, Key=self.RELATIVE_CSV_PATH)[
-                "Body"
-            ].read()
-        except self._s3_client.exceptions.NoSuchKey:
-            logger.warning(f"CSV not found. Please run initialize recreate or upload the file to {self.CSV_PATH}")
-
-        return self._s3_object is not None
 
     def to_pandas_df(self, **kwargs: Any) -> pd.DataFrame | None:
         # Type Checker struggles with BytesIO and S3 Objects
