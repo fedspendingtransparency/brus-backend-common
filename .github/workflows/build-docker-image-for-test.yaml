@@ -1,0 +1,43 @@
+name: Build Docker Image for Test
+
+on:
+  workflow_call:
+
+jobs:
+  Run:
+    name: Run
+    runs-on: ${{ vars.RUNNER_VERSION }}
+    steps:
+      - name: Checkout Backend
+        uses: actions/checkout@v4
+        with:
+          path: brus-backend-common
+
+      - name: Build test .env off .env.template
+        shell: bash
+        run: cp ./brus-backend-common/.github/.env.test .env
+
+      - name: Build test .env off .env.template
+        shell: bash
+        run: cp .env ./brus-backend-common/.env
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build images with Bake
+        uses: docker/bake-action@v7
+        with:
+          # note: source sets the cwd
+          source: ./brus-backend-common
+          set: |
+            brus-backend-common.output=type=tar,dest=/tmp/brus-backend-common.tar
+          # don't need to build minio/s3 as it has a prepackaged image
+          targets: brus-backend-common
+          # Set to false to avoid pushing to registry
+          push: false
+
+      - name: Upload the tar artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: brus-backend-common
+          path: /tmp/brus-backend-common.tar

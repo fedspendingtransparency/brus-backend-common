@@ -1,0 +1,58 @@
+name: Initialize Test Environment
+
+inputs:
+  is-integration-test:
+    description: Triggers build steps needed to support integration tests
+    required: true
+  is-spark-test:
+    description: Triggers build steps needed to support tests that utilize Spark
+    required: true
+  working-directory:
+    description: Directory where the requirements can be found; used when multiple repos are checked out
+    default: ""
+
+runs:
+  using: composite
+  steps:
+    - name: Set combined ENV
+      shell: bash
+      # MINIO_HOST check will be localhost cause we're still outside the docker containers
+      run: |
+        echo "MINIO_DATA_DIR=$HOME/Development/data/brus-backend-common/docker/brus-backend-common-s3" >> $GITHUB_ENV
+        echo "MINIO_HOST=localhost" >> $GITHUB_ENV
+
+    # Have to do this again as its a separate job
+    - name: Build test .env off .env.template
+      shell: bash
+      run: cp ./brus-backend-common/.github/.env.test .env
+
+    - name: Download docker image
+      if: ${{ inputs.is-integration-test == 'true' }}
+      uses: actions/download-artifact@v4
+      with:
+        name: brus-backend-common
+        path: /tmp
+
+    - name: Load docker image
+      shell: bash
+      if: ${{ inputs.is-integration-test == 'true' }}
+      run: docker image import /tmp/brus-backend-common.tar brus-backend-common:latest
+
+    - name: Run services with Docker Compose
+      if: ${{ inputs.is-integration-test == 'true' }}
+      uses: hoverkraft-tech/compose-action@v2.5.0
+      with:
+        compose-file: ./brus-backend-common/docker-compose.yml
+        # Use --no-build as the images are already built by the bake action
+        up-flags: 'brus-backend-common minio --no-build'
+
+    - name: Copy .env to running docker
+      if: ${{ inputs.is-integration-test == 'true' }}
+      shell: bash
+      run: docker cp .env brus-backend-common:/project/.env
+
+    - name: Wait on minio container to be available
+      if: ${{ inputs.is-integration-test == 'true' }}
+      shell: bash
+      run: |
+        ttl=30; echo "Try minio conn from container for $ttl seconds"; until [ $ttl -le 0 ] || curl $MINIO_HOST:10002; do echo $ttl; ((ttl--)); sleep 1; done; [ $ttl -gt 0 ]

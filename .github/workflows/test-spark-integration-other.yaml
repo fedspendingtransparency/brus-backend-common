@@ -1,0 +1,36 @@
+name: Spark Integration Tests - Other
+
+on:
+  workflow_call:
+
+defaults:
+  run:
+    working-directory: ./brus-backend-common
+
+jobs:
+  Run:
+    name: Run
+    runs-on: ${{ vars.RUNNER_VERSION }}
+    steps:
+      - name: Checkout Source Repository
+        uses: actions/checkout@v4
+        with:
+          path: brus-backend-common
+
+      - name: Init Test Environment
+        uses: ./brus-backend-common/.github/actions/init-test-environment
+        with:
+          is-integration-test: true
+          is-spark-test: true
+          working-directory: ./brus-backend-common
+
+      - name: Run Test Cases
+        uses: ./brus-backend-common/.github/actions/run-pytest
+        with:
+          cov-report-name: 'spark-other-tests'
+          include-glob: 'test_*.py *_test.py'
+          marker: 'spark'
+          working-directory: ./brus-backend-common
+          container: 'brus-backend-common'
+          num-processes: 0
+
