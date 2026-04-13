@@ -70,3 +70,24 @@ class DEFCSilver(DeltaModel):
             StructField("earliest_pl_action_date", TimestampType(), True),
         ]
     )
+
+class ProgramActivityPark(DeltaModel):
+    BUCKET_NAME = CONFIG.REFERENCE_S3_BUCKET
+    DATABASE_NAME = LakeHouseDatabase.SILVER
+    TABLE_NAME = "program_activity_park"
+    DESCRIPTION = "Program activity park data after initial processing"
+    PK = "park_code"
+    STRUCTURE = StructType(
+        [
+            StructField("created_at", TimestampType()),
+            StructField("updated_at", TimestampType()),
+            StructField("fiscal_year", IntegerType()),
+            StructField("period", IntegerType()),
+            StructField("allocation_transfer_id", StringType()),
+            StructField("agency_id", StringType()),
+            StructField("main_account_number", StringType()),
+            StructField("sub_account_number", StringType()),
+            StructField("park_code", StringType()),
+            StructField("park_name", StringType()),
+        ]
+    )

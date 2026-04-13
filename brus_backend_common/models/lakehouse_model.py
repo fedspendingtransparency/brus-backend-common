@@ -50,15 +50,15 @@ class LakeHouseDatabase(Enum):
 
 class LakeHouseModel(ABC):
     BUCKET_NAME: str
-    RELATIVE_LAKEHOUSE_PATH = "data"
+    RELATIVE_LAKEHOUSE_PATH: str = "data"
     DATABASE_NAME: LakeHouseDatabase
     TABLE_NAME: str
     DESCRIPTION: str
     CSV_NAME: str
     FORMAT: LakeHouseModelFormat
     PK: str
-    UNIQUE_CONSTRAINTS: List[(str,)]
-    MIGRATION_HISTORY: List[str]  # must be ordered by earliest to latest
+    UNIQUE_CONSTRAINTS: List[str | tuple[str]] | None = None
+    MIGRATION_HISTORY: List[str] | None = None  # must be ordered by earliest to latest
 
     # The schema/structure of the delta table as StructType with StructFields
     STRUCTURE: StructType
@@ -70,7 +70,7 @@ class LakeHouseModel(ABC):
         )
         self.DATABASE_PATH: str = f"s3://{self.BUCKET_NAME}/{self.RELATIVE_DATABASE_PATH}"
         self.DATABASE_PATH_HADOOP: str = f"s3a://{self.BUCKET_NAME}/{self.RELATIVE_DATABASE_PATH}"
-        self.RELATIVE_TABLE_PATH: str = f"{self.RELATIVE_DATABASE_PATH}/{self.TABLE_NAME}"
+        self.RELATIVE_TABLE_PATH: str = f"{self.TABLE_NAME}"
         self.TABLE_PATH: str = f"{self.DATABASE_PATH}/{self.RELATIVE_TABLE_PATH}"
         self.TABLE_PATH_HADOOP: str = f"{self.DATABASE_PATH_HADOOP}/{self.RELATIVE_TABLE_PATH}"
         self.TABLE_REF: str = f"{self.DATABASE_NAME.value}.{self.TABLE_NAME}"
