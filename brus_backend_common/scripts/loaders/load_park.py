@@ -31,6 +31,9 @@ class ParkLoader:
     PARK_SUB_KEY = "OMB_Data/"
     PARK_FILE_NAME = "PARK_PROGRAM_ACTIVITY.csv"
 
+    def __init__(self, spark):
+        self.spark = spark
+
     def get_park_df(self) -> pd.DataFrame:
         logger.info("Getting the PARK file")
         s3 = _get_boto3("client", "s3")
@@ -65,14 +68,12 @@ class ParkLoader:
         last_uploaded = last_uploaded.replace(tzinfo=None)
         return last_uploaded
 
-    @staticmethod
-    def get_stored_park_last_upload() -> datetime.datetime | None:
-        with spark_helper.SparkScriptSession() as spark:
-            edld = ExternalDataLoadDate(spark)
-            if not edld.exists():
-                edld.initialize(recreate=True)
-            df = edld.to_pandas_df()
-            last_stored_obj = df[df.name == ProgramActivityPark(spark).TABLE_REF]
+    def get_stored_park_last_upload(self) -> datetime.datetime | None:
+        edld = ExternalDataLoadDate(self.spark)
+        if not edld.exists():
+            edld.initialize(recreate=True)
+        df = edld.to_pandas_df()
+        last_stored_obj = df[df.name == ProgramActivityPark(self.spark).TABLE_REF]
         return (
             None
             if last_stored_obj.empty
@@ -115,10 +116,11 @@ class ParkLoader:
                 return self.ErrorCodes.EMPTY_DATA.value
             if export:
                 self.export_public_park(df)
-            with spark_helper.SparkScriptSession() as spark:
-                pap = ProgramActivityPark(spark)
-                metrics_json["records_deleted"] = pap.count()
-                pap.save(df)
+            pap = ProgramActivityPark(self.spark)
+            if not pap.exists():
+                pap.initialize(recreate=True)
+            metrics_json["records_deleted"] = pap.count()
+            pap.save(df)
             end_time = datetime.datetime.now()
             update_external_data_load_date(pap, start_time, end_time)
             num_records = pap.count()
@@ -138,7 +140,8 @@ if __name__ == "__main__":
     )
     parser.add_argument("-f", "--force", help="If provided, forces a reload", action="store_true")
     args = parser.parse_args()
-    loader = ParkLoader()
-    exit_code = loader.load_park_data(force_reload=args.force, export=args.export)
+    with spark_helper.SparkScriptSession() as spark:
+        loader = ParkLoader(spark)
+        exit_code = loader.load_park_data(force_reload=args.force, export=args.export)
     if exit_code is not None:
         exit_if_nonlocal(exit_code)
