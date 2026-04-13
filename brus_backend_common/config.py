@@ -55,8 +55,7 @@ class DefaultConfig(BaseSettings):
         # Buckets
         DATA_SOURCES_BUCKET: The S3 data sources bucket name
         PUBLIC_FILES_BUCKET: The S3 public files bucket name
-        BROKER_EXTERNAL_S3_BUCKET: The S3 broker external bucket name
-        BROKER_SUBMISSIONS_S3_BUCKET: The S3 broker submissions bucket name
+        BROKER_S3_BUCKET: The S3 broker bucket name
         REFERENCE_S3_BUCKET: The S3 reference bucket name
         USAS_S3_BUCKET: The S3 USAS bucket name
         METRICS_BUCKET: The S3 metrics bucket name
@@ -121,8 +120,7 @@ class DefaultConfig(BaseSettings):
     # Buckets
     DATA_SOURCES_BUCKET: str = ""
     PUBLIC_FILES_BUCKET: str = ""
-    BROKER_EXTERNAL_S3_BUCKET = ""
-    BROKER_SUBMISSIONS_S3_BUCKET = ""
+    BROKER_S3_BUCKET = ""
     REFERENCE_S3_BUCKET = ""
     USAS_S3_BUCKET = ""
     METRICS_BUCKET: str = ""

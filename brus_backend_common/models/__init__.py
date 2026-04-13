@@ -4,8 +4,7 @@ from brus_backend_common.models.reference import DEFCSilver, DEFCGroup, DEFCBron
 from brus_backend_common.config import CONFIG
 
 LAKEHOUSE_BUCKETS = {
-    "broker-submissions": CONFIG.BROKER_SUBMISSIONS_S3_BUCKET,
-    "broker-external": CONFIG.BROKER_EXTERNAL_S3_BUCKET,
+    "broker": CONFIG.BROKER_S3_BUCKET,
     "reference": CONFIG.REFERENCE_S3_BUCKET,
     "usas": CONFIG.USAS_S3_BUCKET,
 }
