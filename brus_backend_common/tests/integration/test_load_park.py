@@ -19,9 +19,9 @@ def upload_park():
     csv_file_path = os.path.join(_SRC_ROOT_DIR, "tests", "integration", "data", "PARK_PROGRAM_ACTIVITY.csv")
     s3_client.upload_file(csv_file_path, pap_model.BUCKET_NAME, ParkLoader.PARK_SUB_KEY + ParkLoader.PARK_FILE_NAME)
 
-    yield pap_model.RELATIVE_TABLE_PATH
+    yield
 
-    s3_client.delete_object(Bucket=pap_model.BUCKET_NAME, Key=pap_model.RELATIVE_TABLE_PATH)
+    s3_client.delete_object(Bucket=pap_model.BUCKET_NAME, Key=ParkLoader.PARK_SUB_KEY + ParkLoader.PARK_FILE_NAME)
 
 
 def test_load_park(upload_park):
