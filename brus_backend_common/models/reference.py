@@ -71,6 +71,7 @@ class DEFCSilver(DeltaModel):
         ]
     )
 
+
 class ProgramActivityPark(DeltaModel):
     BUCKET_NAME = CONFIG.REFERENCE_S3_BUCKET
     DATABASE_NAME = LakeHouseDatabase.SILVER
