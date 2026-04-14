@@ -1,3 +1,4 @@
+import ast
 import importlib.util
 import io
 import logging
@@ -11,6 +12,7 @@ from typing import Any, Callable, List
 from datetime import datetime
 
 import deltalake
+import numpy as np
 import pyarrow as pa
 import pandas as pd
 import polars as pl
@@ -21,6 +23,7 @@ from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.functions import monotonically_increasing_id
 from pyspark.sql.utils import AnalysisException
 from pyspark.sql.types import (
+    ArrayType,
     IntegerType,
     StructField,
     StringType,
@@ -371,8 +374,22 @@ class CSVModel(LakeHouseModel):
             self._s3_client.upload_file(blank_csv, self.BUCKET_NAME, self.RELATIVE_CSV_PATH)
 
     def to_pandas_df(self, **kwargs: Any) -> pd.DataFrame | None:
+        converters = {}
+
+        # Convert arrays from csv format to lists
+        for col in self.STRUCTURE:
+            if isinstance(col.dataType, ArrayType):
+                converters[col.name] = ast.literal_eval
+
         # Type Checker struggles with BytesIO and S3 Objects
-        return pd.read_csv(io.BytesIO(self._s3_object), **kwargs) if self.exists() else None  # type: ignore
+        df = pd.read_csv(io.BytesIO(self._s3_object), converters=converters, **kwargs) if self.exists() else None  # type: ignore
+
+        # Convert lists in df to np.arrays
+        for col in self.STRUCTURE:
+            if isinstance(col.dataType, ArrayType):
+                df[col.name] = df[col.name].apply(np.array)
+
+        return df
 
     def to_polars_df(self, **kwargs: Any) -> pl.DataFrame | pl.Series | None:
         return pl.read_csv(self.CSV_PATH, **kwargs) if self.exists() else None
@@ -394,7 +411,7 @@ class CSVModel(LakeHouseModel):
 
 class LakeHouseCurrentMigration(CSVModel):
     BUCKET_NAME = CONFIG.REFERENCE_S3_BUCKET
-    DATABASE_NAME = LakeHouseDatabase.BRONZE
+    DATABASE_NAME = LakeHouseDatabase.GOLD
     TABLE_NAME = "migrations"
     DESCRIPTION = "Keeps track of migrations for all Lakehouse Models"
     CSV_NAME = "current_migrations.csv"
@@ -415,7 +432,7 @@ class LakeHouseCurrentMigration(CSVModel):
 
 class ExternalDataLoadDate(CSVModel):
     BUCKET_NAME = CONFIG.REFERENCE_S3_BUCKET
-    DATABASE_NAME = LakeHouseDatabase.BRONZE
+    DATABASE_NAME = LakeHouseDatabase.GOLD
     TABLE_NAME = "external_data_load_date"
     DESCRIPTION = "Keeps track of load dates of certain external data Lakehouse models"
     CSV_NAME = "external_load_date.csv"

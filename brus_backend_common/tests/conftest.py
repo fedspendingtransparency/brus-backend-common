@@ -89,7 +89,7 @@ def temp_file_path():
 # Should just be a simple csv creation, upload, and deletion per test
 @pytest.fixture(scope="function")
 def external_data_load_dates():
-    raw_eld_model = LAKEHOUSE_MODELS["bronze.external_data_load_date"]()
+    raw_eld_model = LAKEHOUSE_MODELS["gold.external_data_load_date"]()
     s3_client = _get_boto3("client", "s3")
 
     raw_eld_model.initialize(recreate=True)
