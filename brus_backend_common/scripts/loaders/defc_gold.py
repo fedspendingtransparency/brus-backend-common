@@ -8,10 +8,9 @@ import pandas as pd
 import re
 from datetime import datetime
 
-from brus_backend_common.models import DEFCBronze, DEFCSilver, DEFCGroup
+from brus_backend_common.models import DEFCBronze, DEFCGroup, DEFCGold
 from brus_backend_common.models.lakehouse_model import update_external_data_load_date
 from brus_backend_common.helpers.aws import _get_boto3
-from brus_backend_common.helpers.spark import SparkScriptSession
 from brus_backend_common.helpers.pandas import check_dataframe_diff
 from brus_backend_common.helpers.scripts import (
     clean_data,
@@ -203,107 +202,106 @@ def main(local_file: str | None = None, force_reload: bool = False, metrics_json
 
     s3 = _get_boto3("client", "s3")
 
-    with SparkScriptSession() as spark:
-        raw_model = DEFCBronze()
-        if not raw_model.exists():
-            raise ValueError(f"{raw_model.TABLE_REF} doesn't exist. Use create_migrate_delta_table beforehand.")
+    raw_model = DEFCBronze()
+    if not raw_model.exists():
+        raise ValueError(f"{raw_model.TABLE_REF} doesn't exist. Use create_migrate_delta_table beforehand.")
 
-        group_model = DEFCGroup()
-        if not group_model.exists():
-            raise ValueError(f"{group_model.TABLE_REF} doesn't exist. Use create_migrate_delta_table beforehand.")
+    group_model = DEFCGroup()
+    if not group_model.exists():
+        raise ValueError(f"{group_model.TABLE_REF} doesn't exist. Use create_migrate_delta_table beforehand.")
 
-        int_model = DEFCSilver(spark=spark)
-        if not int_model.exists():
-            raise ValueError(f"{int_model.TABLE_REF} doesn't exist. Use create_migrate_delta_table beforehand.")
+    gold_model = DEFCGold()
+    if not gold_model.exists():
+        raise ValueError(f"{gold_model.TABLE_REF} doesn't exist. Use create_migrate_delta_table beforehand.")
 
-        start_time = datetime.now()
-        metrics_json["start_time"] = str(start_time)
+    start_time = datetime.now()
+    metrics_json["start_time"] = str(start_time)
 
-        logger.info("Parsing DEFC data")
-        try:
-            if not local_file:
-                raw_data = raw_model.to_pandas_df(dtype=str, na_filter=False)
-            else:
-                raw_data = pd.read_csv(local_file, dtype=str, na_filter=False)
-        except pd.errors.EmptyDataError:
-            metrics_json["blank_file"] = True
-            metrics_json["exit_code"] = 4  # exit code chosen arbitrarily, to indicate distinct failure states
-            return metrics_json
-        headers = set([header.upper() for header in list(raw_data)])
-
-        if not VALID_HEADERS.issubset(headers):
-            logger.error("Missing required headers. Required headers include: %s" % str(VALID_HEADERS))
-            metrics_json["exit_code"] = 4
-            return metrics_json
-        metrics_json["records_received"] = len(raw_data)
-        # Creating a dataframe of the export csv first and then copying columns to match the database
-        raw_data = raw_data.rename(columns={"DEFC_CODE": "DEFC", "DEFC_TITLE": "Public Law"})
-
-        group_model_df = group_model.to_pandas_df()
-        group_mapping = group_model_df.groupby("group")["code"].agg(list).to_dict()
-
-        raw_data = apply_defc_derivations(raw_data, group_mapping)
-
-        raw_data = add_defc_outliers(raw_data, group_mapping)
-
-        # Clear any lingering np.nan's
-        raw_data = raw_data.replace({np.nan: None})
-
-        logger.info("Checking for differences in DEFC data")
-        defc_mapping = {
-            "defc": "code",
-            "public_law": "public_laws",
-            "public_law_short_title": "public_law_short_titles",
-            "group_name": "group",
-            "urls": "urls",
-            "is_valid": "is_valid",
-            "earliest_public_law_enactment_date": "earliest_pl_action_date",
-        }
-        data = clean_data(raw_data, defc_mapping, {})
-        diff_found = check_dataframe_diff(data, int_model.to_pandas_df(), ["defc_id"], ["code"], date_format="%Y-%m-%d")
-        if force_reload or diff_found:
-
-            # The only diff should be whenever a new code is added. Noting it here
-            if diff_found:
-                incoming_defcs = list(data["code"])
-                curr_defcs = list(int_model.to_pandas_df()["code"])
-                diff_defcs = list(set(incoming_defcs) - set(curr_defcs))
-                metrics_json["new_defc"] = diff_defcs
-                logger.info(f"Difference found: {diff_defcs}")
-
-            logger.info("Overwriting new DEFC data to Broker")
-            int_model.save(data)
-
-            update_external_data_load_date(int_model, start_time, datetime.now())
-            logger.info("{} records inserted to DEFC".format(len(data)))
-
-            # convert the arrays to pipe-delimited strings
-            defc_delim = "|"
-            array_cols = ["Public Law", "Public Law Short Title", "URLs"]
-            for array_col in array_cols:
-                raw_data[array_col] = raw_data[array_col].apply(lambda value: defc_delim.join(value))
-
-            header_order = [
-                "DEFC",
-                "Public Law",
-                "Public Law Short Title",
-                "Group Name",
-                "URLs",
-                "Is Valid",
-                "Earliest Public Law Enactment Date",
-            ]
-            raw_data = raw_data[header_order]
-            export_name = "def_codes.csv"
-            logger.info("Exporting loaded DEFC file to {}".format(export_name))
-            raw_data.to_csv(export_name, index=0)
-
-            s3.upload_file(export_name, CONFIG.PUBLIC_FILES_BUCKET, export_name)
-
-            os.remove(export_name)
+    logger.info("Parsing DEFC data")
+    try:
+        if not local_file:
+            raw_data = raw_model.to_pandas_df(dtype=str, na_filter=False)
         else:
-            logger.info("No differences found, skipping defc table reload.")
+            raw_data = pd.read_csv(local_file, dtype=str, na_filter=False)
+    except pd.errors.EmptyDataError:
+        metrics_json["blank_file"] = True
+        metrics_json["exit_code"] = 4  # exit code chosen arbitrarily, to indicate distinct failure states
+        return metrics_json
+    headers = set([header.upper() for header in list(raw_data)])
 
-        total_defc_count = int_model.count()
+    if not VALID_HEADERS.issubset(headers):
+        logger.error("Missing required headers. Required headers include: %s" % str(VALID_HEADERS))
+        metrics_json["exit_code"] = 4
+        return metrics_json
+    metrics_json["records_received"] = len(raw_data)
+    # Creating a dataframe of the export csv first and then copying columns to match the database
+    raw_data = raw_data.rename(columns={"DEFC_CODE": "DEFC", "DEFC_TITLE": "Public Law"})
+
+    group_model_df = group_model.to_pandas_df()
+    group_mapping = group_model_df.groupby("group")["code"].agg(list).to_dict()
+
+    raw_data = apply_defc_derivations(raw_data, group_mapping)
+
+    raw_data = add_defc_outliers(raw_data, group_mapping)
+
+    # Clear any lingering np.nan's
+    raw_data = raw_data.replace({np.nan: None})
+
+    logger.info("Checking for differences in DEFC data")
+    defc_mapping = {
+        "defc": "code",
+        "public_law": "public_laws",
+        "public_law_short_title": "public_law_short_titles",
+        "group_name": "group",
+        "urls": "urls",
+        "is_valid": "is_valid",
+        "earliest_public_law_enactment_date": "earliest_pl_action_date",
+    }
+    data = clean_data(raw_data, defc_mapping, {})
+    diff_found = check_dataframe_diff(data, gold_model.to_pandas_df(), ["defc_id"], ["code"], date_format="%Y-%m-%d")
+    if force_reload or diff_found:
+
+        # The only diff should be whenever a new code is added. Noting it here
+        if diff_found:
+            incoming_defcs = list(data["code"])
+            curr_defcs = list(gold_model.to_pandas_df()["code"])
+            diff_defcs = list(set(incoming_defcs) - set(curr_defcs))
+            metrics_json["new_defc"] = diff_defcs
+            logger.info(f"Difference found: {diff_defcs}")
+
+        logger.info("Overwriting new DEFC data to Broker")
+        gold_model.save(data)
+
+        update_external_data_load_date(gold_model, start_time, datetime.now())
+        logger.info("{} records inserted to DEFC".format(len(data)))
+
+        # convert the arrays to pipe-delimited strings
+        defc_delim = "|"
+        array_cols = ["Public Law", "Public Law Short Title", "URLs"]
+        for array_col in array_cols:
+            raw_data[array_col] = raw_data[array_col].apply(lambda value: defc_delim.join(value))
+
+        header_order = [
+            "DEFC",
+            "Public Law",
+            "Public Law Short Title",
+            "Group Name",
+            "URLs",
+            "Is Valid",
+            "Earliest Public Law Enactment Date",
+        ]
+        raw_data = raw_data[header_order]
+        export_name = "def_codes.csv"
+        logger.info("Exporting loaded DEFC file to {}".format(export_name))
+        raw_data.to_csv(export_name, index=0)
+
+        s3.upload_file(export_name, CONFIG.PUBLIC_FILES_BUCKET, export_name)
+
+        os.remove(export_name)
+    else:
+        logger.info("No differences found, skipping defc table reload.")
+
+    total_defc_count = gold_model.count()
 
     metrics_json["total_defc_count"] = total_defc_count
 
