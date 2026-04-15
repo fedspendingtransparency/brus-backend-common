@@ -24,7 +24,7 @@ def upload_park():
     s3_client.delete_object(Bucket=pap_model.BUCKET_NAME, Key=ParkLoader.PARK_SUB_KEY + ParkLoader.PARK_FILE_NAME)
 
 
-def test_load_park(upload_park):
+def test_load_park(s3_unittest_data_bucket, hive_unittest_metastore_db, upload_park):
     with spark_helper.SparkScriptSession() as spark:
         loader = ParkLoader(spark)
         loader.load_park_data(force_reload=True)
