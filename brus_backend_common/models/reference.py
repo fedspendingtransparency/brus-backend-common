@@ -1,3 +1,7 @@
+from datetime import datetime
+
+import pandas as pd
+
 from pyspark.sql.types import (
     ArrayType,
     BooleanType,
@@ -21,12 +25,10 @@ class DEFCBronze(CSVModel):
     UNIQUE_CONSTRAINTS = []
     MIGRATION_HISTORY = []
 
-    STRUCTURE = StructType(
-        [
-            StructField("DEFC_CODE", StringType(), False),
-            StructField("DEFC_TITLE", StringType(), False),
-        ]
-    )
+    DTYPES = {
+        "DEFC_CODE": pd.StringDtype(),
+        "DEFC_TITLE": pd.StringDtype(),
+    }
 
 
 class DEFCGroup(CSVModel):
@@ -39,12 +41,10 @@ class DEFCGroup(CSVModel):
     UNIQUE_CONSTRAINTS = []
     MIGRATION_HISTORY = []
 
-    STRUCTURE = StructType(
-        [
-            StructField("code", StringType(), False),
-            StructField("group", StringType(), False),
-        ]
-    )
+    DTYPES = {
+        "code": pd.StringDtype(),
+        "group": pd.StringDtype(),
+    }
 
 
 class DEFCSilver(DeltaModel):
@@ -72,23 +72,44 @@ class DEFCSilver(DeltaModel):
     )
 
 
-class ProgramActivityPark(DeltaModel):
+class ProgramActivityParkBronze(CSVModel):
     BUCKET_NAME = CONFIG.REFERENCE_S3_BUCKET
-    DATABASE_NAME = LakeHouseDatabase.SILVER
+    DATABASE_NAME = LakeHouseDatabase.BRONZE
+    TABLE_NAME = "program_activity_park"
+    DESCRIPTION = "Raw program activity park data"
+    CSV_NAME = "PARK_PROGRAM_ACTIVITY.csv"
+    PK = "PARK"
+    DTYPES = {
+        "FY": pd.StringDtype(),
+        "PD": pd.StringDtype(),
+        "ALLOC_XFER_AGENCY": pd.StringDtype(),
+        "AID": pd.StringDtype(),
+        "MAIN_ACCT": pd.StringDtype(),
+        "SUB_ACCT": pd.StringDtype(),
+        "COMPOUND_KEY": pd.StringDtype(),
+        "PARK": pd.StringDtype(),
+        "PARK_NAME": pd.StringDtype(),
+        "RECORD_UPDATE_TS": pd.StringDtype(),
+        "FILE_UPDATE_TS": pd.StringDtype(),
+    }
+
+
+class ProgramActivityParkGold(CSVModel):
+    BUCKET_NAME = CONFIG.REFERENCE_S3_BUCKET
+    DATABASE_NAME = LakeHouseDatabase.GOLD
     TABLE_NAME = "program_activity_park"
     DESCRIPTION = "Program activity park data after initial processing"
+    CSV_NAME = "PROGRAM_ACTIVITY_PARK.csv"
     PK = "park_code"
-    STRUCTURE = StructType(
-        [
-            StructField("created_at", TimestampType()),
-            StructField("updated_at", TimestampType()),
-            StructField("fiscal_year", IntegerType()),
-            StructField("period", IntegerType()),
-            StructField("allocation_transfer_id", StringType()),
-            StructField("agency_id", StringType()),
-            StructField("main_account_number", StringType()),
-            StructField("sub_account_number", StringType()),
-            StructField("park_code", StringType()),
-            StructField("park_name", StringType()),
-        ]
-    )
+    DTYPES = {
+        "created_at": datetime,
+        "updated_at": datetime,
+        "fiscal_year": pd.Int64Dtype(),
+        "period": pd.Int64Dtype(),
+        "allocation_transfer_id": pd.StringDtype(),
+        "agency_id": pd.StringDtype(),
+        "main_account_number": pd.StringDtype(),
+        "sub_account_number": pd.StringDtype(),
+        "park_code": pd.StringDtype(),
+        "park_name": pd.StringDtype(),
+    }

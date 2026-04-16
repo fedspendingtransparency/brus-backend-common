@@ -40,21 +40,21 @@ ENV JAVA_HOME=/usr/lib/jvm/java-${JAVA_VERSION}-amazon-corretto
 # Install Hadoop and Spark into the image
 # Commented out as pyspark + config "spark.jars.packages" installs them much faster. Uncomment if that approach becomes unreliable.
 #
-WORKDIR /usr/local
-
-RUN wget --quiet https://archive.apache.org/dist/hadoop/common/hadoop-${HADOOP_VERSION}/hadoop-${HADOOP_VERSION}.tar.gz \
-    && tar xzf hadoop-${HADOOP_VERSION}.tar.gz \
-    && ln -sfn /usr/local/hadoop-${HADOOP_VERSION} /usr/local/hadoop \
-    && wget --quiet https://archive.apache.org/dist/spark/spark-${SPARK_VERSION}/spark-${SPARK_VERSION}-bin-without-hadoop.tgz \
-    && tar xzf spark-${SPARK_VERSION}-bin-without-hadoop.tgz \
-    && ln -sfn /usr/local/spark-${SPARK_VERSION}-bin-without-hadoop /usr/local/spark \
-    && echo "Installed $(/usr/local/hadoop/bin/hadoop version)"
-ENV HADOOP_HOME=/usr/local/hadoop
-ENV SPARK_HOME=/usr/local/spark
+# WORKDIR /usr/local
+#
+#RUN wget --quiet https://archive.apache.org/dist/hadoop/common/hadoop-${HADOOP_VERSION}/hadoop-${HADOOP_VERSION}.tar.gz \
+#    && tar xzf hadoop-${HADOOP_VERSION}.tar.gz \
+#    && ln -sfn /usr/local/hadoop-${HADOOP_VERSION} /usr/local/hadoop \
+#    && wget --quiet https://archive.apache.org/dist/spark/spark-${SPARK_VERSION}/spark-${SPARK_VERSION}-bin-without-hadoop.tgz \
+#    && tar xzf spark-${SPARK_VERSION}-bin-without-hadoop.tgz \
+#    && ln -sfn /usr/local/spark-${SPARK_VERSION}-bin-without-hadoop /usr/local/spark \
+#    && echo "Installed $(/usr/local/hadoop/bin/hadoop version)"
+#ENV HADOOP_HOME=/usr/local/hadoop
+#ENV SPARK_HOME=/usr/local/spark
 ## Cannot set ENV var = command-result, [i.e. doing: ENV SPARK_DIST_CLASSPATH=$(${HADOOP_HOME}/bin/hadoop classpath)], so interpolating the hadoop classpath the long way
-ENV SPARK_DIST_CLASSPATH="$HADOOP_HOME/etc/hadoop/*:$HADOOP_HOME/share/hadoop/common/lib/*:$HADOOP_HOME/share/hadoop/common/*:$HADOOP_HOME/share/hadoop/hdfs/*:$HADOOP_HOME/share/hadoop/hdfs/lib/*:$HADOOP_HOME/share/hadoop/hdfs/*:$HADOOP_HOME/share/hadoop/yarn/lib/*:$HADOOP_HOME/share/hadoop/yarn/*:$HADOOP_HOME/share/hadoop/mapreduce/lib/*:$HADOOP_HOME/share/hadoop/mapreduce/*:$HADOOP_HOME/share/hadoop/tools/lib/*"
-ENV PATH=${SPARK_HOME}/bin:${HADOOP_HOME}/bin:${JAVA_HOME}/bin:${PATH}
-RUN echo "Installed Spark" && echo "$(${SPARK_HOME}/bin/pyspark --version)"
+#ENV SPARK_DIST_CLASSPATH="$HADOOP_HOME/etc/hadoop/*:$HADOOP_HOME/share/hadoop/common/lib/*:$HADOOP_HOME/share/hadoop/common/*:$HADOOP_HOME/share/hadoop/hdfs/*:$HADOOP_HOME/share/hadoop/hdfs/lib/*:$HADOOP_HOME/share/hadoop/hdfs/*:$HADOOP_HOME/share/hadoop/yarn/lib/*:$HADOOP_HOME/share/hadoop/yarn/*:$HADOOP_HOME/share/hadoop/mapreduce/lib/*:$HADOOP_HOME/share/hadoop/mapreduce/*:$HADOOP_HOME/share/hadoop/tools/lib/*"
+#ENV PATH=${SPARK_HOME}/bin:${HADOOP_HOME}/bin:${JAVA_HOME}/bin:${PATH}
+#RUN echo "Installed Spark" && echo "$(${SPARK_HOME}/bin/pyspark --version)"
 
 WORKDIR /project
 

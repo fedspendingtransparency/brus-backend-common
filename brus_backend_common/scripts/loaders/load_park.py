@@ -1,21 +1,19 @@
 import argparse
-import datetime
-import io
 import json
 import logging
+from datetime import datetime
 from enum import Enum
 
 import pandas as pd
 
-from brus_backend_common.config import CONFIG
 from brus_backend_common.helpers.aws import _get_boto3
 from brus_backend_common.helpers.scripts import (
     clean_data,
     exit_if_nonlocal,
 )
-import brus_backend_common.helpers.spark as spark_helper
+from brus_backend_common.helpers.spark import SparkScriptSession
 from brus_backend_common.models.lakehouse_model import ExternalDataLoadDate, update_external_data_load_date
-from brus_backend_common.models.reference import ProgramActivityPark
+from brus_backend_common.models.reference import ProgramActivityParkBronze, ProgramActivityParkGold
 
 
 logger = logging.getLogger(__name__)
@@ -27,21 +25,13 @@ class ParkLoader:
         EMPTY_DATA = 4
         SKIPPED = 6
 
-    PARK_BUCKET = CONFIG.DATA_SOURCES_BUCKET
-    PARK_SUB_KEY = "OMB_Data/"
-    PARK_FILE_NAME = "PARK_PROGRAM_ACTIVITY.csv"
+    def __init__(self):
+        self.s3 = _get_boto3("client", "s3")
 
-    def __init__(self, spark):
-        self.spark = spark
-
-    def get_park_df(self) -> pd.DataFrame:
-        logger.info("Getting the PARK file")
-        s3 = _get_boto3("client", "s3")
-        response = s3.get_object(Bucket=self.PARK_BUCKET, Key=self.PARK_SUB_KEY + self.PARK_FILE_NAME)
-        pa_file = io.BytesIO(response["Body"].read())
-        raw_data = pd.read_csv(pa_file, dtype=str, na_filter=False)
+    @staticmethod
+    def transformed_df() -> pd.DataFrame:
         return clean_data(
-            raw_data,
+            ProgramActivityParkBronze().to_pandas_df(),
             {
                 "fy": "fiscal_year",
                 "pd": "period",
@@ -60,24 +50,24 @@ class ParkLoader:
             },
         )
 
-    def get_date_of_current_park_upload(self) -> datetime.datetime:
-        last_uploaded = _get_boto3("client", "s3").head_object(
-            Bucket=self.PARK_BUCKET, Key=self.PARK_SUB_KEY + self.PARK_FILE_NAME
-        )["LastModified"]
+    def get_date_of_current_park_upload(self) -> datetime:
+        bronze = ProgramActivityParkBronze()
+        last_uploaded = self.s3.head_object(Bucket=bronze.BUCKET_NAME, Key=bronze.RELATIVE_CSV_PATH)["LastModified"]
         # LastModified is coming back to us in UTC already; just drop the TZ.
         last_uploaded = last_uploaded.replace(tzinfo=None)
         return last_uploaded
 
-    def get_stored_park_last_upload(self) -> datetime.datetime | None:
-        edld = ExternalDataLoadDate(self.spark)
+    @staticmethod
+    def get_stored_park_last_upload() -> datetime | None:
+        edld = ExternalDataLoadDate()
         if not edld.exists():
             edld.initialize(recreate=True)
         df = edld.to_pandas_df()
-        last_stored_obj = df[df.name == ProgramActivityPark(self.spark).TABLE_REF]
+        last_stored_obj = df[df.name == ProgramActivityParkGold().TABLE_REF]
         return (
             None
             if last_stored_obj.empty
-            else datetime.datetime.strptime(last_stored_obj.last_load_date_start.values[0], "%Y-%m-%d %H:%M:%S.%f")
+            else pd.Timestamp(last_stored_obj.last_load_date_start.values[0]).to_pydatetime()
         )
 
     @property
@@ -101,7 +91,7 @@ class ParkLoader:
         force_reload: bool = False,
         export: bool = False,
     ) -> int | None:
-        start_time = datetime.datetime.now()
+        start_time = datetime.now()
         metrics_json = {
             "script_name": "load_park.py",
             "start_time": str(start_time),
@@ -111,20 +101,20 @@ class ParkLoader:
         skipped = False if force_reload else self.is_skipped
         if not skipped:
             try:
-                df = self.get_park_df()
+                df = self.transformed_df()
             except pd.errors.EmptyDataError:
                 return self.ErrorCodes.EMPTY_DATA.value
             if export:
                 self.export_public_park(df)
-            pap = ProgramActivityPark(self.spark)
-            if not pap.exists():
-                pap.initialize(recreate=True)
-            metrics_json["records_deleted"] = pap.count()
-            pap.save(df)
-            end_time = datetime.datetime.now()
-            update_external_data_load_date(pap, start_time, end_time)
-            num_records = pap.count()
-            logger.info("{} records inserted to {}".format(num_records, pap.TABLE_REF))
+            papg = ProgramActivityParkGold()
+            if not papg.exists():
+                papg.initialize(recreate=True)
+            metrics_json["records_deleted"] = papg.count()
+            papg.save(df)
+            end_time = datetime.now()
+            update_external_data_load_date(papg, start_time, end_time)
+            num_records = papg.count()
+            logger.info("{} records inserted to {}".format(num_records, papg.TABLE_REF))
             metrics_json["records_inserted"] = num_records
             metrics_json["duration"] = str(end_time - start_time)
         with open("load_park_metrics.json", "w+") as metrics_file:
@@ -140,8 +130,7 @@ if __name__ == "__main__":
     )
     parser.add_argument("-f", "--force", help="If provided, forces a reload", action="store_true")
     args = parser.parse_args()
-    with spark_helper.SparkScriptSession() as spark:
-        loader = ParkLoader(spark)
-        exit_code = loader.load_park_data(force_reload=args.force, export=args.export)
+    loader = ParkLoader()
+    exit_code = loader.load_park_data(force_reload=args.force, export=args.export)
     if exit_code is not None:
         exit_if_nonlocal(exit_code)

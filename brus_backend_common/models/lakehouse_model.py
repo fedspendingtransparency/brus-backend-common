@@ -6,9 +6,9 @@ import sys
 import tempfile
 from abc import ABC
 from argparse import ArgumentTypeError
-from enum import Enum
-from typing import Any, Callable, List
 from datetime import datetime
+from enum import Enum
+from typing import Any, Callable, Hashable, List
 
 import deltalake
 import pyarrow as pa
@@ -17,6 +17,7 @@ import polars as pl
 from deltalake import DeltaTable, QueryBuilder  # Field, schema
 from deltalake.writer import write_deltalake
 from mypy_boto3_s3 import S3Client
+from numpy.typing import DTypeLike
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.functions import monotonically_increasing_id
 from pyspark.sql.utils import AnalysisException
@@ -60,9 +61,6 @@ class LakeHouseModel(ABC):
     UNIQUE_CONSTRAINTS: List[str | tuple[str]] | None = None
     MIGRATION_HISTORY: List[str] | None = None  # must be ordered by earliest to latest
 
-    # The schema/structure of the delta table as StructType with StructFields
-    STRUCTURE: StructType
-
     def __init__(self, spark: SparkSession | None = None) -> None:
         self._s3_client: S3Client = _get_boto3("client", "s3")
         self.RELATIVE_DATABASE_PATH: str = (
@@ -70,7 +68,7 @@ class LakeHouseModel(ABC):
         )
         self.DATABASE_PATH: str = f"s3://{self.BUCKET_NAME}/{self.RELATIVE_DATABASE_PATH}"
         self.DATABASE_PATH_HADOOP: str = f"s3a://{self.BUCKET_NAME}/{self.RELATIVE_DATABASE_PATH}"
-        self.RELATIVE_TABLE_PATH: str = f"{self.TABLE_NAME}"
+        self.RELATIVE_TABLE_PATH: str = f"{self.RELATIVE_DATABASE_PATH}/{self.TABLE_NAME}"
         self.TABLE_PATH: str = f"{self.DATABASE_PATH}/{self.RELATIVE_TABLE_PATH}"
         self.TABLE_PATH_HADOOP: str = f"{self.DATABASE_PATH_HADOOP}/{self.RELATIVE_TABLE_PATH}"
         self.TABLE_REF: str = f"{self.DATABASE_NAME.value}.{self.TABLE_NAME}"
@@ -158,6 +156,7 @@ class LakeHouseModel(ABC):
 
 class DeltaModel(LakeHouseModel):
     FORMAT = LakeHouseModelFormat.DELTA
+    STRUCTURE: StructType
 
     # Used to repopulate the table from scratch
     # If the text is too large for the model, pull the text from a separate script.
@@ -316,7 +315,7 @@ class DeltaModel(LakeHouseModel):
 
 class CSVModel(LakeHouseModel):
     FORMAT = LakeHouseModelFormat.CSV
-
+    DTYPES: dict[Hashable, DTypeLike]
     CSV_NAME: str
 
     def __init__(self, spark: SparkSession | None = None) -> None:
@@ -364,7 +363,7 @@ class CSVModel(LakeHouseModel):
             self.exists()
 
     def _recreate_blank_file(self):
-        df = pd.DataFrame(columns=self.STRUCTURE.fieldNames())
+        df = pd.DataFrame(columns=list(self.DTYPES))
         with tempfile.TemporaryDirectory() as temp_dir:
             blank_csv = os.path.join(temp_dir, self.CSV_NAME)
             df.to_csv(blank_csv, index=False)
@@ -372,7 +371,18 @@ class CSVModel(LakeHouseModel):
 
     def to_pandas_df(self, **kwargs: Any) -> pd.DataFrame | None:
         # Type Checker struggles with BytesIO and S3 Objects
-        return pd.read_csv(io.BytesIO(self._s3_object), **kwargs) if self.exists() else None  # type: ignore
+        cols = list(self.DTYPES)
+        return (
+            pd.read_csv(
+                io.BytesIO(self._s3_object),
+                dtype={k: v for k, v in self.DTYPES.items() if v != datetime},
+                parse_dates=[k for k, v in self.DTYPES.items() if v == datetime],
+                usecols=cols,
+                **kwargs,
+            )[cols]
+            if self.exists()
+            else None
+        )  # type: ignore
 
     def to_polars_df(self, **kwargs: Any) -> pl.DataFrame | pl.Series | None:
         return pl.read_csv(self.CSV_PATH, **kwargs) if self.exists() else None
@@ -401,16 +411,13 @@ class LakeHouseCurrentMigration(CSVModel):
     PK = "model_id"
     UNIQUE_CONSTRAINTS = ["model"]
     MIGRATION_HISTORY = []
-
-    STRUCTURE = StructType(
-        [
-            StructField("created_at", TimestampType(), True),
-            StructField("updated_at", TimestampType(), True),
-            StructField("model_id", IntegerType(), False),
-            StructField("model", StringType(), False),
-            StructField("current_migration", StringType(), False),
-        ]
-    )
+    DTYPES = {
+        "created_at": datetime,
+        "updated_at": datetime,
+        "model_id": pd.Int64Dtype(),
+        "model": pd.StringDtype(),
+        "current_migration": pd.StringDtype(),
+    }
 
 
 class ExternalDataLoadDate(CSVModel):
@@ -422,18 +429,15 @@ class ExternalDataLoadDate(CSVModel):
     PK = "external_data_load_date_id"
     UNIQUE_CONSTRAINTS = ["name"]
     MIGRATION_HISTORY = []
-
-    STRUCTURE = StructType(
-        [
-            StructField("created_at", TimestampType(), True),
-            StructField("updated_at", TimestampType(), True),
-            StructField("external_data_load_date_id", IntegerType(), False),
-            StructField("name", StringType(), False),
-            StructField("description", StringType(), False),
-            StructField("last_load_date_start", TimestampType(), False),
-            StructField("last_load_date_end", TimestampType(), False),
-        ]
-    )
+    DTYPES = {
+        "created_at": datetime,
+        "updated_at": datetime,
+        "external_data_load_date_id": pd.Int64Dtype(),  # nullable int
+        "name": pd.StringDtype(),
+        "description": pd.StringDtype(),
+        "last_load_date_start": datetime,
+        "last_load_date_end": datetime,
+    }
 
 
 def update_external_data_load_date(model: LakeHouseModel, start_time: datetime, end_time: datetime):
@@ -465,8 +469,8 @@ def update_external_data_load_date(model: LakeHouseModel, start_time: datetime, 
         }
         new_entry = pd.DataFrame(new_entry_dict)
 
-        last_stored_obj = pd.concat([last_stored_obj, new_entry])
-        df = pd.concat([df, new_entry])
+        last_stored_obj = pd.concat([last_stored_obj, new_entry], ignore_index=True)
+        df = pd.concat([df, new_entry], ignore_index=True)
 
     last_stored_obj["last_load_date_start"] = convert_timestamp_df(start_time)
     last_stored_obj["last_load_date_end"] = convert_timestamp_df(end_time)

@@ -9,8 +9,8 @@ logger = logging.getLogger(__name__)
 
 
 def convert_timestamp_df(dt: datetime) -> np.datetime64:
-    """Simply converts datetime's to datetime64[us] for dataframes"""
-    return np.datetime64(dt).astype("datetime64[us]")
+    """Simply converts datetime's to datetime64[ns] for dataframes"""
+    return np.datetime64(dt).astype("datetime64[ns]")
 
 
 def check_dataframe_diff(
