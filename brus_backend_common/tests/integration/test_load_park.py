@@ -27,12 +27,13 @@ def test_load_park(s3_unittest_data_bucket, hive_unittest_metastore_db, upload_p
     with (
         patch.object(ProgramActivityParkBronze, "BUCKET_NAME", s3_unittest_data_bucket),
         patch.object(ProgramActivityParkGold, "BUCKET_NAME", s3_unittest_data_bucket),
+        patch.object(ExternalDataLoadDate, "BUCKET_NAME", s3_unittest_data_bucket),
     ):
         pap_model = ProgramActivityParkGold()
         assert not pap_model.exists()
 
         loader = ParkLoader()
-        loader.load_park_data(force_reload=True)
+        loader.load_park_data()
 
         pap_model = ProgramActivityParkGold()
         assert pap_model.exists()
