@@ -366,17 +366,14 @@ class CSVModel(LakeHouseModel):
     def to_pandas_df(self, **kwargs: Any) -> pd.DataFrame | None:
         # Type Checker struggles with BytesIO and S3 Objects
         cols = list(self.DTYPES)
-        return (
-            pd.read_csv(
-                io.BytesIO(self._s3_object),
-                dtype={k: v for k, v in self.DTYPES.items() if v != datetime},
-                parse_dates=[k for k, v in self.DTYPES.items() if v == datetime],
-                usecols=cols,
-                **kwargs,
-            )[cols]
-            if self.exists()
-            else None
-        )  # type: ignore
+        params = {
+            "dtype": {k: v for k, v in self.DTYPES.items() if v != datetime},
+            "parse_dates": [k for k, v in self.DTYPES.items() if v == datetime],
+            "usecols": cols,
+        }
+        # Ensure that any passed in kwargs take precedence over the default params
+        params.update(kwargs)
+        return pd.read_csv(io.BytesIO(self._s3_object), **params)[cols] if self.exists() else None  # type: ignore
 
     def to_polars_df(self, **kwargs: Any) -> pl.DataFrame | pl.Series | None:
         return pl.read_csv(self.CSV_PATH, **kwargs) if self.exists() else None
