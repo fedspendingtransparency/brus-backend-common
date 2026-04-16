@@ -4,13 +4,11 @@ from unittest.mock import patch
 import pytest
 
 
-import brus_backend_common.helpers.spark as spark_helper
 from brus_backend_common.config import _SRC_ROOT_DIR
 from brus_backend_common.helpers.aws import _get_boto3
 from brus_backend_common.models.lakehouse_model import ExternalDataLoadDate
 from brus_backend_common.models.reference import ProgramActivityParkBronze, ProgramActivityParkGold
 from brus_backend_common.scripts.loaders.load_park import ParkLoader
-from brus_backend_common.tests.conftest_spark import s3_unittest_data_bucket
 
 
 @pytest.fixture(scope="function")

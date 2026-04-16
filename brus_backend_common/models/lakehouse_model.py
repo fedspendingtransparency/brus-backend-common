@@ -21,13 +21,7 @@ from numpy.typing import DTypeLike
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.functions import monotonically_increasing_id
 from pyspark.sql.utils import AnalysisException
-from pyspark.sql.types import (
-    IntegerType,
-    StructField,
-    StringType,
-    StructType,
-    TimestampType,
-)
+from pyspark.sql.types import StructType
 
 from brus_backend_common.config import _SRC_ROOT_DIR, CONFIG
 from brus_backend_common.helpers.aws import _get_boto3, get_storage_options

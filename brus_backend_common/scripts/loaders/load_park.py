@@ -11,7 +11,6 @@ from brus_backend_common.helpers.scripts import (
     clean_data,
     exit_if_nonlocal,
 )
-from brus_backend_common.helpers.spark import SparkScriptSession
 from brus_backend_common.models.lakehouse_model import ExternalDataLoadDate, update_external_data_load_date
 from brus_backend_common.models.reference import ProgramActivityParkBronze, ProgramActivityParkGold
 
