@@ -70,3 +70,55 @@ class DEFCGold(CSVModel):
             StructField("earliest_pl_action_date", TimestampType(), True),
         ]
     )
+
+
+class FONBronze(CSVModel):
+    BUCKET_NAME = CONFIG.REFERENCE_S3_BUCKET
+    DATABASE_NAME = LakeHouseDatabase.BRONZE
+    TABLE_NAME = "funding_opportunity"
+    DESCRIPTION = "Raw FON data pulled from Grants.gov"
+    CSV_NAME = "funding_opportunity.csv"
+    PK = "id"
+    UNIQUE_CONSTRAINTS = [""]
+    MIGRATION_HISTORY = []
+
+    STRUCTURE = StructType(
+        [
+            StructField("id", IntegerType(), False),
+            StructField("number", StringType(), False),
+            StructField("title", StringType(), False),
+            StructField("agencyCode", StringType(), True),
+            StructField("agency", StringType(), True),
+            StructField("openDate", TimestampType(), True),
+            StructField("closeDate", TimestampType(), True),
+            StructField("oppStatus", StringType(), True),
+            StructField("docType", StringType(), True),
+            StructField("cfdaList", ArrayType(StringType(), True), True),
+        ]
+    )
+
+
+class FONGold(CSVModel):
+    BUCKET_NAME = CONFIG.REFERENCE_S3_BUCKET
+    DATABASE_NAME = LakeHouseDatabase.GOLD
+    TABLE_NAME = "funding_opportunity"
+    DESCRIPTION = "Processed FON data from FONBronze"
+    CSV_NAME = "funding_opportunity.csv"
+    PK = "funding_opportunity_id"
+    UNIQUE_CONSTRAINTS = []
+    MIGRATION_HISTORY = []
+
+    STRUCTURE = StructType(
+        [
+            StructField("funding_opportunity_id", IntegerType(), False),
+            StructField("funding_opportunity_number", StringType(), False),
+            StructField("title", StringType(), True),
+            StructField("assistance_listing_numbers", ArrayType(StringType(), True), True),
+            StructField("agency_name", StringType(), True),
+            StructField("status", StringType(), True),
+            StructField("open_date", TimestampType(), True),
+            StructField("close_date", TimestampType(), True),
+            StructField("doc_type", StringType(), True),
+            StructField("internal_id", IntegerType(), True),
+        ]
+    )
