@@ -1,0 +1,52 @@
+{
+    "searchParams": {
+        "resultType": "json",
+        "searchOnly": false,
+        "oppNum": "",
+        "cfda": "",
+        "sortBy": "",
+        "oppStatuses": "forecasted|posted|closed|archived",
+        "startRecordNum": 0,
+        "eligibilities": "",
+        "fundingInstruments": "",
+        "fundingCategories": "",
+        "agencies": "",
+        "rows": 2,
+        "keyword": "",
+        "keywordEncoded": false
+    },
+    "hitCount": 4,
+    "startRecord": 2,
+    "oppHits": [
+        {
+            "id": "51425",
+            "number": "TEST-FON-3",
+            "title": "Test FON 3",
+            "agencyCode": "TA3",
+            "agency": "Test Agency 3",
+            "openDate": "01/28/2010",
+            "closeDate": "02/11/2010",
+            "oppStatus": "archived",
+            "docType": "synopsis",
+            "cfdaList": [
+                "15.932"
+            ]
+        },
+        {
+            "id": "51463",
+            "number": "TEST-FON-4",
+            "title": "Test FON 4",
+            "agencyCode": "TA4",
+            "agency": "Test Agency 4",
+            "openDate": "02/01/2010",
+            "closeDate": "03/18/2010",
+            "oppStatus": "archived",
+            "docType": "synopsis",
+            "cfdaList": [
+                "16.561"
+            ]
+        }
+    ],
+    "accessKey": "",
+    "errorMsgs": []
+}
