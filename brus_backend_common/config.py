@@ -118,12 +118,21 @@ class DefaultConfig(BaseSettings):
         return f"sts.{self.AWS_REGION}.amazonaws.com" if not self.IS_LOCAL else f"{self.MINIO_HOST}:{self.MINIO_PORT}"
 
     # Buckets
+    DATA_ARCHIVE_BUCKET: str = ""
+    DATA_EXTRACTS_BUCKET: str = ""
     DATA_SOURCES_BUCKET: str = ""
-    PUBLIC_FILES_BUCKET: str = ""
-    BROKER_S3_BUCKET = ""
-    REFERENCE_S3_BUCKET = ""
-    USAS_S3_BUCKET = ""
+    FPDS_DELETE_BUCKET: str = ""
     METRICS_BUCKET: str = ""
+    PUBLIC_FILES_BUCKET: str = ""
+    PUBLISHED_BUCKET: str = ""
+    SF133_BUCKET: str = ""
+    SUB_ZIPS_BUCKET: str = ""
+    UNPUBLISHED_BUCKET: str = ""
+
+    # Lakehouse Buckets
+    BROKER_S3_BUCKET: str = ""
+    REFERENCE_S3_BUCKET: str = ""
+    USAS_S3_BUCKET: str = ""
 
     # Postgres
     DB1_URL: SecretStr = SecretStr("")
