@@ -101,6 +101,7 @@ class DefaultConfig(BaseSettings):
     # App
     IS_LOCAL: bool = True
     PROJECT_LOG_DIR: str = str(_SRC_ROOT_DIR / "logs")
+    ENV_CODE: str = "local"
     TRACE_ENV: str = ""
 
     # AWS
