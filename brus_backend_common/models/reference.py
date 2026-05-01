@@ -12,7 +12,7 @@ from brus_backend_common.models.lakehouse_model import CSVModel, LakeHouseDataba
 
 
 class DEFCBronze(CSVModel):
-    BUCKET_NAME = CONFIG.REFERENCE_S3_BUCKET
+    BUCKET_NAME = CONFIG.LAKEHOUSE_REFERENCE_BUCKET
     DATABASE_NAME = LakeHouseDatabase.BRONZE
     TABLE_NAME = "defc"
     DESCRIPTION = "Raw DEFC CSV placed in S3"
@@ -30,7 +30,7 @@ class DEFCBronze(CSVModel):
 
 
 class DEFCGroup(CSVModel):
-    BUCKET_NAME = CONFIG.REFERENCE_S3_BUCKET
+    BUCKET_NAME = CONFIG.LAKEHOUSE_REFERENCE_BUCKET
     DATABASE_NAME = LakeHouseDatabase.GOLD
     TABLE_NAME = "defc_mapping"
     DESCRIPTION = "Internal CSV to dynamically group DEFCs together"
@@ -48,7 +48,7 @@ class DEFCGroup(CSVModel):
 
 
 class DEFCGold(CSVModel):
-    BUCKET_NAME = CONFIG.REFERENCE_S3_BUCKET
+    BUCKET_NAME = CONFIG.LAKEHOUSE_REFERENCE_BUCKET
     DATABASE_NAME = LakeHouseDatabase.GOLD
     TABLE_NAME = "defc"
     DESCRIPTION = "DEFC data after initial processing"
