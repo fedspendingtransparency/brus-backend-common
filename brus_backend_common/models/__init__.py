@@ -4,9 +4,9 @@ from brus_backend_common.models.reference import DEFCBronze, DEFCGold, DEFCGroup
 from brus_backend_common.config import CONFIG
 
 LAKEHOUSE_BUCKETS = {
-    "broker": CONFIG.BROKER_S3_BUCKET,
-    "reference": CONFIG.REFERENCE_S3_BUCKET,
-    "usas": CONFIG.USAS_S3_BUCKET,
+    "broker": CONFIG.LAKEHOUSE_BROKER_BUCKET,
+    "reference": CONFIG.LAKEHOUSE_REFERENCE_BUCKET,
+    "usas": CONFIG.LAKEHOUSE_USAS_BUCKET,
 }
 LAKEHOUSE_BUCKET_NAMES = list(LAKEHOUSE_BUCKETS.values())
 
