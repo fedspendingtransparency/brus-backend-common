@@ -130,6 +130,10 @@ class DefaultConfig(BaseSettings):
     def AWS_STS_ENDPOINT(self):
         return f"sts.{self.AWS_REGION}.amazonaws.com" if not self.IS_LOCAL else f"{self.MINIO_HOST}:{self.MINIO_PORT}"
 
+    @property
+    def AWS_SSM_ENDPOINT(self):
+        return f"ssm.{self.AWS_REGION}.amazonaws.com" if not self.IS_LOCAL else f"{self.MINIO_HOST}:{self.MINIO_PORT}"
+
     # Buckets
     DATA_ARCHIVE_BUCKET: str = ""
     DATA_EXTRACTS_BUCKET: str = ""
