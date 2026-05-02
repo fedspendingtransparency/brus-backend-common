@@ -138,8 +138,8 @@ def _get_boto3(method_name: str, *args, region_name=CONFIG.AWS_REGION, **kwargs)
     attr = getattr(boto3, method_name)
     kwargs.update({"region_name": region_name})
     endpoint = None
-    if len(args) > 0 and args[0].upper() in ('S3', 'SSM', 'STS'):
-        endpoint = getattr(CONFIG, f'AWS_{args[0].upper()}_ENDPOINT')
+    if len(args) > 0 and args[0].upper() in ("S3", "SSM", "STS"):
+        endpoint = getattr(CONFIG, f"AWS_{args[0].upper()}_ENDPOINT")
 
     if callable(attr):
         if CONFIG.IS_LOCAL:

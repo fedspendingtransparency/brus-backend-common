@@ -22,6 +22,11 @@ Note: When working locally, do not modify this file and update your values in ".
 
 import os
 import pathlib
+
+import boto3
+
+from dotenv import dotenv_values
+from io import StringIO
 from pydantic import BaseSettings, SecretStr
 
 from brus_backend_common.helpers.uri import get_jdbc_url_from_pg_uri
@@ -202,10 +207,37 @@ class DefaultConfig(BaseSettings):
     MINIO_DATA_DIR: str = ""
 
 
-CONFIG = DefaultConfig()
+def pull_ssm_config() -> dict:
+    """This function lives in the liminal space between CONFIG and helpers.aws, having a hand in both.
+    While this is essentially more helpers.aws based, that file imports and uses CONFIG values from this file,
+    which'd result in a circular dependency.
+
+    Likewise, we could re-use the helper function below but that'd also run into a circular dependency.
+    ssm_client = _get_boto3('client', 'ssm')
+    """
+    env_group = "prod" if CONFIG.ENV_CODE == "prod" else "nonprod"
+
+    # TODO: Post-FAPC Cleanup
+    non_fapc_path = f"/{env_group}/brus-backend-common/{CONFIG.ENV_CODE}/.env"
+    fapc_path = "/kc-dtas/brus/broker/secrets"
+    secrets_param_name = fapc_path if CONFIG.FAPC else non_fapc_path
+
+    ssm_client = boto3.client("ssm", region_name=CONFIG.AWS_REGION)
+    secrets_yaml_param = ssm_client.get_parameter(Name=secrets_param_name, WithDecryption=True)
+    ssm_config = dotenv_values(stream=StringIO(secrets_yaml_param["Parameter"]["Value"]))
+    return ssm_config
 
 
 def set_brus_config(config):
     """Takes in a config dict of the attributes to override"""
     for attr, value in config.items():
         setattr(CONFIG, attr, value)
+
+
+CONFIG = DefaultConfig()
+
+# Overwrite any values with ones pulled from SSM if not local
+# Note: DefaultConfig() can take the argument, but we need the initial default values to look up the right
+# Parameter values, so we're updating them after the initial pull.
+if not CONFIG.IS_LOCAL:
+    set_brus_config(pull_ssm_config())
