@@ -73,7 +73,7 @@ class DEFCGold(CSVModel):
 
 
 class FONBronze(CSVModel):
-    BUCKET_NAME = CONFIG.REFERENCE_S3_BUCKET
+    BUCKET_NAME = CONFIG.LAKEHOUSE_REFERENCE_BUCKET
     DATABASE_NAME = LakeHouseDatabase.BRONZE
     TABLE_NAME = "funding_opportunity"
     DESCRIPTION = "Raw FON data pulled from Grants.gov"
@@ -99,7 +99,7 @@ class FONBronze(CSVModel):
 
 
 class FONGold(CSVModel):
-    BUCKET_NAME = CONFIG.REFERENCE_S3_BUCKET
+    BUCKET_NAME = CONFIG.LAKEHOUSE_REFERENCE_BUCKET
     DATABASE_NAME = LakeHouseDatabase.GOLD
     TABLE_NAME = "funding_opportunity"
     DESCRIPTION = "Processed FON data from FONBronze"
