@@ -371,6 +371,8 @@ class CSVModel(LakeHouseModel):
         with tempfile.TemporaryDirectory() as temp_dir:
             blank_csv = os.path.join(temp_dir, self.CSV_NAME)
             df.to_csv(blank_csv, index=False)
+            logger.info(f'BUCKET_NAME:{self.BUCKET_NAME}')
+            logger.info(f'RELATIVE_CSV_PATH:{self.RELATIVE_CSV_PATH}')
             self._s3_client.upload_file(blank_csv, self.BUCKET_NAME, self.RELATIVE_CSV_PATH)
 
     def to_pandas_df(self, **kwargs: Any) -> pd.DataFrame | None:
