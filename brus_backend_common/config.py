@@ -228,13 +228,12 @@ def pull_ssm_config() -> dict:
     return ssm_config
 
 
+CONFIG = DefaultConfig()
+
 def set_brus_config(config):
     """Takes in a config dict of the attributes to override"""
     for attr, value in config.items():
         setattr(CONFIG, attr, value)
-
-
-CONFIG = DefaultConfig()
 
 # Overwrite any values with ones pulled from SSM if not local
 # Note: DefaultConfig() can take the argument, but we need the initial default values to look up the right
