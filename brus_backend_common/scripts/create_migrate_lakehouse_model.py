@@ -52,6 +52,7 @@ def main(table, recreate=False, migrate=None):
 
 
 if __name__ == "__main__":
+    configure_logging()
     parser = argparse.ArgumentParser(description="Create or migrate lakehouse tables")
     parser = setup_parser(parser)
     args = parser.parse_args()

@@ -41,6 +41,7 @@ def main(table, incremental=False):
 
 
 if __name__ == "__main__":
+    configure_logging()
     parser = argparse.ArgumentParser(description="Populate a lakehouse table with its designated query.")
     parser = setup_parser(parser)
     args = parser.parse_args()
