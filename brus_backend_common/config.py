@@ -239,4 +239,4 @@ def set_brus_config(config):
 # Note: DefaultConfig() can take the argument, but we need the initial default values to look up the right
 # Parameter values, so we're updating them after the initial pull.
 if not CONFIG.IS_LOCAL:
-    set_brus_config(pull_ssm_config())
+    CONFIG = DefaultConfig(**pull_ssm_config())
