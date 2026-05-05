@@ -20,6 +20,7 @@ Note: When working locally, do not modify this file and update your values in ".
       Pydantic's dotenv will automagically populate it based on it
 """
 
+import logging
 import os
 import pathlib
 
@@ -38,6 +39,8 @@ _PROJECT_ROOT_DIR: pathlib.Path = pathlib.Path(__file__).parent.parent.resolve()
 _SRC_ROOT_DIR: pathlib.Path = _PROJECT_ROOT_DIR / _PROJECT_NAME.replace("-", "_")
 
 ENV_FILE_PATH = os.path.join(_PROJECT_ROOT_DIR, ".env")
+
+logger = logging.getLogger(__name__)
 
 
 class DefaultConfig(BaseSettings):
@@ -239,4 +242,8 @@ def set_brus_config(config):
 # Note: DefaultConfig() can take the argument, but we need the initial default values to look up the right
 # Parameter values, so we're updating them after the initial pull.
 if not CONFIG.IS_LOCAL:
-    CONFIG = DefaultConfig(**pull_ssm_config())
+    ssm_config = pull_ssm_config()
+    logger.info(ssm_config)
+    CONFIG = DefaultConfig(**ssm_config)
+
+logger.info(CONFIG)
