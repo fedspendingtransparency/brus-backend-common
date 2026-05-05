@@ -233,7 +233,7 @@ def pull_ssm_config() -> dict:
 
 CONFIG = DefaultConfig()
 
-def set_brus_config(config):
+def set_brus_config(config: dict):
     """Takes in a config dict of the attributes to override"""
     for attr, value in config.items():
         setattr(CONFIG, attr, value)
@@ -242,8 +242,4 @@ def set_brus_config(config):
 # Note: DefaultConfig() can take the argument, but we need the initial default values to look up the right
 # Parameter values, so we're updating them after the initial pull.
 if not CONFIG.IS_LOCAL:
-    ssm_config = pull_ssm_config()
-    logger.info(ssm_config)
-    CONFIG = DefaultConfig(**ssm_config)
-
-logger.info(CONFIG)
+    set_brus_config(pull_ssm_config())
