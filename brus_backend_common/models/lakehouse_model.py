@@ -74,8 +74,8 @@ class LakeHouseModel(ABC):
         self.DATABASE_PATH: str = f"s3://{self.BUCKET_NAME}/{self.RELATIVE_DATABASE_PATH}"
         self.DATABASE_PATH_HADOOP: str = f"s3a://{self.BUCKET_NAME}/{self.RELATIVE_DATABASE_PATH}"
         self.RELATIVE_TABLE_PATH: str = f"{self.RELATIVE_DATABASE_PATH}/{self.TABLE_NAME}"
-        self.TABLE_PATH: str = f"{self.DATABASE_PATH}/{self.RELATIVE_TABLE_PATH}"
-        self.TABLE_PATH_HADOOP: str = f"{self.DATABASE_PATH_HADOOP}/{self.RELATIVE_TABLE_PATH}"
+        self.TABLE_PATH: str = f"{self.DATABASE_PATH}/{self.TABLE_NAME}"
+        self.TABLE_PATH_HADOOP: str = f"{self.DATABASE_PATH_HADOOP}/{self.TABLE_NAME}"
         self.TABLE_REF: str = f"{self.DATABASE_NAME.value}.{self.TABLE_NAME}"
 
     def exists(self) -> bool:
