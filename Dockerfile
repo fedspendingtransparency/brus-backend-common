@@ -80,10 +80,6 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
     uv sync --extra awscli --extra dev --extra spark --locked --no-install-project
 
-RUN echo $(pwd)
-
-RUN cat .env
-
 # Download the spark jars and stored them in the image (/root/.ivy2), primarily to save time for github actions
 RUN if [ ${DOWNLOAD_JARS} = "true" ]; then \
     pytest --numprocesses logical --no-cov --disable-warnings -r=fEs --verbosity=3 \
