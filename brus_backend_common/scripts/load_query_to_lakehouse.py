@@ -1,8 +1,9 @@
 import argparse
 import logging
 
-from brus_backend_common.models import LAKEHOUSE_MODELS
 from brus_backend_common.helpers.spark import SparkScriptSession
+from brus_backend_common.logging import configure_logging
+from brus_backend_common.models import LAKEHOUSE_MODELS
 
 logger = logging.getLogger(__name__)
 
