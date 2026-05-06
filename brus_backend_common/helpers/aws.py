@@ -139,7 +139,7 @@ def _get_boto3(method_name: str, *args, region_name=CONFIG.AWS_REGION, **kwargs)
     kwargs.update({"region_name": region_name})
     endpoint = None
     # Note: we can't dynamically pull these as getattr <> @property CONFIG.AWS_S3_ENDPOINT
-    logger.info(CONFIG.IS_LOCAL)
+    logger.info(f"IS_LOCAL: {CONFIG.IS_LOCAL} {type(CONFIG.IS_LOCAL)}")
     endpoint_mappings = {
         'S3': CONFIG.AWS_S3_ENDPOINT,
         'SSM': CONFIG.AWS_SSM_ENDPOINT,
