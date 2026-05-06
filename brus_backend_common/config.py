@@ -236,12 +236,20 @@ CONFIG = DefaultConfig()
 def set_brus_config(config: dict):
     """Takes in a config dict of the attributes to override"""
     for attr, value in config.items():
+        logger.info(f'attr: {attr}')
+        logger.info(f'value: {value}')
+        logger.info(f'new: {getattr(CONFIG, attr)}, {type(getattr(CONFIG, attr))}')
+        logger.info(f'new: {getattr(CONFIG, attr, attr)}, {type(getattr(CONFIG, attr, attr))}')
         # Convert strings -> the expected types
         t = type(getattr(CONFIG, attr, attr))
+        logger.info(f't: {t}')
+        logger.info(f't(value): {t(value)}')
         setattr(CONFIG, attr, t(value))
+        logger.info(f'new: {getattr(CONFIG, attr, attr)}, {type(getattr(CONFIG, attr, attr))}')
 
 # Overwrite any values with ones pulled from SSM if not local
 # Note: DefaultConfig() can take the argument, but we need the initial default values to look up the right
 # Parameter values, so we're updating them after the initial pull.
 if not CONFIG.IS_LOCAL:
+    logger.info('Updating config')
     set_brus_config(pull_ssm_config())
