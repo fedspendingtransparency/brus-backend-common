@@ -49,6 +49,9 @@ def main(metrics: dict = None):
 
     fon_bronze = LAKEHOUSE_MODELS["bronze.funding_opportunity"]()
     logger.info(f"Uploading to {fon_bronze.CSV_PATH}")
+    logger.info(f"BUCKET_NAME: {fon_bronze.BUCKET_NAME}")
+    logger.info(f"RELATIVE_CSV_PATH: {fon_bronze.RELATIVE_CSV_PATH}")
+    logger.info(f"AWS_REGION: {CONFIG.AWS_REGION}")
     s3 = _get_boto3("client", "s3")
     s3.upload_file(local_fon_csv, fon_bronze.BUCKET_NAME, fon_bronze.RELATIVE_CSV_PATH)
 
