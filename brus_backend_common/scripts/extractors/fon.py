@@ -1,3 +1,5 @@
+import os
+
 import argparse
 import datetime
 import json
@@ -55,6 +57,9 @@ def main(metrics: dict = None):
     s3 = _get_boto3("client", "s3")
     logger.info(f"S3 CLIENT REGION: {s3.meta.region_name}")
     s3.upload_file(local_fon_csv, fon_bronze.BUCKET_NAME, fon_bronze.RELATIVE_CSV_PATH)
+    s3_local = f'aws s3 cp {local_fon_csv} s3://{fon_bronze.BUCKET_NAME}/{fon_bronze.RELATIVE_CSV_PATH}'
+    logger.info(s3_local)
+    os.system(s3_local)
 
     metrics["end_time"] = get_utc_now()
     metrics["duration"] = str(metrics["end_time"] - metrics["start_time"])
