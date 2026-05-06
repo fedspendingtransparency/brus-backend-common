@@ -50,16 +50,8 @@ def main(metrics: dict = None):
     fon_df.to_csv(local_fon_csv, index=False)
 
     fon_bronze = LAKEHOUSE_MODELS["bronze.funding_opportunity"]()
-    logger.info(f"Uploading to {fon_bronze.CSV_PATH}")
-    logger.info(f"BUCKET_NAME: {fon_bronze.BUCKET_NAME}")
-    logger.info(f"RELATIVE_CSV_PATH: {fon_bronze.RELATIVE_CSV_PATH}")
-    logger.info(f"AWS_REGION: {CONFIG.AWS_REGION}")
     s3 = _get_boto3("client", "s3")
-    logger.info(f"S3 CLIENT REGION: {s3.meta.region_name}")
-    # s3.upload_file(local_fon_csv, fon_bronze.BUCKET_NAME, fon_bronze.RELATIVE_CSV_PATH)
-    s3_local = f'aws s3 cp {local_fon_csv} s3://{fon_bronze.BUCKET_NAME}/{fon_bronze.RELATIVE_CSV_PATH} --region {CONFIG.AWS_REGION}'
-    logger.info(s3_local)
-    os.system(s3_local)
+    s3.upload_file(local_fon_csv, fon_bronze.BUCKET_NAME, fon_bronze.RELATIVE_CSV_PATH)
 
     metrics["end_time"] = get_utc_now()
     metrics["duration"] = str(metrics["end_time"] - metrics["start_time"])
