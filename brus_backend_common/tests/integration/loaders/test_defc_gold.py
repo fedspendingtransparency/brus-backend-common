@@ -26,7 +26,7 @@ def raw_defc_mapping_file():
     # Mimic placing the raw DEFC mapping file in the expected location (directly or copied from another bucket)
     defc_mapping_model = LAKEHOUSE_MODELS["gold.defc_mapping"]()
     s3_client = _get_boto3("client", "s3")
-    csv_file_path = os.path.join(_SRC_ROOT_DIR, "tests", "integration", "data", "defc_groups.csv")
+    csv_file_path = os.path.join(_SRC_ROOT_DIR, "tests", "integration", "data", "DEFC_MAPPING.csv")
     s3_client.upload_file(csv_file_path, defc_mapping_model.BUCKET_NAME, defc_mapping_model.RELATIVE_CSV_PATH)
 
     yield defc_mapping_model.RELATIVE_CSV_PATH
