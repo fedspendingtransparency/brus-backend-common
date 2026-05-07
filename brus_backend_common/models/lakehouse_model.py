@@ -376,10 +376,19 @@ class CSVModel(LakeHouseModel):
     def to_pandas_df(self, **kwargs: Any) -> pd.DataFrame | None:
         converters = {}
 
+        def safe_literal_eval(val):
+            # Check if the value is a non-empty string
+            if isinstance(val, str) and val.strip():
+                try:
+                    return ast.literal_eval(val)
+                except (ValueError, SyntaxError):
+                    return val  # Return original if parsing fails
+            return val  # Return original if empty or already null
+
         # Convert arrays from csv format to lists
         for col in self.STRUCTURE:
             if isinstance(col.dataType, ArrayType):
-                converters[col.name] = ast.literal_eval
+                converters[col.name] = safe_literal_eval
 
         # Type Checker struggles with BytesIO and S3 Objects
         df = pd.read_csv(io.BytesIO(self._s3_object), converters=converters, **kwargs) if self.exists() else None  # type: ignore
