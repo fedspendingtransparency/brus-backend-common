@@ -21,7 +21,6 @@ Note: When working locally, do not modify this file and update your values in ".
 """
 
 import logging
-import os
 import pathlib
 
 import boto3
@@ -229,12 +228,15 @@ def pull_ssm_config() -> dict:
     secrets_yaml_param = ssm_client.get_parameter(Name=secrets_param_name, WithDecryption=True)
     return dotenv_values(stream=StringIO(secrets_yaml_param["Parameter"]["Value"]))
 
+
 CONFIG = DefaultConfig()
+
 
 def set_brus_config(config: dict):
     """Takes in a config dict of the attributes to override"""
     for attr, value in config.items():
-        setattr(CONFIG, attr, t(value))
+        setattr(CONFIG, attr, value)
+
 
 # Overwrite any values with ones pulled from SSM if not local
 # Note: DefaultConfig() can take the argument, but we need the initial default values to look up the right
@@ -242,4 +244,3 @@ def set_brus_config(config: dict):
 if not CONFIG.IS_LOCAL:
     ssm_config = pull_ssm_config()
     CONFIG = DefaultConfig(**ssm_config)
-
