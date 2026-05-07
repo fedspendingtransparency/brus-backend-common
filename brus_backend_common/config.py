@@ -30,7 +30,6 @@ import boto3
 from dotenv import dotenv_values
 from io import StringIO
 from pydantic import BaseSettings, SecretStr
-from pydantic_settings import SettingsConfigDict
 
 from brus_backend_common.helpers.uri import get_jdbc_url_from_pg_uri
 
