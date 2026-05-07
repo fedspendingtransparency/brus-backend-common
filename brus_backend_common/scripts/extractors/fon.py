@@ -70,7 +70,7 @@ if __name__ == "__main__":
     main(metrics=metrics)
 
     metrics_name = "extract_fon.json"
-    logger.info(f"Saving methrics and upload to {CONFIG.METRICS_BUCKET}/{metrics_name}")
+    logger.info(f"Saving metrics and upload to {CONFIG.METRICS_BUCKET}/{metrics_name}")
     with open(metrics_name, "w+") as metrics_file:
         json.dump(metrics, metrics_file)
     s3 = _get_boto3("client", "s3")
