@@ -21,7 +21,6 @@ Note: When working locally, do not modify this file and update your values in ".
 """
 
 import logging
-import logging.config
 import os
 import pathlib
 
@@ -230,24 +229,6 @@ def pull_ssm_config() -> dict:
     secrets_yaml_param = ssm_client.get_parameter(Name=secrets_param_name, WithDecryption=True)
     return dotenv_values(stream=StringIO(secrets_yaml_param["Parameter"]["Value"]))
 
-DEFAULT_CONFIG_2 = {
-    "version": 1,
-    "disable_existing_loggers": False,
-    "formatters": {
-        "default": {"format": "[%(asctime)s] [%(levelname)s] - %(message)s", "datefmt": "%Y-%m-%d %H:%M:%S %Z"},
-    },
-    "handlers": {
-        "console": {"formatter": "default", "class": "logging.StreamHandler"},
-    },
-    "loggers": {
-        # i.e. "all modules"
-        "": {"handlers": ["console"], "level": "INFO", "propagate": True},
-        "__main__": {"level": "INFO", "propagate": True},  # for the __main__ module within scripts
-    },
-}
-
-logging.config.dictConfig(DEFAULT_CONFIG_2)
-
 CONFIG = DefaultConfig()
 
 def set_brus_config(config: dict):
@@ -258,9 +239,7 @@ def set_brus_config(config: dict):
 # Overwrite any values with ones pulled from SSM if not local
 # Note: DefaultConfig() can take the argument, but we need the initial default values to look up the right
 # Parameter values, so we're updating them after the initial pull.
-logger.info(f'CONFIG.IS_LOCAL: {CONFIG.IS_LOCAL}')
 if not CONFIG.IS_LOCAL:
-    logger.info('Updating config')
     ssm_config = pull_ssm_config()
     CONFIG = DefaultConfig(**ssm_config)
 
