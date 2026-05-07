@@ -30,6 +30,7 @@ import boto3
 from dotenv import dotenv_values
 from io import StringIO
 from pydantic import BaseSettings, SecretStr
+from pydantic_settings import SettingsConfigDict
 
 from brus_backend_common.helpers.uri import get_jdbc_url_from_pg_uri
 
@@ -211,7 +212,7 @@ class DefaultConfig(BaseSettings):
     MINIO_DATA_DIR: str = ""
 
 
-def pull_ssm_config() -> dict:
+def pull_ssm_config() -> StringIO:
     """This function lives in the liminal space between CONFIG and helpers.aws, having a hand in both.
     While this is essentially more helpers.aws based, that file imports and uses CONFIG values from this file,
     which'd result in a circular dependency.
@@ -228,8 +229,7 @@ def pull_ssm_config() -> dict:
 
     ssm_client = boto3.client("ssm", region_name=CONFIG.AWS_REGION)
     secrets_yaml_param = ssm_client.get_parameter(Name=secrets_param_name, WithDecryption=True)
-    ssm_config = dotenv_values(stream=StringIO(secrets_yaml_param["Parameter"]["Value"]))
-    return ssm_config
+    return StringIO(secrets_yaml_param["Parameter"]["Value"])
 
 DEFAULT_CONFIG_2 = {
     "version": 1,
@@ -254,16 +254,7 @@ CONFIG = DefaultConfig()
 def set_brus_config(config: dict):
     """Takes in a config dict of the attributes to override"""
     for attr, value in config.items():
-        logger.info(f'attr: {attr}')
-        logger.info(f'value: {value}')
-        logger.info(f'new: {getattr(CONFIG, attr)}, {type(getattr(CONFIG, attr))}')
-        logger.info(f'new: {getattr(CONFIG, attr, attr)}, {type(getattr(CONFIG, attr, attr))}')
-        # Convert strings -> the expected types
-        t = type(getattr(CONFIG, attr, attr))
-        logger.info(f't: {t}')
-        logger.info(f't(value): {t(value)}')
         setattr(CONFIG, attr, t(value))
-        logger.info(f'new: {getattr(CONFIG, attr, attr)}, {type(getattr(CONFIG, attr, attr))}')
 
 # Overwrite any values with ones pulled from SSM if not local
 # Note: DefaultConfig() can take the argument, but we need the initial default values to look up the right
@@ -271,4 +262,6 @@ def set_brus_config(config: dict):
 logger.info(f'CONFIG.IS_LOCAL: {CONFIG.IS_LOCAL}')
 if not CONFIG.IS_LOCAL:
     logger.info('Updating config')
-    set_brus_config(pull_ssm_config())
+    ssm_config = pull_ssm_config()
+    CONFIG = DefaultConfig(_env_file=ssm_config)
+
