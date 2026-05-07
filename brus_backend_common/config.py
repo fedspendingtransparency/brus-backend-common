@@ -250,6 +250,7 @@ def set_brus_config(config: dict):
 # Overwrite any values with ones pulled from SSM if not local
 # Note: DefaultConfig() can take the argument, but we need the initial default values to look up the right
 # Parameter values, so we're updating them after the initial pull.
+print(CONFIG.IS_LOCAL)
 if not CONFIG.IS_LOCAL:
     logger.info('Updating config')
     set_brus_config(pull_ssm_config())
