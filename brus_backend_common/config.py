@@ -21,6 +21,7 @@ Note: When working locally, do not modify this file and update your values in ".
 """
 
 import logging
+import logging.config
 import os
 import pathlib
 
