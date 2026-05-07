@@ -21,6 +21,7 @@ Note: When working locally, do not modify this file and update your values in ".
 """
 
 import logging
+import os
 import pathlib
 
 import boto3
