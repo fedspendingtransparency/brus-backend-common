@@ -151,7 +151,6 @@ def _get_boto3(method_name: str, *args, region_name=CONFIG.AWS_REGION, **kwargs)
             )
             attr = getattr(session, method_name)
         if endpoint:
-            logger.info(f"ENDPOINT_URL: http{'s' if not CONFIG.IS_LOCAL else ''}://{endpoint}")
             kwargs.update({"endpoint_url": f"http{'s' if not CONFIG.IS_LOCAL else ''}://{endpoint}"})
         return attr(*args, **kwargs)
     return attr
