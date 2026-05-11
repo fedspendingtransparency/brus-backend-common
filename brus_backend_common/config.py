@@ -210,6 +210,11 @@ class DefaultConfig(BaseSettings):
     MINIO_DATA_DIR: str = ""
 
 
+# TODO: Update CONFIG to use BaseModel with nested environment variables which can help generate this list automatically
+#       (ex. BUCKETS__DATA_ARCHIVE -> CONFIG.BUCKETS.DATA_ARCHIVE)
+CONFIG_BUCKETS = [attr for attr, value in DefaultConfig().__dict__.items() if attr.endswith("_BUCKET")]
+
+
 def pull_ssm_config() -> dict:
     """This function lives in the liminal space between CONFIG and helpers.aws, having a hand in both.
     While this is essentially more helpers.aws based, that file imports and uses CONFIG values from this file,
@@ -245,3 +250,11 @@ def set_brus_config(config: dict):
 if not CONFIG.IS_LOCAL:
     ssm_config = pull_ssm_config()
     CONFIG = DefaultConfig(**ssm_config)
+
+# Overwrite any values if running in a test to prevent conflicting with your local environment
+# https://docs.pytest.org/en/stable/example/simple.html#detect-if-running-from-within-a-pytest-run
+if os.environ.get("PYTEST_VERSION") is not None:
+    # Rename the buckets in the test environment to not overwrite your local buckets
+    CONFIG = DefaultConfig(
+        **{bucket_config: f"test-{getattr(CONFIG, bucket_config)}" for bucket_config in CONFIG_BUCKETS}
+    )

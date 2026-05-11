@@ -1,14 +1,6 @@
 from brus_backend_common.models.lakehouse_model import LakeHouseCurrentMigration, ExternalDataLoadDate
 
 from brus_backend_common.models.reference import DEFCBronze, DEFCGold, DEFCGroup, FONBronze, FONGold
-from brus_backend_common.config import CONFIG
-
-LAKEHOUSE_BUCKETS = {
-    "broker": CONFIG.LAKEHOUSE_BROKER_BUCKET,
-    "reference": CONFIG.LAKEHOUSE_REFERENCE_BUCKET,
-    "usas": CONFIG.LAKEHOUSE_USAS_BUCKET,
-}
-LAKEHOUSE_BUCKET_NAMES = list(LAKEHOUSE_BUCKETS.values())
 
 LAKEHOUSE_MODEL_CLASSES = [
     DEFCBronze,
