@@ -11,29 +11,29 @@ class AgencyBronze(CSVModel):
     UNIQUE_CONSTRAINTS = [("CGAC AGENCY CODE", "FREC", "SUBTIER CODE")]
     MIGRATION_HISTORY = []
 
-    STRUCTURE = StructType(
+    STRUCTURE = BaseSchema(
         [
-            StructField("CGAC AGENCY CODE", StringType(), False),
-            StructField("AGENCY NAME", StringType(), False),
-            StructField("AGENCY ABBREVIATION", StringType(), True),
-            StructField("FREC", StringType(), True),
-            StructField("FREC Entity Description", StringType(), True),
-            StructField("FREC ABBREVIATION", StringType(), True),
-            StructField("SUBTIER CODE", StringType(), True),
-            StructField("SUBTIER NAME", StringType(), True),
-            StructField("SUBTIER ABBREVIATION", StringType(), True),
-            StructField("Admin Org Name", StringType(), True),
-            StructField("ADMIN_ORG", StringType(), True),
-            StructField("TOPTIER_FLAG", BooleanType(), False),
-            StructField("IS_FREC", BooleanType(), False),
-            StructField("FREC CGAC ASSOCIATION", BooleanType(), False),
-            StructField("USER SELECTABLE ON USASPENDING.GOV", BooleanType(), False),
-            StructField("MISSION", StringType(), True),
-            StructField("ABOUT AGENCY DATA", StringType(), True),
-            StructField("WEBSITE", StringType(), True),
-            StructField("CONGRESSIONAL JUSTIFICATION", StringType(), True),
-            StructField("ICON FILENAME", StringType(), True),
-            StructField("COMMENT", StringType(), True),
+            SchemaField("CGAC AGENCY CODE", SchemaType.STRING, False),
+            SchemaField("AGENCY NAME", SchemaType.STRING, False),
+            SchemaField("AGENCY ABBREVIATION", SchemaType.STRING, True),
+            SchemaField("FREC", SchemaType.STRING, True),
+            SchemaField("FREC Entity Description", SchemaType.STRING, True),
+            SchemaField("FREC ABBREVIATION", SchemaType.STRING, True),
+            SchemaField("SUBTIER CODE", SchemaType.STRING, True),
+            SchemaField("SUBTIER NAME", SchemaType.STRING, True),
+            SchemaField("SUBTIER ABBREVIATION", SchemaType.STRING, True),
+            SchemaField("Admin Org Name", SchemaType.STRING, True),
+            SchemaField("ADMIN_ORG", SchemaType.STRING, True),
+            SchemaField("TOPTIER_FLAG", SchemaType.BOOLEAN, False),
+            SchemaField("IS_FREC", SchemaType.BOOLEAN, False),
+            SchemaField("FREC CGAC ASSOCIATION", SchemaType.BOOLEAN, False),
+            SchemaField("USER SELECTABLE ON USASPENDING.GOV", SchemaType.BOOLEAN, False),
+            SchemaField("MISSION", SchemaType.STRING, True),
+            SchemaField("ABOUT AGENCY DATA", SchemaType.STRING, True),
+            SchemaField("WEBSITE", SchemaType.STRING, True),
+            SchemaField("CONGRESSIONAL JUSTIFICATION", SchemaType.STRING, True),
+            SchemaField("ICON FILENAME", SchemaType.STRING, True),
+            SchemaField("COMMENT", SchemaType.STRING, True),
         ]
     )
 
@@ -48,14 +48,14 @@ class CGACGold(CSVModel):
     UNIQUE_CONSTRAINTS = []
     MIGRATION_HISTORY = []
 
-    STRUCTURE = StructType(
+    STRUCTURE = BaseSchema(
         [
-            StructField("cgac_id", IntegerType(), False),
-            StructField("cgac_code", StringType(), False),
-            StructField("agency_name", StringType(), False),
-            StructField("agency_abbreviation", StringType(), True),
-            StructField("display_name", StringType(), False),
-            StructField("icon_name", StringType(), True),
+            SchemaField("cgac_id", SchemaType.INTEGER, False),
+            SchemaField("cgac_code", SchemaType.STRING, False),
+            SchemaField("agency_name", SchemaType.STRING, False),
+            SchemaField("agency_abbreviation", SchemaType.STRING, True),
+            SchemaField("display_name", SchemaType.STRING, False),
+            SchemaField("icon_name", SchemaType.STRING, True),
         ]
     )
 
@@ -70,15 +70,15 @@ class FRECGold(CSVModel):
     UNIQUE_CONSTRAINTS = []
     MIGRATION_HISTORY = []
 
-    STRUCTURE = StructType(
+    STRUCTURE = BaseSchema(
         [
-            StructField("frec_id", IntegerType(), False),
-            StructField("frec_code", StringType(), False),
-            StructField("agency_name", StringType(), False),
-            StructField("agency_abbreviation", StringType(), True),
-            StructField("display_name", StringType(), False),
-            StructField("cgac_code", IntegerType(), False),
-            StructField("icon_name", StringType(), True),
+            SchemaField("frec_id", SchemaType.INTEGER, False),
+            SchemaField("frec_code", SchemaType.STRING, False),
+            SchemaField("agency_name", SchemaType.STRING, False),
+            SchemaField("agency_abbreviation", SchemaType.STRING, True),
+            SchemaField("display_name", SchemaType.STRING, False),
+            SchemaField("cgac_code", SchemaType.STRING, False),
+            SchemaField("icon_name", SchemaType.STRING, True),
         ]
     )
 
@@ -86,22 +86,22 @@ class FRECGold(CSVModel):
 class SubTierAgencyGold(CSVModel):
     BUCKET_NAME = CONFIG.LAKEHOUSE_REFERENCE_BUCKET
     DATABASE_NAME = LakeHouseDatabase.GOLD
-    TABLE_NAME = "sub_tier_agency"
+    TABLE_NAME = "subtier_agency"
     DESCRIPTION = "Sub Tier Agency Data after processing"
-    CSV_NAME = "sub_tier_agency.csv"
-    PK = "sub_tier_agency_id"
+    CSV_NAME = "subtier_agency.csv"
+    PK = "subtier_agency_id"
     UNIQUE_CONSTRAINTS = []
     MIGRATION_HISTORY = []
 
-    STRUCTURE = StructType(
+    STRUCTURE = BaseSchema(
         [
-            StructField("sub_tier_agency_id", IntegerType(), False),
-            StructField("sub_tier_agency_code", StringType(), False),
-            StructField("sub_tier_agency_name", StringType(), False),
-            StructField("cgac_code", IntegerType(), False),
-            StructField("frec_code", IntegerType(), False),
-            StructField("priority", IntegerType(), False),
-            StructField("is_frec", BooleanType(), False),
+            SchemaField("subtier_agency_id", SchemaType.INTEGER, False),
+            SchemaField("subtier_code", SchemaType.STRING, False),
+            SchemaField("subtier_name", SchemaType.STRING, False),
+            SchemaField("cgac_code", SchemaType.STRING, False),
+            SchemaField("frec_code", SchemaType.STRING, False),
+            SchemaField("priority", SchemaType.INTEGER, False),
+            SchemaField("is_frec", SchemaType.BOOLEAN, False),
         ]
     )
 

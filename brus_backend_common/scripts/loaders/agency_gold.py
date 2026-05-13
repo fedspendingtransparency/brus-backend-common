@@ -24,13 +24,26 @@ CUSTOM_CGACS = [
     {"CGAC AGENCY CODE": "999", "AGENCY NAME": "Non-published FABS Vendor Agency", "AGENCY ABBREVIATION": "TFVA", "ICON FILENAME": None}
 ]
 
+CUSTOM_SUBTIERS = [
+    {
+        "CGAC AGENCY CODE": "999",
+        "SUBTIER CODE": "TFVA",
+        "SUBTIER NAME": "Non-published FABS Vendor Subtier Agency",
+        "TOPTIER_FLAG": "TRUE",
+        "IS_FREC": "FALSE",
+        "ICON FILENAME": None,
+    }
+]
 
-def load_cgac(raw_data: pd.DataFrame, force_reload: bool = False, metrics_json: dict = None) -> dict:
+
+def load_cgac(raw_data: pd.DataFrame, start_time: datetime, force_reload: bool = False, metrics_json: dict = None) -> dict:
     """Loads the CGAC data into the gold table
 
     Args:
         raw_data: the raw agency codes bronze table
+        start_time: the start time of the script
         force_reload: Boolean flag to determine if a reload should happen regardless of new data
+        metrics_json: dict to collect metrics for the script
 
     Returns:
         metrics dict
@@ -67,16 +80,19 @@ def load_cgac(raw_data: pd.DataFrame, force_reload: bool = False, metrics_json: 
         cgac_data["display_name"] = cgac_data.apply(lambda row: f"{row["agency_name"]} ({row["agency_abbreviation"]})" if row["agency_abbreviation"] else f"{row["agency_name"]} (nan)", axis=1)
         logger.info("Overwriting new CGAC data to Broker")
         cgac_model.save(cgac_data)
+        update_external_data_load_date(cgac_model, start_time, datetime.now())
 
     return metrics_json
 
 
-def load_frec(raw_data: pd.DataFrame, force_reload: bool = False, metrics_json: dict = None) -> dict:
-    """Loads the CGAC data into the gold table
+def load_frec(raw_data: pd.DataFrame, start_time: datetime, force_reload: bool = False, metrics_json: dict = None) -> dict:
+    """Loads the FREC data into the gold table
 
     Args:
         raw_data: the raw agency codes bronze table
+        start_time: the start time of the script
         force_reload: Boolean flag to determine if a reload should happen regardless of new data
+        metrics_json: dict to collect metrics for the script
 
     Returns:
         metrics dict
@@ -106,10 +122,72 @@ def load_frec(raw_data: pd.DataFrame, force_reload: bool = False, metrics_json: 
     if force_reload or diff_found:
         metrics_json['frec_loaded'] = len(frec_data)
         frec_data["display_name"] = frec_data.apply(lambda row: f"{row["agency_name"]} ({row["agency_abbreviation"]})" if row["agency_abbreviation"] else f"{row["agency_name"]} (nan)", axis=1)
-        with pd.option_context('display.max_rows', None, 'display.max_columns', None):  # more options can be specified also
-            print(frec_data)
-        logger.info("Overwriting new CGAC data to Broker")
-        # frec_model.save(frec_data)
+        logger.info("Overwriting new FREC data to Broker")
+        frec_model.save(frec_data)
+        update_external_data_load_date(frec_model, start_time, datetime.now())
+
+    return metrics_json
+
+
+def load_subtier(raw_data: pd.DataFrame,  start_time: datetime, force_reload: bool = False, metrics_json: dict = None) -> dict:
+    """Loads the SubTier data into the gold table
+
+    Args:
+        raw_data: the raw agency codes bronze table
+        start_time: the start time of the script
+        force_reload: Boolean flag to determine if a reload should happen regardless of new data
+        metrics_json: dict to collect metrics for the script
+
+    Returns:
+        metrics dict
+    """
+    subtier_model = SubTierAgencyGold()
+    if not subtier_model.exists():
+        raise ValueError(f"{subtier_model.TABLE_REF} doesn't exist. Use create_migrate_delta_table beforehand.")
+
+    # Check and add custom Subtiers to incoming list for comparison
+    for custom_subtier in CUSTOM_SUBTIERS:
+        if custom_subtier["SUBTIER CODE"] in raw_data["SUBTIER CODE"].values:
+            raise ValueError(
+                f"Custom Subtier code found in agency list: {custom_subtier['SUBTIER CODE']}."
+                f" Consult the latest agency list with the custom Subtier code."
+            )
+        else:
+            custom_cgac_row = pd.DataFrame([custom_subtier])
+            raw_data = pd.concat([raw_data, custom_cgac_row], ignore_index=True)
+
+    condition = raw_data["TOPTIER_FLAG"] == "TRUE"
+    raw_data.loc[condition, "PRIORITY"] = 1
+    raw_data.loc[~condition, "PRIORITY"] = 2
+    raw_data["PRIORITY"] = raw_data["PRIORITY"].astype(int)
+    raw_data.replace({"TRUE": True, "FALSE": False}, inplace=True)
+
+    subtier_mapping = {
+        "cgac_agency_code": "cgac_code",
+        "subtier_code": "subtier_code",
+        "priority": "priority",
+        "frec": "frec_code",
+        "subtier_name": "subtier_name",
+        "is_frec": "is_frec",
+    }
+
+    subtier_data = clean_data(raw_data, subtier_mapping, {
+            "cgac_code": {"pad_to_length": 3},
+            "frec_code": {"pad_to_length": 4},
+            "subtier_code": {"pad_to_length": 4},
+        })
+
+    # de-dupe
+    subtier_data.drop_duplicates(subset=["subtier_code"], inplace=True)
+
+    diff_found = check_dataframe_diff(subtier_data, subtier_model.to_pandas_df(), ["subtier_agency_id", "display_name"], ["frec_code"])
+
+    if force_reload or diff_found:
+        print('reloading')
+        metrics_json['subtiers_loaded'] = len(subtier_data)
+        logger.info("Overwriting new SubTier data to Broker")
+        subtier_model.save(subtier_data)
+        update_external_data_load_date(subtier_model, start_time, datetime.now())
 
     return metrics_json
 
@@ -132,9 +210,8 @@ def main(local_file: str | None = None, force_reload: bool = False, metrics_json
     if not raw_model.exists():
         raise ValueError(f"{raw_model.TABLE_REF} doesn't exist. Use create_migrate_delta_table beforehand.")
 
-    subtier_model = SubTierAgencyGold()
-    if not subtier_model.exists():
-        raise ValueError(f"{subtier_model.TABLE_REF} doesn't exist. Use create_migrate_delta_table beforehand.")
+    start_time = datetime.now()
+    metrics_json["start_time"] = str(start_time)
 
     logger.info("Parsing Agency data")
     try:
@@ -147,8 +224,13 @@ def main(local_file: str | None = None, force_reload: bool = False, metrics_json
         metrics_json["exit_code"] = 4  # exit code chosen arbitrarily, to indicate distinct failure states
         return metrics_json
 
-    metrics_json = load_cgac(raw_data, force_reload, metrics_json)
-    metrics_json = load_frec(raw_data, force_reload, metrics_json)
+    metrics_json = load_cgac(raw_data, start_time, force_reload, metrics_json)
+    metrics_json = load_frec(raw_data, start_time, force_reload, metrics_json)
+    metrics_json = load_subtier(raw_data, start_time, force_reload, metrics_json)
+
+    end_time = datetime.now()
+    metrics_json["end_time"] = str(end_time)
+    metrics_json["duration"] = str(end_time - start_time)
     return metrics_json
 
 
@@ -195,7 +277,6 @@ if __name__ == "__main__":
 
     s3 = _get_boto3("client", "s3")
     s3.upload_file("load_agency_metrics.json", CONFIG.METRICS_BUCKET, "load_agency_metrics.json")
-    #TODO Add external load date
 
     if exit_code != 0:
         exit_if_nonlocal(exit_code, blank_file)
