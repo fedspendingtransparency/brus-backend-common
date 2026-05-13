@@ -10,10 +10,10 @@ from brus_backend_common.helpers.spark import (
     is_spark_context_stopped,
     stop_spark_context,
 )
-from brus_backend_common.config import CONFIG
+from brus_backend_common.config import CONFIG, CONFIG_BUCKETS
 from brus_backend_common.helpers.aws import _get_boto3
 from brus_backend_common.helpers.configs import LOCAL_BASIC_EXTRA_CONF  # LOCAL_EXTENDED_EXTRA_CONF
-from brus_backend_common.models import LAKEHOUSE_MODELS, LAKEHOUSE_BUCKET_NAMES
+from brus_backend_common.models import LAKEHOUSE_MODELS
 from brus_backend_common.scripts.create_migrate_lakehouse_model import main as create_migrate
 
 if TYPE_CHECKING:
@@ -208,7 +208,7 @@ def delta_lake_unittest_schema(spark: "SparkSession", hive_unittest_metastore_db
 
 @pytest.fixture(scope="session")
 def setup_teardown_buckets_session() -> Generator[List[str], None, None]:
-    buckets = LAKEHOUSE_BUCKET_NAMES + [CONFIG.PUBLIC_FILES_BUCKET, CONFIG.METRICS_BUCKET, CONFIG.DATA_SOURCES_BUCKET]
+    buckets = [getattr(CONFIG, bucket) for bucket in CONFIG_BUCKETS]
     for bucket in buckets:
         s3_unittest_data_bucket_setup(bucket)
 

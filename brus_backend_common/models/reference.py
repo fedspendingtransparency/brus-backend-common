@@ -1,14 +1,5 @@
-from pyspark.sql.types import (
-    ArrayType,
-    BooleanType,
-    IntegerType,
-    StringType,
-    StructField,
-    StructType,
-    TimestampType,
-)
 from brus_backend_common.config import CONFIG
-from brus_backend_common.models.lakehouse_model import CSVModel, LakeHouseDatabase
+from brus_backend_common.models.lakehouse_model import BaseSchema, CSVModel, LakeHouseDatabase, SchemaField, SchemaType
 
 
 class AgencyBronze(CSVModel):
@@ -125,10 +116,10 @@ class DEFCBronze(CSVModel):
     UNIQUE_CONSTRAINTS = []
     MIGRATION_HISTORY = []
 
-    STRUCTURE = StructType(
+    STRUCTURE = BaseSchema(
         [
-            StructField("DEFC_CODE", StringType(), False),
-            StructField("DEFC_TITLE", StringType(), False),
+            SchemaField("DEFC_CODE", SchemaType.STRING, False),
+            SchemaField("DEFC_TITLE", SchemaType.STRING, False),
         ]
     )
 
@@ -143,10 +134,10 @@ class DEFCGroup(CSVModel):
     UNIQUE_CONSTRAINTS = []
     MIGRATION_HISTORY = []
 
-    STRUCTURE = StructType(
+    STRUCTURE = BaseSchema(
         [
-            StructField("code", StringType(), False),
-            StructField("group", StringType(), False),
+            SchemaField("code", SchemaType.STRING, False),
+            SchemaField("group", SchemaType.STRING, False),
         ]
     )
 
@@ -160,18 +151,18 @@ class DEFCGold(CSVModel):
     PK = "defc_id"
     UNIQUE_CONSTRAINTS = ["code"]
     MIGRATION_HISTORY = []
-    STRUCTURE = StructType(
+    STRUCTURE = BaseSchema(
         [
-            StructField("created_at", TimestampType(), True),
-            StructField("updated_at", TimestampType(), True),
-            StructField("defc_id", IntegerType(), False),
-            StructField("code", StringType(), False),
-            StructField("public_laws", ArrayType(StringType(), True), True),
-            StructField("public_law_short_titles", ArrayType(StringType(), True), True),
-            StructField("group", StringType(), True),
-            StructField("urls", ArrayType(StringType(), True), True),
-            StructField("is_valid", BooleanType(), False),
-            StructField("earliest_pl_action_date", TimestampType(), True),
+            SchemaField("created_at", SchemaType.TIMESTAMP, True),
+            SchemaField("updated_at", SchemaType.TIMESTAMP, True),
+            SchemaField("defc_id", SchemaType.INTEGER, False),
+            SchemaField("code", SchemaType.STRING, False),
+            SchemaField("public_laws", SchemaType.LIST_STRING, True),
+            SchemaField("public_law_short_titles", SchemaType.LIST_STRING, True),
+            SchemaField("group", SchemaType.STRING, True),
+            SchemaField("urls", SchemaType.LIST_STRING, True),
+            SchemaField("is_valid", SchemaType.BOOLEAN, False),
+            SchemaField("earliest_pl_action_date", SchemaType.TIMESTAMP, True),
         ]
     )
 
@@ -186,18 +177,18 @@ class FONBronze(CSVModel):
     UNIQUE_CONSTRAINTS = [""]
     MIGRATION_HISTORY = []
 
-    STRUCTURE = StructType(
+    STRUCTURE = BaseSchema(
         [
-            StructField("id", IntegerType(), False),
-            StructField("number", StringType(), False),
-            StructField("title", StringType(), False),
-            StructField("agencyCode", StringType(), True),
-            StructField("agency", StringType(), True),
-            StructField("openDate", TimestampType(), True),
-            StructField("closeDate", TimestampType(), True),
-            StructField("oppStatus", StringType(), True),
-            StructField("docType", StringType(), True),
-            StructField("cfdaList", ArrayType(StringType(), True), True),
+            SchemaField("id", SchemaType.INTEGER, False),
+            SchemaField("number", SchemaType.STRING, False),
+            SchemaField("title", SchemaType.STRING, False),
+            SchemaField("agencyCode", SchemaType.STRING, True),
+            SchemaField("agency", SchemaType.STRING, True),
+            SchemaField("openDate", SchemaType.TIMESTAMP, True),
+            SchemaField("closeDate", SchemaType.TIMESTAMP, True),
+            SchemaField("oppStatus", SchemaType.STRING, True),
+            SchemaField("docType", SchemaType.STRING, True),
+            SchemaField("cfdaList", SchemaType.LIST_STRING, True),
         ]
     )
 
@@ -212,17 +203,19 @@ class FONGold(CSVModel):
     UNIQUE_CONSTRAINTS = []
     MIGRATION_HISTORY = []
 
-    STRUCTURE = StructType(
+    STRUCTURE = BaseSchema(
         [
-            StructField("funding_opportunity_id", IntegerType(), False),
-            StructField("funding_opportunity_number", StringType(), False),
-            StructField("title", StringType(), True),
-            StructField("assistance_listing_numbers", ArrayType(StringType(), True), True),
-            StructField("agency_name", StringType(), True),
-            StructField("status", StringType(), True),
-            StructField("open_date", TimestampType(), True),
-            StructField("close_date", TimestampType(), True),
-            StructField("doc_type", StringType(), True),
-            StructField("internal_id", IntegerType(), True),
+            SchemaField("created_at", SchemaType.TIMESTAMP, True),
+            SchemaField("updated_at", SchemaType.TIMESTAMP, True),
+            SchemaField("funding_opportunity_id", SchemaType.INTEGER, False),
+            SchemaField("funding_opportunity_number", SchemaType.STRING, False),
+            SchemaField("title", SchemaType.STRING, True),
+            SchemaField("assistance_listing_numbers", SchemaType.LIST_STRING, True),
+            SchemaField("agency_name", SchemaType.STRING, True),
+            SchemaField("status", SchemaType.STRING, True),
+            SchemaField("open_date", SchemaType.TIMESTAMP, True),
+            SchemaField("close_date", SchemaType.TIMESTAMP, True),
+            SchemaField("doc_type", SchemaType.STRING, True),
+            SchemaField("internal_id", SchemaType.INTEGER, True),
         ]
     )
