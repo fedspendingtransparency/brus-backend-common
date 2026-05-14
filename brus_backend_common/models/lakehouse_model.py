@@ -95,9 +95,10 @@ class BaseSchema(ABC):
         """Convert to Pandas dtype mapping"""
         return {schema_field.name: self.TYPE_MAP[schema_field.type][1] for schema_field in self.schema_definition}
 
-    def column_names(self) -> List[str]:
-        """Get list of column names"""
-        return [schema_field.name for schema_field in self.schema_definition]
+    @property
+    def columns(self) -> Dict[str, SchemaField]:
+        """Get dict of column names with their schema fields """
+        return {schema_field.name: schema_field for schema_field in self.schema_definition}
 
 
 class LakeHouseModel(ABC):
@@ -400,7 +401,10 @@ class CSVModel(LakeHouseModel):
 
     def next_id(self) -> int:
         df = self.to_pandas_df()
-        return df[self.PK].max() + 1 if df is not None else -1
+        max_id = -1
+        if self.PK is not None and self.PK in df.columns and self.STRUCTURE.columns[self.PK].type == SchemaType.INTEGER:
+            max_id = df[self.PK].max() + 1 if not df.empty else 1
+        return max_id
 
     def initialize(self, recreate: bool = False) -> None:
         logger.info(f"Initializing {self.TABLE_REF}")
@@ -416,7 +420,7 @@ class CSVModel(LakeHouseModel):
             self.exists()
 
     def _recreate_blank_file(self):
-        df = pd.DataFrame(columns=self.STRUCTURE.column_names())
+        df = pd.DataFrame(columns=list(self.STRUCTURE.columns))
         with tempfile.TemporaryDirectory() as temp_dir:
             blank_csv = os.path.join(temp_dir, self.CSV_NAME)
             df.to_csv(blank_csv, index=False)
@@ -444,11 +448,11 @@ class CSVModel(LakeHouseModel):
             "converters": converters,
             "dtype": {k: v for k, v in dtypes.items() if v != "datetime64[ns]"},
             "parse_dates": [k for k, v in dtypes.items() if v == "datetime64[ns]"],
-            "usecols": self.STRUCTURE.column_names(),
+            "usecols": list(self.STRUCTURE.columns),
         }
         params.update(kwargs)
 
-        return pd.read_csv(io.BytesIO(self._s3_object), **params)[self.STRUCTURE.column_names()] if self.exists() else None  # type: ignore
+        return pd.read_csv(io.BytesIO(self._s3_object), **params)[list(self.STRUCTURE.columns)] if self.exists() else None  # type: ignore
 
     def to_polars_df(self, **kwargs: Any) -> pl.DataFrame | pl.Series | None:
         return pl.read_csv(self.CSV_PATH, **kwargs) if self.exists() else None
@@ -534,7 +538,7 @@ def update_external_data_load_date(model: LakeHouseModel, start_time: datetime, 
     last_stored_obj = df[df.name == model.TABLE_REF]
     if last_stored_obj.empty:
         new_entry_dict = {
-            "created_at": convert_timestamp_df(datetime.now()),
+            "created_at": [convert_timestamp_df(datetime.now())],
             "updated_at": [None],  # will be updated later
             "external_data_load_date_id": [edld_model.next_id()],
             "name": [model.TABLE_REF],
@@ -544,8 +548,8 @@ def update_external_data_load_date(model: LakeHouseModel, start_time: datetime, 
         }
         new_entry = pd.DataFrame(new_entry_dict)
 
-        last_stored_obj = pd.concat([last_stored_obj, new_entry])
         df = pd.concat([df, new_entry])
+        last_stored_obj = df[df.name == model.TABLE_REF]
 
     last_stored_obj["last_load_date_start"] = convert_timestamp_df(start_time)
     last_stored_obj["last_load_date_end"] = convert_timestamp_df(end_time)
