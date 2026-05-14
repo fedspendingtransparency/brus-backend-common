@@ -97,7 +97,7 @@ class BaseSchema(ABC):
 
     @property
     def columns(self) -> Dict[str, SchemaField]:
-        """Get dict of column names with their schema fields """
+        """Get dict of column names with their schema fields"""
         return {schema_field.name: schema_field for schema_field in self.schema_definition}
 
 

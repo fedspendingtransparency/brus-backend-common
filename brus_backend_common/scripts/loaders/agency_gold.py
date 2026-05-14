@@ -1,27 +1,25 @@
 import argparse
-import itertools
 import json
 import logging
-import numpy as np
-import os
 import pandas as pd
-import re
 from datetime import datetime
 
 from brus_backend_common.models import AgencyBronze, CGACGold, FRECGold, SubTierAgencyGold
 from brus_backend_common.models.lakehouse_model import update_external_data_load_date
 from brus_backend_common.helpers.aws import _get_boto3
 from brus_backend_common.helpers.pandas import check_dataframe_diff
-from brus_backend_common.helpers.scripts import (
-    clean_data,
-    exit_if_nonlocal,
-)
+from brus_backend_common.helpers.scripts import clean_data, exit_if_nonlocal
 from brus_backend_common.config import CONFIG
 
 logger = logging.getLogger(__name__)
 
 CUSTOM_CGACS = [
-    {"CGAC AGENCY CODE": "999", "AGENCY NAME": "Non-published FABS Vendor Agency", "AGENCY ABBREVIATION": "TFVA", "ICON FILENAME": None}
+    {
+        "CGAC AGENCY CODE": "999",
+        "AGENCY NAME": "Non-published FABS Vendor Agency",
+        "AGENCY ABBREVIATION": "TFVA",
+        "ICON FILENAME": None,
+    }
 ]
 
 CUSTOM_SUBTIERS = [
@@ -36,7 +34,9 @@ CUSTOM_SUBTIERS = [
 ]
 
 
-def load_cgac(raw_data: pd.DataFrame, start_time: datetime, force_reload: bool = False, metrics_json: dict = None) -> dict:
+def load_cgac(
+    raw_data: pd.DataFrame, start_time: datetime, force_reload: bool = False, metrics_json: dict = None
+) -> dict:
     """Loads the CGAC data into the gold table
 
     Args:
@@ -76,8 +76,15 @@ def load_cgac(raw_data: pd.DataFrame, start_time: datetime, force_reload: bool =
     diff_found = check_dataframe_diff(cgac_data, cgac_model.to_pandas_df(), ["cgac_id", "display_name"], ["cgac_code"])
 
     if force_reload or diff_found:
-        metrics_json['cgac_loaded'] = len(cgac_data)
-        cgac_data["display_name"] = cgac_data.apply(lambda row: f"{row["agency_name"]} ({row["agency_abbreviation"]})" if row["agency_abbreviation"] else f"{row["agency_name"]} (nan)", axis=1)
+        metrics_json["cgac_loaded"] = len(cgac_data)
+        cgac_data["display_name"] = cgac_data.apply(
+            lambda row: (
+                f"{row["agency_name"]} ({row["agency_abbreviation"]})"
+                if row["agency_abbreviation"]
+                else f"{row["agency_name"]} (nan)"
+            ),
+            axis=1,
+        )
         logger.info("Overwriting new CGAC data to Broker")
         cgac_model.save(cgac_data)
         update_external_data_load_date(cgac_model, start_time, datetime.now())
@@ -85,7 +92,9 @@ def load_cgac(raw_data: pd.DataFrame, start_time: datetime, force_reload: bool =
     return metrics_json
 
 
-def load_frec(raw_data: pd.DataFrame, start_time: datetime, force_reload: bool = False, metrics_json: dict = None) -> dict:
+def load_frec(
+    raw_data: pd.DataFrame, start_time: datetime, force_reload: bool = False, metrics_json: dict = None
+) -> dict:
     """Loads the FREC data into the gold table
 
     Args:
@@ -110,7 +119,11 @@ def load_frec(raw_data: pd.DataFrame, start_time: datetime, force_reload: bool =
         "icon_filename": "icon_name",
     }
 
-    frec_data = clean_data(raw_data, frec_mapping, {"frec": {"keep_null": False}, "cgac_code": {"pad_to_length": 3}, "frec_code": {"pad_to_length": 4}})
+    frec_data = clean_data(
+        raw_data,
+        frec_mapping,
+        {"frec": {"keep_null": False}, "cgac_code": {"pad_to_length": 3}, "frec_code": {"pad_to_length": 4}},
+    )
 
     # de-dupe
     frec_data = frec_data[frec_data.frec_cgac == "TRUE"]
@@ -120,8 +133,15 @@ def load_frec(raw_data: pd.DataFrame, start_time: datetime, force_reload: bool =
     diff_found = check_dataframe_diff(frec_data, frec_model.to_pandas_df(), ["frec_id", "display_name"], ["frec_code"])
 
     if force_reload or diff_found:
-        metrics_json['frec_loaded'] = len(frec_data)
-        frec_data["display_name"] = frec_data.apply(lambda row: f"{row["agency_name"]} ({row["agency_abbreviation"]})" if row["agency_abbreviation"] else f"{row["agency_name"]} (nan)", axis=1)
+        metrics_json["frec_loaded"] = len(frec_data)
+        frec_data["display_name"] = frec_data.apply(
+            lambda row: (
+                f"{row["agency_name"]} ({row["agency_abbreviation"]})"
+                if row["agency_abbreviation"]
+                else f"{row["agency_name"]} (nan)"
+            ),
+            axis=1,
+        )
         logger.info("Overwriting new FREC data to Broker")
         frec_model.save(frec_data)
         update_external_data_load_date(frec_model, start_time, datetime.now())
@@ -129,7 +149,9 @@ def load_frec(raw_data: pd.DataFrame, start_time: datetime, force_reload: bool =
     return metrics_json
 
 
-def load_subtier(raw_data: pd.DataFrame,  start_time: datetime, force_reload: bool = False, metrics_json: dict = None) -> dict:
+def load_subtier(
+    raw_data: pd.DataFrame, start_time: datetime, force_reload: bool = False, metrics_json: dict = None
+) -> dict:
     """Loads the SubTier data into the gold table
 
     Args:
@@ -171,20 +193,25 @@ def load_subtier(raw_data: pd.DataFrame,  start_time: datetime, force_reload: bo
         "is_frec": "is_frec",
     }
 
-    subtier_data = clean_data(raw_data, subtier_mapping, {
+    subtier_data = clean_data(
+        raw_data,
+        subtier_mapping,
+        {
             "cgac_code": {"pad_to_length": 3},
             "frec_code": {"pad_to_length": 4},
             "subtier_code": {"pad_to_length": 4},
-        })
+        },
+    )
 
     # de-dupe
     subtier_data.drop_duplicates(subset=["subtier_code"], inplace=True)
 
-    diff_found = check_dataframe_diff(subtier_data, subtier_model.to_pandas_df(), ["subtier_agency_id", "display_name"], ["frec_code"])
+    diff_found = check_dataframe_diff(
+        subtier_data, subtier_model.to_pandas_df(), ["subtier_agency_id", "display_name"], ["frec_code"]
+    )
 
     if force_reload or diff_found:
-        print('reloading')
-        metrics_json['subtiers_loaded'] = len(subtier_data)
+        metrics_json["subtiers_loaded"] = len(subtier_data)
         logger.info("Overwriting new SubTier data to Broker")
         subtier_model.save(subtier_data)
         update_external_data_load_date(subtier_model, start_time, datetime.now())
