@@ -1,5 +1,0 @@
-id,number,title,agencyCode,agency,openDate,closeDate,oppStatus,docType,cfdaList
-51424,TEST-FON-1,Test FON 1,TA1,Test Agency 1,01/28/2010,02/11/2010,archived,synopsis,['15.931']
-51462,TEST-FON-2,Test FON 2,TA2,Test Agency 2,02/01/2010,03/18/2010,archived,synopsis,['16.560']
-51425,TEST-FON-3,Test FON 3,TA3,Test Agency 3,01/28/2010,02/11/2010,archived,synopsis,['15.932']
-51463,TEST-FON-4,Test FON 4,TA4,Test Agency 4,02/01/2010,03/18/2010,archived,synopsis,['16.561']
