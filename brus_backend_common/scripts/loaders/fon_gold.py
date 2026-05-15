@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 def main(
     local_file: os.PathLike = False, force_reload: bool = False, update_public_file: bool = True, metrics: dict = None
-):
+) -> None:
     """Load funding opportunity number lookup table.
 
     Args:
@@ -100,7 +100,7 @@ def main(
     update_external_data_load_date(fon_gold, metrics["start_time"], metrics["end_time"])
 
 
-def setup_parser(parser):
+def setup_parser(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     """Separating parser functionality as USAS uses Django Commands"""
     parser.add_argument(
         "--local_file",

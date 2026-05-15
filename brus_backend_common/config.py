@@ -238,7 +238,7 @@ def pull_ssm_config() -> dict:
 CONFIG = DefaultConfig()
 
 
-def set_brus_config(config: dict):
+def set_brus_config(config: dict) -> None:
     """Takes in a config dict of the attributes to override"""
     for attr, value in config.items():
         setattr(CONFIG, attr, value)

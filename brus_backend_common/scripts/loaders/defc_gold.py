@@ -234,20 +234,8 @@ def main(local_file: str | None = None, force_reload: bool = False, metrics_json
         metrics_json["exit_code"] = 4
         return metrics_json
     metrics_json["records_received"] = len(raw_data)
+
     # Creating a dataframe of the export csv first and then copying columns to match the database
-    raw_data = raw_data.rename(columns={"DEFC_CODE": "DEFC", "DEFC_TITLE": "Public Law"})
-
-    group_model_df = group_model.to_pandas_df()
-    group_mapping = group_model_df.groupby("group")["code"].agg(list).to_dict()
-
-    raw_data = apply_defc_derivations(raw_data, group_mapping)
-
-    raw_data = add_defc_outliers(raw_data, group_mapping)
-
-    # Clear any lingering np.nan's
-    raw_data = raw_data.replace({np.nan: None})
-
-    logger.info("Checking for differences in DEFC data")
     defc_mapping = {
         "defc": "code",
         "public_law": "public_laws",
@@ -257,43 +245,58 @@ def main(local_file: str | None = None, force_reload: bool = False, metrics_json
         "is_valid": "is_valid",
         "earliest_public_law_enactment_date": "earliest_pl_action_date",
     }
-    data = clean_data(raw_data, defc_mapping, {})
-    diff_found = check_dataframe_diff(data, gold_model.to_pandas_df(), ["defc_id"], ["code"], date_format="%Y-%m-%d")
+    group_model_df = group_model.to_pandas_df()
+    group_mapping = group_model_df.groupby("group")["code"].agg(list).to_dict()
+
+    clean_df = (
+        raw_data.rename(columns={"DEFC_CODE": "DEFC", "DEFC_TITLE": "Public Law"})
+        .pipe(apply_defc_derivations, group_mapping)
+        .pipe(add_defc_outliers, group_mapping)
+        .replace({np.nan: None})
+        .pipe(clean_data, defc_mapping, {})
+    )
+
+    logger.info("Checking for differences in DEFC data")
+    diff_found = check_dataframe_diff(
+        clean_df, gold_model.to_pandas_df(), ["defc_id"], ["code"], date_format="%Y-%m-%d"
+    )
     if force_reload or diff_found:
 
         # The only diff should be whenever a new code is added. Noting it here
         if diff_found:
-            incoming_defcs = list(data["code"])
+            incoming_defcs = list(clean_df["code"])
             curr_defcs = list(gold_model.to_pandas_df()["code"])
             diff_defcs = list(set(incoming_defcs) - set(curr_defcs))
             metrics_json["new_defc"] = diff_defcs
             logger.info(f"Difference found: {diff_defcs}")
 
         logger.info("Overwriting new DEFC data to Broker")
-        gold_model.save(data)
+        gold_model.save(clean_df)
 
         update_external_data_load_date(gold_model, start_time, datetime.now())
-        logger.info("{} records inserted to DEFC".format(len(data)))
+        logger.info("{} records inserted to DEFC".format(len(clean_df)))
 
         # convert the arrays to pipe-delimited strings
+        export_df = clean_df.copy()
         defc_delim = "|"
-        array_cols = ["Public Law", "Public Law Short Title", "URLs"]
+        array_cols = ["public_laws", "public_law_short_titles", "urls"]
         for array_col in array_cols:
-            raw_data[array_col] = raw_data[array_col].apply(lambda value: defc_delim.join(value))
+            export_df[array_col] = export_df[array_col].apply(lambda value: defc_delim.join(value))
 
-        header_order = [
-            "DEFC",
-            "Public Law",
-            "Public Law Short Title",
-            "Group Name",
-            "URLs",
-            "Is Valid",
-            "Earliest Public Law Enactment Date",
-        ]
-        raw_data = raw_data[header_order]
+        header_order = {
+            "code": "DEFC",
+            "public_laws": "Public Law",
+            "public_law_short_titles": "Public Law Short Title",
+            "group": "Group Name",
+            "urls": "URLs",
+            "is_valid": "Is Valid",
+            "earliest_pl_action_date": "Earliest Public Law Enactment Date",
+        }
+        export_df = export_df.reindex(columns=list(header_order)).rename(columns=header_order)
         export_name = "def_codes.csv"
+        print(export_df.to_string())
         logger.info("Exporting loaded DEFC file to {}".format(export_name))
-        raw_data.to_csv(export_name, index=0)
+        export_df.to_csv(export_name, index=0)
 
         s3.upload_file(export_name, CONFIG.PUBLIC_FILES_BUCKET, export_name)
 

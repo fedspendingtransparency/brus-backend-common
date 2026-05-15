@@ -50,8 +50,7 @@ def main(metrics: dict = None):
 
     fon_bronze = LAKEHOUSE_MODELS["bronze.funding_opportunity"]()
     logger.info(f"Uploading to {fon_bronze.CSV_PATH}")
-    s3 = _get_boto3("client", "s3")
-    s3.upload_file(local_fon_csv, fon_bronze.BUCKET_NAME, fon_bronze.RELATIVE_CSV_PATH)
+    fon_bronze.save()
     os.remove(local_fon_csv)
 
     metrics["end_time"] = get_utc_now()
