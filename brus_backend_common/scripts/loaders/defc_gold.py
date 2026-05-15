@@ -294,7 +294,6 @@ def main(local_file: str | None = None, force_reload: bool = False, metrics_json
         }
         export_df = export_df.reindex(columns=list(header_order)).rename(columns=header_order)
         export_name = "def_codes.csv"
-        print(export_df.to_string())
         logger.info("Exporting loaded DEFC file to {}".format(export_name))
         export_df.to_csv(export_name, index=0)
 
