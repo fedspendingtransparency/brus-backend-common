@@ -53,10 +53,10 @@ class DEFCGold(CSVModel):
             SchemaField("updated_at", SchemaType.TIMESTAMP, True),
             SchemaField("defc_id", SchemaType.INTEGER, False),
             SchemaField("code", SchemaType.STRING, False),
-            SchemaField("public_laws", SchemaType.LIST_STRING, True),
-            SchemaField("public_law_short_titles", SchemaType.LIST_STRING, True),
+            SchemaField("public_laws", SchemaType.LIST, True, SchemaType.STRING, True),
+            SchemaField("public_law_short_titles", SchemaType.LIST, SchemaType.STRING, True),
             SchemaField("group", SchemaType.STRING, True),
-            SchemaField("urls", SchemaType.LIST_STRING, True),
+            SchemaField("urls", SchemaType.LIST, True, SchemaType.STRING, True),
             SchemaField("is_valid", SchemaType.BOOLEAN, False),
             SchemaField("earliest_pl_action_date", SchemaType.TIMESTAMP, True),
         ]
@@ -84,7 +84,7 @@ class FONBronze(CSVModel):
             SchemaField("closeDate", SchemaType.TIMESTAMP, True),
             SchemaField("oppStatus", SchemaType.STRING, True),
             SchemaField("docType", SchemaType.STRING, True),
-            SchemaField("cfdaList", SchemaType.LIST_STRING, True),
+            SchemaField("cfdaList", SchemaType.LIST, True, SchemaType.STRING, True),
         ]
     )
 
@@ -106,7 +106,7 @@ class FONGold(CSVModel):
             SchemaField("funding_opportunity_id", SchemaType.INTEGER, False),
             SchemaField("funding_opportunity_number", SchemaType.STRING, False),
             SchemaField("title", SchemaType.STRING, True),
-            SchemaField("assistance_listing_numbers", SchemaType.LIST_STRING, True),
+            SchemaField("assistance_listing_numbers", SchemaType.LIST, True, SchemaType.STRING, True),
             SchemaField("agency_name", SchemaType.STRING, True),
             SchemaField("status", SchemaType.STRING, True),
             SchemaField("open_date", SchemaType.TIMESTAMP, True),
