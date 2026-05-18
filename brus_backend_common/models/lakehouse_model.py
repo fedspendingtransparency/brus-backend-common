@@ -72,17 +72,17 @@ class SchemaField(NamedTuple):
 
 class TypeFormat(NamedTuple):
     spark_type: DataType
-    dtype: str
+    pandas_type: str
 
 
 class BaseSchema:
     TYPE_MAP = {
-        SchemaType.BOOLEAN: TypeFormat(spark_type=BooleanType, dtype="bool"),
-        SchemaType.FLOAT: TypeFormat(spark_type=DoubleType, dtype="float64"),
-        SchemaType.INTEGER: TypeFormat(spark_type=IntegerType, dtype="Int64"),
-        SchemaType.LIST: TypeFormat(spark_type=ArrayType, dtype="object"),
-        SchemaType.STRING: TypeFormat(spark_type=StringType, dtype="object"),
-        SchemaType.TIMESTAMP: TypeFormat(spark_type=TimestampType, dtype="datetime64[ns]"),
+        SchemaType.BOOLEAN: TypeFormat(spark_type=BooleanType, pandas_type="bool"),
+        SchemaType.FLOAT: TypeFormat(spark_type=DoubleType, pandas_type="float64"),
+        SchemaType.INTEGER: TypeFormat(spark_type=IntegerType, pandas_type="Int64"),
+        SchemaType.LIST: TypeFormat(spark_type=ArrayType, pandas_type="object"),
+        SchemaType.STRING: TypeFormat(spark_type=StringType, pandas_type="object"),
+        SchemaType.TIMESTAMP: TypeFormat(spark_type=TimestampType, pandas_type="datetime64[ns]"),
     }
 
     def __init__(self, schema_definition: List[SchemaField]) -> None:
@@ -103,7 +103,9 @@ class BaseSchema:
 
     def to_pandas_dtypes(self) -> Dict[str, str]:
         """Convert to Pandas dtype mapping"""
-        return {schema_field.name: self.TYPE_MAP[schema_field.type].dtype for schema_field in self.schema_definition}
+        return {
+            schema_field.name: self.TYPE_MAP[schema_field.type].pandas_type for schema_field in self.schema_definition
+        }
 
     @property
     def columns(self) -> Dict[str, SchemaField]:
