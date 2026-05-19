@@ -41,8 +41,10 @@ class DefaultConfig(BaseSettings):
     Attributes:
         # App
         IS_LOCAL: Whether it's running locally or remotely
-        PROJECT_LOG_DIR: where log files will be kept
+        ENV_CODE: the environment code this is running on
+        FAPC: whether this is running on FAPC or not
         TRACE_ENV: set by deploys to help with tracing
+        PROJECT_LOG_DIR: where log files will be kept
 
         # AWS
         AWS_ACCESS_KEY: The current AWS access key
@@ -53,13 +55,21 @@ class DefaultConfig(BaseSettings):
         AWS_STS_ENDPOINT: (derived) The current AWS S3 endpoint
 
         # Buckets
-        DATA_SOURCES_BUCKET: The S3 data sources bucket name
-        PUBLIC_FILES_BUCKET: The S3 public files bucket name
-        BROKER_EXTERNAL_S3_BUCKET: The S3 broker external bucket name
-        BROKER_SUBMISSIONS_S3_BUCKET: The S3 broker submissions bucket name
-        REFERENCE_S3_BUCKET: The S3 reference bucket name
-        USAS_S3_BUCKET: The S3 USAS bucket name
-        METRICS_BUCKET: The S3 metrics bucket name
+        DATA_ARCHIVE_BUCKET: The data archive bucket name
+        DATA_EXTRACTS_BUCKET: The data extracts bucket name
+        DATA_SOURCES_BUCKET: The data sources bucket name
+        FPDS_DELETE_BUCKET: The data sources bucket name
+        METRICS_BUCKET: The metrics bucket name
+        PUBLIC_FILES_BUCKET: The public files bucket name
+        PUBLISHED_BUCKET: The broker published files bucket name
+        SF133_BUCKET: The sf133 bucket name
+        SUB_ZIPS_BUCKET: The broker submission zips bucket name
+        UNPUBLISHED_BUCKET: The broker unpublished files bucket name
+
+        # Lakehouse Buckets
+        LAKEHOUSE_BROKER_BUCKET: The lakehouse Broker bucket name
+        LAKEHOUSE_REFERENCE_BUCKET: The lakehouse reference bucket name
+        LAKEHOUSE_USAS_BUCKET: The lakehouse USAS bucket name
 
         # Postgres
         DB1_URL: Postgres url to your applications database
@@ -101,8 +111,10 @@ class DefaultConfig(BaseSettings):
 
     # App
     IS_LOCAL: bool = True
-    PROJECT_LOG_DIR: str = str(_SRC_ROOT_DIR / "logs")
+    ENV_CODE: str = "local"
+    FAPC: bool = False
     TRACE_ENV: str = ""
+    PROJECT_LOG_DIR: str = str(_SRC_ROOT_DIR / "logs")
 
     # AWS
     AWS_ACCESS_KEY: SecretStr = SecretStr("")
@@ -119,13 +131,21 @@ class DefaultConfig(BaseSettings):
         return f"sts.{self.AWS_REGION}.amazonaws.com" if not self.IS_LOCAL else f"{self.MINIO_HOST}:{self.MINIO_PORT}"
 
     # Buckets
+    DATA_ARCHIVE_BUCKET: str = ""
+    DATA_EXTRACTS_BUCKET: str = ""
     DATA_SOURCES_BUCKET: str = ""
-    PUBLIC_FILES_BUCKET: str = ""
-    BROKER_EXTERNAL_S3_BUCKET = ""
-    BROKER_SUBMISSIONS_S3_BUCKET = ""
-    REFERENCE_S3_BUCKET = ""
-    USAS_S3_BUCKET = ""
+    FPDS_DELETE_BUCKET: str = ""
     METRICS_BUCKET: str = ""
+    PUBLIC_FILES_BUCKET: str = ""
+    PUBLISHED_BUCKET: str = ""
+    SF133_BUCKET: str = ""
+    SUB_ZIPS_BUCKET: str = ""
+    UNPUBLISHED_BUCKET: str = ""
+
+    # Lakehouse Buckets
+    LAKEHOUSE_BROKER_BUCKET: str = ""
+    LAKEHOUSE_REFERENCE_BUCKET: str = ""
+    LAKEHOUSE_USAS_BUCKET: str = ""
 
     # Postgres
     DB1_URL: SecretStr = SecretStr("")

@@ -393,7 +393,7 @@ class CSVModel(LakeHouseModel):
 
 
 class LakeHouseCurrentMigration(CSVModel):
-    BUCKET_NAME = CONFIG.REFERENCE_S3_BUCKET
+    BUCKET_NAME = CONFIG.LAKEHOUSE_REFERENCE_BUCKET
     DATABASE_NAME = LakeHouseDatabase.BRONZE
     TABLE_NAME = "migrations"
     DESCRIPTION = "Keeps track of migrations for all Lakehouse Models"
@@ -414,7 +414,7 @@ class LakeHouseCurrentMigration(CSVModel):
 
 
 class ExternalDataLoadDate(CSVModel):
-    BUCKET_NAME = CONFIG.REFERENCE_S3_BUCKET
+    BUCKET_NAME = CONFIG.LAKEHOUSE_REFERENCE_BUCKET
     DATABASE_NAME = LakeHouseDatabase.BRONZE
     TABLE_NAME = "external_data_load_date"
     DESCRIPTION = "Keeps track of load dates of certain external data Lakehouse models"
