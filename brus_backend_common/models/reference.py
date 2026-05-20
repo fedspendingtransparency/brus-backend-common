@@ -8,7 +8,7 @@ from pyspark.sql.types import (
     TimestampType,
 )
 from brus_backend_common.config import CONFIG
-from brus_backend_common.models.lakehouse_model import DeltaModel, CSVModel, LakeHouseDatabase
+from brus_backend_common.models.lakehouse_model import CSVModel, LakeHouseDatabase
 
 
 class DEFCBronze(CSVModel):
@@ -31,7 +31,7 @@ class DEFCBronze(CSVModel):
 
 class DEFCGroup(CSVModel):
     BUCKET_NAME = CONFIG.LAKEHOUSE_REFERENCE_BUCKET
-    DATABASE_NAME = LakeHouseDatabase.SILVER
+    DATABASE_NAME = LakeHouseDatabase.GOLD
     TABLE_NAME = "defc_mapping"
     DESCRIPTION = "Internal CSV to dynamically group DEFCs together"
     CSV_NAME = "DEFC_MAPPING.csv"
@@ -47,15 +47,15 @@ class DEFCGroup(CSVModel):
     )
 
 
-class DEFCSilver(DeltaModel):
+class DEFCGold(CSVModel):
     BUCKET_NAME = CONFIG.LAKEHOUSE_REFERENCE_BUCKET
-    DATABASE_NAME = LakeHouseDatabase.SILVER
+    DATABASE_NAME = LakeHouseDatabase.GOLD
     TABLE_NAME = "defc"
     DESCRIPTION = "DEFC data after initial processing"
+    CSV_NAME = "def_codes.csv"
     PK = "defc_id"
     UNIQUE_CONSTRAINTS = ["code"]
     MIGRATION_HISTORY = []
-
     STRUCTURE = StructType(
         [
             StructField("created_at", TimestampType(), True),
