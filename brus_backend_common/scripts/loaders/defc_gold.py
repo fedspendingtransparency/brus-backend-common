@@ -11,6 +11,7 @@ from datetime import datetime
 from brus_backend_common.models import DEFCBronze, DEFCGroup, DEFCGold
 from brus_backend_common.models.lakehouse_model import update_external_data_load_date
 from brus_backend_common.helpers.aws import _get_boto3
+from brus_backend_common.logging import configure_logging
 from brus_backend_common.helpers.pandas import check_dataframe_diff
 from brus_backend_common.helpers.scripts import (
     clean_data,
@@ -215,7 +216,7 @@ def main(local_file: str | None = None, force_reload: bool = False, metrics_json
         raise ValueError(f"{gold_model.TABLE_REF} doesn't exist. Use create_migrate_delta_table beforehand.")
 
     start_time = datetime.now()
-    metrics_json["start_time"] = str(start_time)
+    metrics_json["start_time"] = start_time
 
     logger.info("Parsing DEFC data")
     try:
@@ -308,8 +309,8 @@ def main(local_file: str | None = None, force_reload: bool = False, metrics_json
     metrics_json["total_defc_count"] = total_defc_count
 
     end_time = datetime.now()
-    metrics_json["end_time"] = str(end_time)
-    metrics_json["duration"] = str(end_time - start_time)
+    metrics_json["end_time"] = end_time
+    metrics_json["duration"] = end_time - start_time
 
     if not (force_reload or diff_found):
         metrics_json["exit_code"] = 3
@@ -337,6 +338,7 @@ def setup_parser(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
 
 
 if __name__ == "__main__":
+    configure_logging()
     parser = argparse.ArgumentParser(description="Process the bronze defc data into the gold defc table.")
     parser = setup_parser(parser)
     args = parser.parse_args()
@@ -356,7 +358,7 @@ if __name__ == "__main__":
     exit_code = metrics_json.pop("exit_code")
 
     with open("load_defc_metrics.json", "w+") as metrics_file:
-        json.dump(metrics_json, metrics_file)
+        json.dump(metrics_json, metrics_file, default=str)
 
     s3 = _get_boto3("client", "s3")
     s3.upload_file("load_defc_metrics.json", CONFIG.METRICS_BUCKET, "load_defc_metrics.json")

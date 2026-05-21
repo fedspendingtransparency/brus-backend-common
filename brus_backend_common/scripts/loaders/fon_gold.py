@@ -96,7 +96,7 @@ def main(
         logger.info("No differences found, skipping reload.")
 
     metrics["end_time"] = get_utc_now()
-    metrics["duration"] = str(metrics["end_time"] - metrics["start_time"])
+    metrics["duration"] = metrics["end_time"] - metrics["start_time"]
     update_external_data_load_date(fon_gold, metrics["start_time"], metrics["end_time"])
 
 
