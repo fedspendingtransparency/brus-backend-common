@@ -24,6 +24,7 @@ from pyspark.sql.utils import AnalysisException
 from pyspark.sql.types import (
     ArrayType,
     BooleanType,
+    DataType,
     DoubleType,
     IntegerType,
     StructField,
@@ -53,8 +54,7 @@ class LakeHouseDatabase(Enum):
 
 
 class SchemaType(Enum):
-    LIST_INTEGER = "list_int"
-    LIST_STRING = "list_string"
+    LIST = "list"
     STRING = "string"
     INTEGER = "integer"
     FLOAT = "float"
@@ -66,17 +66,23 @@ class SchemaField(NamedTuple):
     name: str
     type: SchemaType
     nullable: bool
+    sub_type: SchemaType | None = None
+    sub_nullable: bool | None = None
 
 
-class BaseSchema(ABC):
+class TypeFormat(NamedTuple):
+    spark_type: DataType
+    pandas_type: str
+
+
+class BaseSchema:
     TYPE_MAP = {
-        SchemaType.LIST_INTEGER: (ArrayType(IntegerType()), "object"),
-        SchemaType.LIST_STRING: (ArrayType(StringType()), "object"),
-        SchemaType.STRING: (StringType(), "object"),
-        SchemaType.INTEGER: (IntegerType(), "Int64"),
-        SchemaType.FLOAT: (DoubleType(), "float64"),
-        SchemaType.BOOLEAN: (BooleanType(), "bool"),
-        SchemaType.TIMESTAMP: (TimestampType(), "datetime64[ns]"),
+        SchemaType.BOOLEAN: TypeFormat(spark_type=BooleanType, pandas_type="bool"),
+        SchemaType.FLOAT: TypeFormat(spark_type=DoubleType, pandas_type="float64"),
+        SchemaType.INTEGER: TypeFormat(spark_type=IntegerType, pandas_type="Int64"),
+        SchemaType.LIST: TypeFormat(spark_type=ArrayType, pandas_type="object"),
+        SchemaType.STRING: TypeFormat(spark_type=StringType, pandas_type="object"),
+        SchemaType.TIMESTAMP: TypeFormat(spark_type=TimestampType, pandas_type="datetime64[ns]"),
     }
 
     def __init__(self, schema_definition: List[SchemaField]) -> None:
@@ -85,15 +91,21 @@ class BaseSchema(ABC):
 
     def to_spark_schema(self) -> StructType:
         """Convert to PySpark StructType"""
-        fields = [
-            StructField(schema_field.name, self.TYPE_MAP[schema_field.type][0], schema_field.nullable)
-            for schema_field in self.schema_definition
-        ]
+        fields = []
+        for schema_field in self.schema_definition:
+            spark_type = (
+                self.TYPE_MAP[schema_field.type].spark_type(schema_field.sub_type, schema_field.sub_nullable)
+                if SchemaType == SchemaType.LIST
+                else self.TYPE_MAP[schema_field.type].spark_type()
+            )
+            fields.append(StructField(schema_field.name, spark_type, schema_field.nullable))
         return StructType(fields)
 
     def to_pandas_dtypes(self) -> Dict[str, str]:
         """Convert to Pandas dtype mapping"""
-        return {schema_field.name: self.TYPE_MAP[schema_field.type][1] for schema_field in self.schema_definition}
+        return {
+            schema_field.name: self.TYPE_MAP[schema_field.type].pandas_type for schema_field in self.schema_definition
+        }
 
     @property
     def columns(self) -> Dict[str, SchemaField]:
@@ -440,7 +452,7 @@ class CSVModel(LakeHouseModel):
 
         # Convert arrays from csv format to lists
         for col in self.STRUCTURE.schema_definition:
-            if col.type in (SchemaType.LIST_STRING, SchemaType.LIST_INTEGER):
+            if col.type == SchemaType.LIST:
                 converters[col.name] = safe_literal_eval
 
         dtypes = self.STRUCTURE.to_pandas_dtypes()
