@@ -96,7 +96,7 @@ class FONGold(CSVModel):
     DESCRIPTION = "Processed FON data from FONBronze"
     CSV_NAME = "funding_opportunity.csv"
     PK = "funding_opportunity_id"
-    UNIQUE_CONSTRAINTS = ['funding_opportunity_number']
+    UNIQUE_CONSTRAINTS = ["funding_opportunity_number"]
     MIGRATION_HISTORY = []
 
     STRUCTURE = BaseSchema(
