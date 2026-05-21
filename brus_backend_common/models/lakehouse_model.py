@@ -122,7 +122,8 @@ class LakeHouseModel(ABC):
     CSV_NAME: str
     FORMAT: LakeHouseModelFormat
     PK: str
-    UNIQUE_CONSTRAINTS: List[(str,)]
+    # TODO: Add PK and unique constraint validations
+    UNIQUE_CONSTRAINTS: List[str | (str,)]
     MIGRATION_HISTORY: List[str]  # must be ordered by earliest to latest
 
     # The schema/structure of the delta table as StructType with StructFields

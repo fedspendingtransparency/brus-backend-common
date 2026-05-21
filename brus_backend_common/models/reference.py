@@ -26,7 +26,7 @@ class DEFCGroup(CSVModel):
     TABLE_NAME = "defc_mapping"
     DESCRIPTION = "Internal CSV to dynamically group DEFCs together"
     CSV_NAME = "DEFC_MAPPING.csv"
-    PK = "DEFC_CODE"
+    PK = "code"
     UNIQUE_CONSTRAINTS = []
     MIGRATION_HISTORY = []
 
@@ -70,7 +70,7 @@ class FONBronze(CSVModel):
     DESCRIPTION = "Raw FON data pulled from Grants.gov"
     CSV_NAME = "funding_opportunity.csv"
     PK = "id"
-    UNIQUE_CONSTRAINTS = [""]
+    UNIQUE_CONSTRAINTS = ["number"]
     MIGRATION_HISTORY = []
 
     STRUCTURE = BaseSchema(
@@ -96,7 +96,7 @@ class FONGold(CSVModel):
     DESCRIPTION = "Processed FON data from FONBronze"
     CSV_NAME = "funding_opportunity.csv"
     PK = "funding_opportunity_id"
-    UNIQUE_CONSTRAINTS = []
+    UNIQUE_CONSTRAINTS = ['funding_opportunity_number']
     MIGRATION_HISTORY = []
 
     STRUCTURE = BaseSchema(
