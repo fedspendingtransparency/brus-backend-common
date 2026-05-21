@@ -11,6 +11,7 @@ from brus_backend_common.helpers.aws import _get_boto3
 from brus_backend_common.helpers.pandas import check_dataframe_diff
 from brus_backend_common.helpers.scripts import clean_data, exit_if_nonlocal
 from brus_backend_common.config import CONFIG
+from brus_backend_common.logging import configure_logging
 
 logger = logging.getLogger(__name__)
 
@@ -91,7 +92,7 @@ def load_frec(raw_data: pd.DataFrame, force_reload: bool = False, metrics_json: 
     """Loads the FREC data into the gold table
 
     Args:
-        raw_data: the raw agency codes bronze table\
+        raw_data: the raw agency codes bronze table
         force_reload: Boolean flag to determine if a reload should happen regardless of new data
         metrics_json: dict to collect metrics for the script
 
@@ -268,6 +269,7 @@ def setup_parser(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
 
 
 if __name__ == "__main__":
+    configure_logging()
     parser = argparse.ArgumentParser(description="Process the bronze defc data into the gold defc table.")
     parser = setup_parser(parser)
     args = parser.parse_args()
