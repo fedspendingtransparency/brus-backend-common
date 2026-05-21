@@ -1,8 +1,9 @@
 import argparse
 import logging
 
-from brus_backend_common.models import LAKEHOUSE_MODELS
 from brus_backend_common.helpers.spark import SparkScriptSession
+from brus_backend_common.logging import configure_logging
+from brus_backend_common.models import LAKEHOUSE_MODELS
 
 logger = logging.getLogger(__name__)
 
@@ -52,6 +53,7 @@ def main(table, recreate=False, migrate=None):
 
 
 if __name__ == "__main__":
+    configure_logging()
     parser = argparse.ArgumentParser(description="Create or migrate lakehouse tables")
     parser = setup_parser(parser)
     args = parser.parse_args()

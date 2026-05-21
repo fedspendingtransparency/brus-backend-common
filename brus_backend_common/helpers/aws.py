@@ -44,6 +44,9 @@ def get_storage_options() -> dict:
         "aws_sts_endpoint": (
             f"http://{CONFIG.AWS_STS_ENDPOINT}" if CONFIG.IS_LOCAL else f"https://{CONFIG.AWS_STS_ENDPOINT}"
         ),
+        "aws_ssm_endpoint": (
+            f"http://{CONFIG.AWS_SSM_ENDPOINT}" if CONFIG.IS_LOCAL else f"https://{CONFIG.AWS_SSM_ENDPOINT}"
+        ),
         "region": CONFIG.AWS_REGION,
         "allow_http": "true",
         "aws_conditional_put": "etag",
@@ -134,6 +137,9 @@ def _get_boto3(method_name: str, *args, region_name=CONFIG.AWS_REGION, **kwargs)
     """
     attr = getattr(boto3, method_name)
     kwargs.update({"region_name": region_name})
+    endpoint = None
+    if len(args) > 0 and args[0].upper() in ("S3", "SSM", "STS"):
+        endpoint = getattr(CONFIG, f"AWS_{args[0].upper()}_ENDPOINT")
 
     if callable(attr):
         if CONFIG.IS_LOCAL:
@@ -143,9 +149,8 @@ def _get_boto3(method_name: str, *args, region_name=CONFIG.AWS_REGION, **kwargs)
                 aws_secret_access_key=CONFIG.AWS_SECRET_KEY.get_secret_value(),
             )
             attr = getattr(session, method_name)
-            kwargs.update({"endpoint_url": f"http://{CONFIG.AWS_S3_ENDPOINT}"})
-        else:
-            kwargs.update({"endpoint_url": f"https://{CONFIG.AWS_S3_ENDPOINT}"})
+        if endpoint:
+            kwargs.update({"endpoint_url": f"http{'s' if not CONFIG.IS_LOCAL else ''}://{endpoint}"})
         return attr(*args, **kwargs)
     return attr
 

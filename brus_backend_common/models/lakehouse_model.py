@@ -8,11 +8,10 @@ import tempfile
 from abc import ABC
 from argparse import ArgumentTypeError
 from enum import Enum
-from typing import Any, Callable, List
+from typing import Any, Callable, Dict, List, NamedTuple
 from datetime import datetime
 
 import deltalake
-import numpy as np
 import pyarrow as pa
 import pandas as pd
 import polars as pl
@@ -24,6 +23,9 @@ from pyspark.sql.functions import monotonically_increasing_id
 from pyspark.sql.utils import AnalysisException
 from pyspark.sql.types import (
     ArrayType,
+    BooleanType,
+    DataType,
+    DoubleType,
     IntegerType,
     StructField,
     StringType,
@@ -51,6 +53,66 @@ class LakeHouseDatabase(Enum):
     GOLD = "gold"
 
 
+class SchemaType(Enum):
+    LIST = "list"
+    STRING = "string"
+    INTEGER = "integer"
+    FLOAT = "float"
+    BOOLEAN = "bool"
+    TIMESTAMP = "timestamp"
+
+
+class SchemaField(NamedTuple):
+    name: str
+    type: SchemaType
+    nullable: bool
+    sub_type: SchemaType | None = None
+    sub_nullable: bool | None = None
+
+
+class TypeFormat(NamedTuple):
+    spark_type: DataType
+    pandas_type: str
+
+
+class BaseSchema:
+    TYPE_MAP = {
+        SchemaType.BOOLEAN: TypeFormat(spark_type=BooleanType, pandas_type="bool"),
+        SchemaType.FLOAT: TypeFormat(spark_type=DoubleType, pandas_type="float64"),
+        SchemaType.INTEGER: TypeFormat(spark_type=IntegerType, pandas_type="Int64"),
+        SchemaType.LIST: TypeFormat(spark_type=ArrayType, pandas_type="object"),
+        SchemaType.STRING: TypeFormat(spark_type=StringType, pandas_type="object"),
+        SchemaType.TIMESTAMP: TypeFormat(spark_type=TimestampType, pandas_type="datetime64[ns]"),
+    }
+
+    def __init__(self, schema_definition: List[SchemaField]) -> None:
+        """Returns list of (column_name, type_key, nullable)"""
+        self.schema_definition = schema_definition
+
+    def to_spark_schema(self) -> StructType:
+        """Convert to PySpark StructType"""
+        fields = []
+        for schema_field in self.schema_definition:
+            spark_type = (
+                self.TYPE_MAP[schema_field.type].spark_type(schema_field.sub_type, schema_field.sub_nullable)
+                if SchemaType == SchemaType.LIST
+                else self.TYPE_MAP[schema_field.type].spark_type()
+            )
+            fields.append(StructField(schema_field.name, spark_type, schema_field.nullable))
+        return StructType(fields)
+
+    def to_pandas_dtypes(self) -> Dict[str, str]:
+        """Convert to Pandas dtype mapping"""
+        return {
+            schema_field.name: self.TYPE_MAP[schema_field.type].pandas_type for schema_field in self.schema_definition
+        }
+
+    @property
+    def columns(self) -> Dict[str, SchemaField]:
+        """Get dict of column names with their schema fields"""
+        return {schema_field.name: schema_field for schema_field in self.schema_definition}
+
+
 class LakeHouseModel(ABC):
     BUCKET_NAME: str
     RELATIVE_LAKEHOUSE_PATH = "data"
@@ -64,7 +126,7 @@ class LakeHouseModel(ABC):
     MIGRATION_HISTORY: List[str]  # must be ordered by earliest to latest
 
     # The schema/structure of the delta table as StructType with StructFields
-    STRUCTURE: StructType
+    STRUCTURE: BaseSchema
 
     def __init__(self, spark: SparkSession | None = None) -> None:
         self._s3_client: S3Client = _get_boto3("client", "s3")
@@ -74,8 +136,8 @@ class LakeHouseModel(ABC):
         self.DATABASE_PATH: str = f"s3://{self.BUCKET_NAME}/{self.RELATIVE_DATABASE_PATH}"
         self.DATABASE_PATH_HADOOP: str = f"s3a://{self.BUCKET_NAME}/{self.RELATIVE_DATABASE_PATH}"
         self.RELATIVE_TABLE_PATH: str = f"{self.RELATIVE_DATABASE_PATH}/{self.TABLE_NAME}"
-        self.TABLE_PATH: str = f"{self.DATABASE_PATH}/{self.RELATIVE_TABLE_PATH}"
-        self.TABLE_PATH_HADOOP: str = f"{self.DATABASE_PATH_HADOOP}/{self.RELATIVE_TABLE_PATH}"
+        self.TABLE_PATH: str = f"{self.DATABASE_PATH}/{self.TABLE_NAME}"
+        self.TABLE_PATH_HADOOP: str = f"{self.DATABASE_PATH_HADOOP}/{self.TABLE_NAME}"
         self.TABLE_REF: str = f"{self.DATABASE_NAME.value}.{self.TABLE_NAME}"
 
     def exists(self) -> bool:
@@ -246,9 +308,9 @@ class DeltaModel(LakeHouseModel):
             structure = self.STRUCTURE
             if self.PK:
                 # Drop from the initial structure, will be added afterward as a special id
-                structure = StructType([field for field in structure.fields if field.name != self.PK])
+                structure = BaseSchema([field for field in structure.schema_definition if field.name != self.PK])
 
-            df = self.spark.createDataFrame([], structure)
+            df = self.spark.createDataFrame([], structure.to_spark_schema())
             if self.PK:
                 df = df.withColumn(self.PK, monotonically_increasing_id())
             if recreate:
@@ -351,7 +413,10 @@ class CSVModel(LakeHouseModel):
 
     def next_id(self) -> int:
         df = self.to_pandas_df()
-        return df[self.PK].max() + 1 if df is not None else -1
+        max_id = -1
+        if self.PK is not None and self.PK in df.columns and self.STRUCTURE.columns[self.PK].type == SchemaType.INTEGER:
+            max_id = df[self.PK].max() + 1 if not df.empty else 1
+        return max_id
 
     def initialize(self, recreate: bool = False) -> None:
         logger.info(f"Initializing {self.TABLE_REF}")
@@ -367,7 +432,7 @@ class CSVModel(LakeHouseModel):
             self.exists()
 
     def _recreate_blank_file(self):
-        df = pd.DataFrame(columns=self.STRUCTURE.fieldNames())
+        df = pd.DataFrame(columns=list(self.STRUCTURE.columns))
         with tempfile.TemporaryDirectory() as temp_dir:
             blank_csv = os.path.join(temp_dir, self.CSV_NAME)
             df.to_csv(blank_csv, index=False)
@@ -376,20 +441,30 @@ class CSVModel(LakeHouseModel):
     def to_pandas_df(self, **kwargs: Any) -> pd.DataFrame | None:
         converters = {}
 
+        def safe_literal_eval(val: Any) -> Any:
+            # Check if the value is a non-empty string
+            if isinstance(val, str) and val.strip():
+                try:
+                    return ast.literal_eval(val)
+                except (ValueError, SyntaxError):
+                    return val  # Return original if parsing fails
+            return val  # Return original if empty or already null
+
         # Convert arrays from csv format to lists
-        for col in self.STRUCTURE:
-            if isinstance(col.dataType, ArrayType):
-                converters[col.name] = ast.literal_eval
+        for col in self.STRUCTURE.schema_definition:
+            if col.type == SchemaType.LIST:
+                converters[col.name] = safe_literal_eval
 
-        # Type Checker struggles with BytesIO and S3 Objects
-        df = pd.read_csv(io.BytesIO(self._s3_object), converters=converters, **kwargs) if self.exists() else None  # type: ignore
+        dtypes = self.STRUCTURE.to_pandas_dtypes()
+        params = {
+            "converters": converters,
+            "dtype": {k: v for k, v in dtypes.items() if v != "datetime64[ns]"},
+            "parse_dates": [k for k, v in dtypes.items() if v == "datetime64[ns]"],
+            "usecols": list(self.STRUCTURE.columns),
+        }
+        params.update(kwargs)
 
-        # Convert lists in df to np.arrays
-        for col in self.STRUCTURE:
-            if isinstance(col.dataType, ArrayType):
-                df[col.name] = df[col.name].apply(np.array)
-
-        return df
+        return pd.read_csv(io.BytesIO(self._s3_object), **params)[list(self.STRUCTURE.columns)] if self.exists() else None  # type: ignore
 
     def to_polars_df(self, **kwargs: Any) -> pl.DataFrame | pl.Series | None:
         return pl.read_csv(self.CSV_PATH, **kwargs) if self.exists() else None
@@ -398,6 +473,9 @@ class CSVModel(LakeHouseModel):
         # Using pandas with its built-in S3 support
         if isinstance(df, pl.DataFrame):
             df = df.to_pandas()
+
+        if self.PK and self.PK not in df.columns:
+            df[self.PK] = df.index + 1
 
         csv_buffer = io.StringIO()
         df.to_csv(csv_buffer, index=False)
@@ -419,13 +497,13 @@ class LakeHouseCurrentMigration(CSVModel):
     UNIQUE_CONSTRAINTS = ["model"]
     MIGRATION_HISTORY = []
 
-    STRUCTURE = StructType(
+    STRUCTURE = BaseSchema(
         [
-            StructField("created_at", TimestampType(), True),
-            StructField("updated_at", TimestampType(), True),
-            StructField("model_id", IntegerType(), False),
-            StructField("model", StringType(), False),
-            StructField("current_migration", StringType(), False),
+            SchemaField("created_at", SchemaType.TIMESTAMP, True),
+            SchemaField("updated_at", SchemaType.TIMESTAMP, True),
+            SchemaField("model_id", SchemaType.INTEGER, False),
+            SchemaField("model", SchemaType.STRING, False),
+            SchemaField("current_migration", SchemaType.STRING, False),
         ]
     )
 
@@ -440,15 +518,15 @@ class ExternalDataLoadDate(CSVModel):
     UNIQUE_CONSTRAINTS = ["name"]
     MIGRATION_HISTORY = []
 
-    STRUCTURE = StructType(
+    STRUCTURE = BaseSchema(
         [
-            StructField("created_at", TimestampType(), True),
-            StructField("updated_at", TimestampType(), True),
-            StructField("external_data_load_date_id", IntegerType(), False),
-            StructField("name", StringType(), False),
-            StructField("description", StringType(), False),
-            StructField("last_load_date_start", TimestampType(), False),
-            StructField("last_load_date_end", TimestampType(), False),
+            SchemaField("created_at", SchemaType.TIMESTAMP, True),
+            SchemaField("updated_at", SchemaType.TIMESTAMP, True),
+            SchemaField("external_data_load_date_id", SchemaType.INTEGER, False),
+            SchemaField("name", SchemaType.STRING, False),
+            SchemaField("description", SchemaType.STRING, False),
+            SchemaField("last_load_date_start", SchemaType.TIMESTAMP, False),
+            SchemaField("last_load_date_end", SchemaType.TIMESTAMP, False),
         ]
     )
 
@@ -472,7 +550,7 @@ def update_external_data_load_date(model: LakeHouseModel, start_time: datetime, 
     last_stored_obj = df[df.name == model.TABLE_REF]
     if last_stored_obj.empty:
         new_entry_dict = {
-            "created_at": convert_timestamp_df(datetime.now()),
+            "created_at": [convert_timestamp_df(datetime.now())],
             "updated_at": [None],  # will be updated later
             "external_data_load_date_id": [edld_model.next_id()],
             "name": [model.TABLE_REF],
@@ -482,8 +560,8 @@ def update_external_data_load_date(model: LakeHouseModel, start_time: datetime, 
         }
         new_entry = pd.DataFrame(new_entry_dict)
 
-        last_stored_obj = pd.concat([last_stored_obj, new_entry])
         df = pd.concat([df, new_entry])
+        last_stored_obj = df[df.name == model.TABLE_REF]
 
     last_stored_obj["last_load_date_start"] = convert_timestamp_df(start_time)
     last_stored_obj["last_load_date_end"] = convert_timestamp_df(end_time)

@@ -20,8 +20,14 @@ Note: When working locally, do not modify this file and update your values in ".
       Pydantic's dotenv will automagically populate it based on it
 """
 
+import logging
 import os
 import pathlib
+
+import boto3
+
+from dotenv import dotenv_values
+from io import StringIO
 from pydantic import BaseSettings, SecretStr
 
 from brus_backend_common.helpers.uri import get_jdbc_url_from_pg_uri
@@ -33,6 +39,8 @@ _PROJECT_ROOT_DIR: pathlib.Path = pathlib.Path(__file__).parent.parent.resolve()
 _SRC_ROOT_DIR: pathlib.Path = _PROJECT_ROOT_DIR / _PROJECT_NAME.replace("-", "_")
 
 ENV_FILE_PATH = os.path.join(_PROJECT_ROOT_DIR, ".env")
+
+logger = logging.getLogger(__name__)
 
 
 class DefaultConfig(BaseSettings):
@@ -130,6 +138,10 @@ class DefaultConfig(BaseSettings):
     def AWS_STS_ENDPOINT(self):
         return f"sts.{self.AWS_REGION}.amazonaws.com" if not self.IS_LOCAL else f"{self.MINIO_HOST}:{self.MINIO_PORT}"
 
+    @property
+    def AWS_SSM_ENDPOINT(self):
+        return f"ssm.{self.AWS_REGION}.amazonaws.com" if not self.IS_LOCAL else f"{self.MINIO_HOST}:{self.MINIO_PORT}"
+
     # Buckets
     DATA_ARCHIVE_BUCKET: str = ""
     DATA_EXTRACTS_BUCKET: str = ""
@@ -198,10 +210,51 @@ class DefaultConfig(BaseSettings):
     MINIO_DATA_DIR: str = ""
 
 
+# TODO: Update CONFIG to use BaseModel with nested environment variables which can help generate this list automatically
+#       (ex. BUCKETS__DATA_ARCHIVE -> CONFIG.BUCKETS.DATA_ARCHIVE)
+CONFIG_BUCKETS = [attr for attr, value in DefaultConfig().__dict__.items() if attr.endswith("_BUCKET")]
+
+
+def pull_ssm_config() -> dict:
+    """This function lives in the liminal space between CONFIG and helpers.aws, having a hand in both.
+    While this is essentially more helpers.aws based, that file imports and uses CONFIG values from this file,
+    which'd result in a circular dependency.
+
+    Likewise, we could re-use the helper function below but that'd also run into a circular dependency.
+    ssm_client = _get_boto3('client', 'ssm')
+    """
+    env_group = "prod" if CONFIG.ENV_CODE == "prod" else "nonprod"
+
+    # TODO: Post-FAPC Cleanup
+    non_fapc_path = f"/{env_group}/brus-backend-common/{CONFIG.ENV_CODE}/.env"
+    fapc_path = "/kc-dtas/brus/broker/secrets"
+    secrets_param_name = fapc_path if CONFIG.FAPC else non_fapc_path
+
+    ssm_client = boto3.client("ssm", region_name=CONFIG.AWS_REGION)
+    secrets_yaml_param = ssm_client.get_parameter(Name=secrets_param_name, WithDecryption=True)
+    return dotenv_values(stream=StringIO(secrets_yaml_param["Parameter"]["Value"]))
+
+
 CONFIG = DefaultConfig()
 
 
-def set_brus_config(config):
+def set_brus_config(config: dict) -> None:
     """Takes in a config dict of the attributes to override"""
     for attr, value in config.items():
         setattr(CONFIG, attr, value)
+
+
+# Overwrite any values with ones pulled from SSM if not local
+# Note: DefaultConfig() can take the argument, but we need the initial default values to look up the right
+# Parameter values, so we're updating them after the initial pull.
+if not CONFIG.IS_LOCAL:
+    ssm_config = pull_ssm_config()
+    CONFIG = DefaultConfig(**ssm_config)
+
+# Overwrite any values if running in a test to prevent conflicting with your local environment
+# https://docs.pytest.org/en/stable/example/simple.html#detect-if-running-from-within-a-pytest-run
+if os.environ.get("PYTEST_VERSION") is not None:
+    # Rename the buckets in the test environment to not overwrite your local buckets
+    CONFIG = DefaultConfig(
+        **{bucket_config: f"test-{getattr(CONFIG, bucket_config)}" for bucket_config in CONFIG_BUCKETS}
+    )
