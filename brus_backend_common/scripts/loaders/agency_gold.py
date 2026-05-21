@@ -2,6 +2,7 @@ import argparse
 import json
 import logging
 import pandas as pd
+import numpy as np
 from datetime import datetime
 
 from brus_backend_common.models import AgencyBronze, CGACGold, FRECGold, SubTierAgencyGold
@@ -77,13 +78,8 @@ def load_cgac(
 
     if force_reload or diff_found:
         metrics_json["cgac_loaded"] = len(cgac_data)
-        cgac_data["display_name"] = cgac_data.apply(
-            lambda row: (
-                f"{row["agency_name"]} ({row["agency_abbreviation"]})"
-                if row["agency_abbreviation"]
-                else f"{row["agency_name"]} (nan)"
-            ),
-            axis=1,
+        cgac_data["display_name"] = (
+            cgac_data["agency_name"] + " (" + cgac_data["agency_abbreviation"].replace("", "nan").fillna("nan") + ")"
         )
         logger.info("Overwriting new CGAC data to Broker")
         cgac_model.save(cgac_data)
@@ -119,28 +115,24 @@ def load_frec(
         "icon_filename": "icon_name",
     }
 
-    frec_data = clean_data(
-        raw_data,
-        frec_mapping,
-        {"frec": {"keep_null": False}, "cgac_code": {"pad_to_length": 3}, "frec_code": {"pad_to_length": 4}},
+    # clean and de-dupe
+    frec_data = (
+        clean_data(
+            raw_data,
+            frec_mapping,
+            {"frec": {"keep_null": False}, "cgac_code": {"pad_to_length": 3}, "frec_code": {"pad_to_length": 4}},
+        )
+        .loc[lambda df: df.frec_cgac == "TRUE"]
+        .drop(columns=["frec_cgac"])
+        .drop_duplicates(subset=["frec_code"])
     )
-
-    # de-dupe
-    frec_data = frec_data[frec_data.frec_cgac == "TRUE"]
-    frec_data.drop(["frec_cgac"], axis=1, inplace=True)
-    frec_data.drop_duplicates(subset=["frec_code"], inplace=True)
 
     diff_found = check_dataframe_diff(frec_data, frec_model.to_pandas_df(), ["frec_id", "display_name"], ["frec_code"])
 
     if force_reload or diff_found:
         metrics_json["frec_loaded"] = len(frec_data)
-        frec_data["display_name"] = frec_data.apply(
-            lambda row: (
-                f"{row["agency_name"]} ({row["agency_abbreviation"]})"
-                if row["agency_abbreviation"]
-                else f"{row["agency_name"]} (nan)"
-            ),
-            axis=1,
+        frec_data["display_name"] = (
+            frec_data["agency_name"] + " (" + frec_data["agency_abbreviation"].replace("", "nan").fillna("nan") + ")"
         )
         logger.info("Overwriting new FREC data to Broker")
         frec_model.save(frec_data)
@@ -178,11 +170,9 @@ def load_subtier(
             custom_cgac_row = pd.DataFrame([custom_subtier])
             raw_data = pd.concat([raw_data, custom_cgac_row], ignore_index=True)
 
-    condition = raw_data["TOPTIER_FLAG"] == "TRUE"
-    raw_data.loc[condition, "PRIORITY"] = 1
-    raw_data.loc[~condition, "PRIORITY"] = 2
-    raw_data["PRIORITY"] = raw_data["PRIORITY"].astype(int)
-    raw_data.replace({"TRUE": True, "FALSE": False}, inplace=True)
+    raw_data = raw_data.assign(PRIORITY=lambda df: np.where(df["TOPTIER_FLAG"] == "TRUE", 1, 2).astype(int)).replace(
+        {"TRUE": True, "FALSE": False}
+    )
 
     subtier_mapping = {
         "cgac_agency_code": "cgac_code",
