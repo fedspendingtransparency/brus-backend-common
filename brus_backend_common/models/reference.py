@@ -45,7 +45,7 @@ class CGACGold(CSVModel):
     DESCRIPTION = "CGAC Data after processing"
     CSV_NAME = "cgac.csv"
     PK = "cgac_id"
-    UNIQUE_CONSTRAINTS = []
+    UNIQUE_CONSTRAINTS = ["cgac_code"]
     MIGRATION_HISTORY = []
 
     STRUCTURE = BaseSchema(
@@ -67,7 +67,7 @@ class FRECGold(CSVModel):
     DESCRIPTION = "FREC Data after processing"
     CSV_NAME = "frec.csv"
     PK = "frec_id"
-    UNIQUE_CONSTRAINTS = []
+    UNIQUE_CONSTRAINTS = ["frec_code"]
     MIGRATION_HISTORY = []
 
     STRUCTURE = BaseSchema(
@@ -90,7 +90,7 @@ class SubTierAgencyGold(CSVModel):
     DESCRIPTION = "Sub Tier Agency Data after processing"
     CSV_NAME = "subtier_agency.csv"
     PK = "subtier_agency_id"
-    UNIQUE_CONSTRAINTS = []
+    UNIQUE_CONSTRAINTS = ["subtier_code"]
     MIGRATION_HISTORY = []
 
     STRUCTURE = BaseSchema(

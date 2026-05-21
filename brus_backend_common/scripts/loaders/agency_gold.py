@@ -14,6 +14,7 @@ from brus_backend_common.config import CONFIG
 
 logger = logging.getLogger(__name__)
 
+datetime_format = "%Y-%m-%d %H:%M:%S.%f"
 CUSTOM_CGACS = [
     {
         "CGAC AGENCY CODE": "999",
@@ -22,7 +23,6 @@ CUSTOM_CGACS = [
         "ICON FILENAME": None,
     }
 ]
-
 CUSTOM_SUBTIERS = [
     {
         "CGAC AGENCY CODE": "999",
@@ -35,14 +35,11 @@ CUSTOM_SUBTIERS = [
 ]
 
 
-def load_cgac(
-    raw_data: pd.DataFrame, start_time: datetime, force_reload: bool = False, metrics_json: dict = None
-) -> dict:
+def load_cgac(raw_data: pd.DataFrame, force_reload: bool = False, metrics_json: dict = None) -> dict:
     """Loads the CGAC data into the gold table
 
     Args:
         raw_data: the raw agency codes bronze table
-        start_time: the start time of the script
         force_reload: Boolean flag to determine if a reload should happen regardless of new data
         metrics_json: dict to collect metrics for the script
 
@@ -81,21 +78,20 @@ def load_cgac(
         cgac_data["display_name"] = (
             cgac_data["agency_name"] + " (" + cgac_data["agency_abbreviation"].replace("", "nan").fillna("nan") + ")"
         )
-        logger.info("Overwriting new CGAC data to Broker")
+        logger.info("Overwriting new CGAC data to CGACGold")
         cgac_model.save(cgac_data)
-        update_external_data_load_date(cgac_model, start_time, datetime.now())
+        update_external_data_load_date(
+            cgac_model, datetime.strptime(metrics_json["start_time"], datetime_format), datetime.now()
+        )
 
     return metrics_json
 
 
-def load_frec(
-    raw_data: pd.DataFrame, start_time: datetime, force_reload: bool = False, metrics_json: dict = None
-) -> dict:
+def load_frec(raw_data: pd.DataFrame, force_reload: bool = False, metrics_json: dict = None) -> dict:
     """Loads the FREC data into the gold table
 
     Args:
-        raw_data: the raw agency codes bronze table
-        start_time: the start time of the script
+        raw_data: the raw agency codes bronze table\
         force_reload: Boolean flag to determine if a reload should happen regardless of new data
         metrics_json: dict to collect metrics for the script
 
@@ -134,21 +130,20 @@ def load_frec(
         frec_data["display_name"] = (
             frec_data["agency_name"] + " (" + frec_data["agency_abbreviation"].replace("", "nan").fillna("nan") + ")"
         )
-        logger.info("Overwriting new FREC data to Broker")
+        logger.info("Overwriting new FREC data to FRECGold")
         frec_model.save(frec_data)
-        update_external_data_load_date(frec_model, start_time, datetime.now())
+        update_external_data_load_date(
+            frec_model, datetime.strptime(metrics_json["start_time"], datetime_format), datetime.now()
+        )
 
     return metrics_json
 
 
-def load_subtier(
-    raw_data: pd.DataFrame, start_time: datetime, force_reload: bool = False, metrics_json: dict = None
-) -> dict:
+def load_subtier(raw_data: pd.DataFrame, force_reload: bool = False, metrics_json: dict = None) -> dict:
     """Loads the SubTier data into the gold table
 
     Args:
         raw_data: the raw agency codes bronze table
-        start_time: the start time of the script
         force_reload: Boolean flag to determine if a reload should happen regardless of new data
         metrics_json: dict to collect metrics for the script
 
@@ -202,9 +197,11 @@ def load_subtier(
 
     if force_reload or diff_found:
         metrics_json["subtiers_loaded"] = len(subtier_data)
-        logger.info("Overwriting new SubTier data to Broker")
+        logger.info("Overwriting new SubTier data to SubTierAgencyGold")
         subtier_model.save(subtier_data)
-        update_external_data_load_date(subtier_model, start_time, datetime.now())
+        update_external_data_load_date(
+            subtier_model, datetime.strptime(metrics_json["start_time"], datetime_format), datetime.now()
+        )
 
     return metrics_json
 
@@ -241,9 +238,9 @@ def main(local_file: str | None = None, force_reload: bool = False, metrics_json
         metrics_json["exit_code"] = 4  # exit code chosen arbitrarily, to indicate distinct failure states
         return metrics_json
 
-    metrics_json = load_cgac(raw_data, start_time, force_reload, metrics_json)
-    metrics_json = load_frec(raw_data, start_time, force_reload, metrics_json)
-    metrics_json = load_subtier(raw_data, start_time, force_reload, metrics_json)
+    metrics_json = load_cgac(raw_data, force_reload, metrics_json)
+    metrics_json = load_frec(raw_data, force_reload, metrics_json)
+    metrics_json = load_subtier(raw_data, force_reload, metrics_json)
 
     end_time = datetime.now()
     metrics_json["end_time"] = str(end_time)
