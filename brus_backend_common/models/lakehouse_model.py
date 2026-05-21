@@ -561,15 +561,9 @@ def update_external_data_load_date(model: LakeHouseModel, start_time: datetime, 
         new_entry = pd.DataFrame(new_entry_dict)
 
         df = pd.concat([df, new_entry])
-        last_stored_obj = df[df.name == model.TABLE_REF]
 
-    last_stored_obj["last_load_date_start"] = convert_timestamp_df(start_time)
-    last_stored_obj["last_load_date_end"] = convert_timestamp_df(end_time)
-    last_stored_obj["updated_at"] = convert_timestamp_df(datetime.now())
-
-    df.set_index(edld_model.PK, inplace=True)
-    last_stored_obj.set_index(edld_model.PK, inplace=True)
-    df.update(last_stored_obj)
-    df.reset_index(inplace=True)
+    df.loc[df.name == model.TABLE_REF, "last_load_date_start"] = convert_timestamp_df(start_time)
+    df.loc[df.name == model.TABLE_REF, "last_load_date_end"] = convert_timestamp_df(end_time)
+    df.loc[df.name == model.TABLE_REF, "updated_at"] = convert_timestamp_df(datetime.now())
 
     edld_model.save(df)
