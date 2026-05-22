@@ -12,4 +12,4 @@
 #
 # from brus_backend_common.models.lakehouse_model import LakeHouseModel, LakeHouseDatabase
 # from brus_backend_common.config import CONFIG
-# CONFIG.USAS_S3_BUCKET
+# CONFIG.LAKEHOUSE_USAS_BUCKET
