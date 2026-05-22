@@ -1,7 +1,3 @@
-from datetime import datetime
-
-import pandas as pd
-
 from brus_backend_common.config import CONFIG
 from brus_backend_common.models.lakehouse_model import BaseSchema, CSVModel, LakeHouseDatabase, SchemaField, SchemaType
 
@@ -128,43 +124,43 @@ class FONGold(CSVModel):
 
 
 class ProgramActivityParkBronze(CSVModel):
-    BUCKET_NAME = CONFIG.REFERENCE_S3_BUCKET
+    BUCKET_NAME = CONFIG.LAKEHOUSE_REFERENCE_BUCKET
     DATABASE_NAME = LakeHouseDatabase.BRONZE
     TABLE_NAME = "program_activity_park"
     DESCRIPTION = "Raw program activity park data"
     CSV_NAME = "PARK_PROGRAM_ACTIVITY.csv"
     PK = "PARK"
-    DTYPES = {
-        "FY": pd.StringDtype(),
-        "PD": pd.StringDtype(),
-        "ALLOC_XFER_AGENCY": pd.StringDtype(),
-        "AID": pd.StringDtype(),
-        "MAIN_ACCT": pd.StringDtype(),
-        "SUB_ACCT": pd.StringDtype(),
-        "COMPOUND_KEY": pd.StringDtype(),
-        "PARK": pd.StringDtype(),
-        "PARK_NAME": pd.StringDtype(),
-        "RECORD_UPDATE_TS": pd.StringDtype(),
-        "FILE_UPDATE_TS": pd.StringDtype(),
-    }
+    STRUCTURE = BaseSchema([
+        SchemaField("FY", SchemaType.STRING),
+        SchemaField("PD", SchemaType.STRING),
+        SchemaField("ALLOC_XFER_AGENCY", SchemaType.STRING),
+        SchemaField("AID", SchemaType.STRING),
+        SchemaField("MAIN_ACCT", SchemaType.STRING),
+        SchemaField("SUB_ACCT", SchemaType.STRING),
+        SchemaField("COMPOUND_KEY", SchemaType.STRING),
+        SchemaField("PARK", SchemaType.STRING),
+        SchemaField("PARK_NAME", SchemaType.STRING),
+        SchemaField("RECORD_UPDATE_TS", SchemaType.STRING),
+        SchemaField("FILE_UPDATE_TS", SchemaType.STRING),
+    ])
 
 
 class ProgramActivityParkGold(CSVModel):
-    BUCKET_NAME = CONFIG.REFERENCE_S3_BUCKET
+    BUCKET_NAME = CONFIG.LAKEHOUSE_REFERENCE_BUCKET
     DATABASE_NAME = LakeHouseDatabase.GOLD
     TABLE_NAME = "program_activity_park"
     DESCRIPTION = "Program activity park data after initial processing"
     CSV_NAME = "PROGRAM_ACTIVITY_PARK.csv"
     PK = "park_code"
-    DTYPES = {
-        "created_at": datetime,
-        "updated_at": datetime,
-        "fiscal_year": pd.Int64Dtype(),
-        "period": pd.Int64Dtype(),
-        "allocation_transfer_id": pd.StringDtype(),
-        "agency_id": pd.StringDtype(),
-        "main_account_number": pd.StringDtype(),
-        "sub_account_number": pd.StringDtype(),
-        "park_code": pd.StringDtype(),
-        "park_name": pd.StringDtype(),
-    }
+    STRUCTURE = BaseSchema([
+        SchemaField("created_at", SchemaType.TIMESTAMP),
+        SchemaField("updated_at", SchemaType.TIMESTAMP),
+        SchemaField("fiscal_year", SchemaType.INTEGER),
+        SchemaField("period", SchemaType.INTEGER),
+        SchemaField("allocation_transfer_id", SchemaType.STRING),
+        SchemaField("agency_id", SchemaType.STRING),
+        SchemaField("main_account_number", SchemaType.STRING),
+        SchemaField("sub_account_number", SchemaType.STRING),
+        SchemaField("park_code", SchemaType.STRING),
+        SchemaField("park_name", SchemaType.STRING),
+    ])

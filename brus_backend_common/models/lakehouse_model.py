@@ -7,6 +7,7 @@ import sys
 import tempfile
 from abc import ABC
 from argparse import ArgumentTypeError
+from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 from typing import Any, Callable, NamedTuple
@@ -43,46 +44,51 @@ logger = logging.getLogger(__name__)
 
 
 class LakeHouseModelFormat(Enum):
-    DELTA = "delta"
-    CSV = "csv"
+    DELTA: str = "delta"
+    CSV: str = "csv"
 
 
 class LakeHouseDatabase(Enum):
-    BRONZE = "bronze"
-    SILVER = "silver"
-    GOLD = "gold"
+    BRONZE: str = "bronze"
+    SILVER: str = "silver"
+    GOLD: str = "gold"
 
 
 class SchemaType(Enum):
-    LIST = "list"
-    STRING = "string"
-    INTEGER = "integer"
-    FLOAT = "float"
-    BOOLEAN = "bool"
-    TIMESTAMP = "timestamp"
+    LIST: str = "list"
+    STRING: str = "string"
+    INTEGER: str = "integer"
+    FLOAT: str = "float"
+    BOOLEAN: str = "bool"
+    TIMESTAMP: str = "timestamp"
 
 
-class SchemaField(NamedTuple):
+@dataclass
+class SchemaField:
     name: str
     type: SchemaType
-    nullable: bool
+    nullable: bool = True
     sub_type: SchemaType | None = None
-    sub_nullable: bool | None = None
+    sub_nullable: bool = True
+
+    def __post_init__(self):
+        if self.type == SchemaType.LIST and self.sub_type is None:
+            raise ValueError(f"sub_type must be provided when type is LIST for field '{self.name}'")
 
 
 class TypeFormat(NamedTuple):
     spark_type: DataType
-    pandas_type: str
+    pandas_type: pa.DataType
 
 
 class BaseSchema:
-    TYPE_MAP = {
-        SchemaType.BOOLEAN: TypeFormat(spark_type=BooleanType, pandas_type="bool"),
-        SchemaType.FLOAT: TypeFormat(spark_type=DoubleType, pandas_type="float64"),
-        SchemaType.INTEGER: TypeFormat(spark_type=IntegerType, pandas_type="Int64"),
-        SchemaType.LIST: TypeFormat(spark_type=ArrayType, pandas_type="object"),
-        SchemaType.STRING: TypeFormat(spark_type=StringType, pandas_type="object"),
-        SchemaType.TIMESTAMP: TypeFormat(spark_type=TimestampType, pandas_type="datetime64[ns]"),
+    TYPE_MAP: dict[SchemaType, TypeFormat] = {
+        SchemaType.BOOLEAN: TypeFormat(spark_type=BooleanType, pandas_type=pa.bool_()),
+        SchemaType.FLOAT: TypeFormat(spark_type=DoubleType, pandas_type=pa.float64()),
+        SchemaType.INTEGER: TypeFormat(spark_type=IntegerType, pandas_type=pa.int64()),
+        SchemaType.LIST: TypeFormat(spark_type=ArrayType, pandas_type=pa.list_),
+        SchemaType.STRING: TypeFormat(spark_type=StringType, pandas_type=pa.string()),
+        SchemaType.TIMESTAMP: TypeFormat(spark_type=TimestampType, pandas_type=pa.timestamp('ns')),
     }
 
     def __init__(self, schema_definition: list[SchemaField]) -> None:
@@ -94,17 +100,27 @@ class BaseSchema:
         fields = []
         for schema_field in self.schema_definition:
             spark_type = (
-                self.TYPE_MAP[schema_field.type].spark_type(schema_field.sub_type, schema_field.sub_nullable)
-                if SchemaType == SchemaType.LIST
+                self.TYPE_MAP[schema_field.type].spark_type(
+                    self.TYPE_MAP[schema_field.sub_type].spark_type(),
+                    containsNull=schema_field.sub_nullable,
+                )
+                if schema_field.type == SchemaType.LIST
                 else self.TYPE_MAP[schema_field.type].spark_type()
             )
             fields.append(StructField(schema_field.name, spark_type, schema_field.nullable))
         return StructType(fields)
 
-    def to_pandas_dtypes(self) -> dict[str, str]:
+    def to_pandas_dtypes(self) -> dict[str, pd.ArrowDtype]:
         """Convert to Pandas dtype mapping"""
         return {
-            schema_field.name: self.TYPE_MAP[schema_field.type].pandas_type for schema_field in self.schema_definition
+            schema_field.name: (
+                pd.ArrowDtype(self.TYPE_MAP[schema_field.type].pandas_type(
+                    self.TYPE_MAP[schema_field.sub_type].pandas_type,
+                ))
+                if schema_field.type == SchemaType.LIST
+                else pd.ArrowDtype(self.TYPE_MAP[schema_field.type].pandas_type)
+            )
+            for schema_field in self.schema_definition
         }
 
     @property
