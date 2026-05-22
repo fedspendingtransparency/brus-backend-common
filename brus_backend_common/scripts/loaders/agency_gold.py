@@ -5,6 +5,7 @@ import pandas as pd
 import numpy as np
 from datetime import datetime
 
+from brus_backend_common.helpers.generic import get_utc_now
 from brus_backend_common.models import AgencyBronze, CGACGold, FRECGold, SubTierAgencyGold
 from brus_backend_common.models.lakehouse_model import update_external_data_load_date
 from brus_backend_common.helpers.aws import _get_boto3
@@ -81,9 +82,7 @@ def load_cgac(raw_data: pd.DataFrame, force_reload: bool = False, metrics_json: 
         )
         logger.info("Overwriting new CGAC data to CGACGold")
         cgac_model.save(cgac_data)
-        update_external_data_load_date(
-            cgac_model, datetime.strptime(metrics_json["start_time"], datetime_format), datetime.now()
-        )
+        update_external_data_load_date(cgac_model, metrics_json["start_time"], get_utc_now())
 
     return metrics_json
 
@@ -133,9 +132,7 @@ def load_frec(raw_data: pd.DataFrame, force_reload: bool = False, metrics_json: 
         )
         logger.info("Overwriting new FREC data to FRECGold")
         frec_model.save(frec_data)
-        update_external_data_load_date(
-            frec_model, datetime.strptime(metrics_json["start_time"], datetime_format), datetime.now()
-        )
+        update_external_data_load_date(frec_model, metrics_json["start_time"], get_utc_now())
 
     return metrics_json
 
@@ -200,9 +197,7 @@ def load_subtier(raw_data: pd.DataFrame, force_reload: bool = False, metrics_jso
         metrics_json["subtiers_loaded"] = len(subtier_data)
         logger.info("Overwriting new SubTier data to SubTierAgencyGold")
         subtier_model.save(subtier_data)
-        update_external_data_load_date(
-            subtier_model, datetime.strptime(metrics_json["start_time"], datetime_format), datetime.now()
-        )
+        update_external_data_load_date(subtier_model, metrics_json["start_time"], get_utc_now())
 
     return metrics_json
 
@@ -226,7 +221,7 @@ def main(local_file: str | None = None, force_reload: bool = False, metrics_json
         raise ValueError(f"{raw_model.TABLE_REF} doesn't exist. Use create_migrate_delta_table beforehand.")
 
     start_time = datetime.now()
-    metrics_json["start_time"] = str(start_time)
+    metrics_json["start_time"] = start_time
 
     logger.info("Parsing Agency data")
     try:
@@ -244,8 +239,8 @@ def main(local_file: str | None = None, force_reload: bool = False, metrics_json
     metrics_json = load_subtier(raw_data, force_reload, metrics_json)
 
     end_time = datetime.now()
-    metrics_json["end_time"] = str(end_time)
-    metrics_json["duration"] = str(end_time - start_time)
+    metrics_json["end_time"] = end_time
+    metrics_json["duration"] = end_time - start_time
     return metrics_json
 
 
@@ -289,7 +284,7 @@ if __name__ == "__main__":
     exit_code = metrics_json.pop("exit_code")
 
     with open("load_agency_metrics.json", "w+") as metrics_file:
-        json.dump(metrics_json, metrics_file)
+        json.dump(metrics_json, metrics_file, default=str)
 
     s3 = _get_boto3("client", "s3")
     s3.upload_file("load_agency_metrics.json", CONFIG.METRICS_BUCKET, "load_agency_metrics.json")
