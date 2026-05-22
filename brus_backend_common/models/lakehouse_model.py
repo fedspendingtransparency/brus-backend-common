@@ -8,7 +8,7 @@ import tempfile
 from abc import ABC
 from argparse import ArgumentTypeError
 from enum import Enum
-from typing import Any, Callable, Dict, List, NamedTuple
+from typing import Any, Callable, Dict, List, NamedTuple, Tuple
 from datetime import datetime
 
 import deltalake
@@ -123,7 +123,7 @@ class LakeHouseModel(ABC):
     FORMAT: LakeHouseModelFormat
     PK: str
     # TODO: Add PK and unique constraint validations
-    UNIQUE_CONSTRAINTS: List[str | (str,)]
+    UNIQUE_CONSTRAINTS: List[str | Tuple[str]]
     MIGRATION_HISTORY: List[str]  # must be ordered by earliest to latest
 
     # The schema/structure of the delta table as StructType with StructFields
