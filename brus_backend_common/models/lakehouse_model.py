@@ -568,7 +568,7 @@ def update_external_data_load_date(model: LakeHouseModel, start_time: datetime, 
 
     start = convert_timestamp_df(start_time)
     end = convert_timestamp_df(end_time)
-    now = datetime.now()
+    now = convert_timestamp_df(datetime.now())
 
     if not df.loc[df.name == model.TABLE_REF].empty:
         df.loc[df.name == model.TABLE_REF, ["last_load_date_start", "last_load_date_end", "updated_at"]] = [
