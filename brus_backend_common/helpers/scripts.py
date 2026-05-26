@@ -302,7 +302,7 @@ def clean_data(
     for _, row in dropped.iterrows():
         logger.info(f"Dropped row due to faulty data: {row}")
 
-    if clean_df.empty or len(dropped) / len(raw_df) > FAILURE_THRESHOLD_PERCENTAGE:
+    if clean_df.empty or round(len(dropped) / len(raw_df), 2) > FAILURE_THRESHOLD_PERCENTAGE:
         raise FailureThresholdExceededError(len(dropped.index))
 
     if return_dropped_count and not dropped.empty:
