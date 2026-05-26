@@ -9,6 +9,7 @@ from brus_backend_common.models.reference import (
     FONBronze,
     FONGold,
     FRECGold,
+    ProgramActivityBronze,
     ProgramActivityGold,
     SubTierAgencyGold,
 )
@@ -24,6 +25,7 @@ LAKEHOUSE_MODEL_CLASSES = [
     FONGold,
     FRECGold,
     LakeHouseCurrentMigration,
+    ProgramActivityBronze,
     ProgramActivityGold,
     SubTierAgencyGold,
 ]
