@@ -129,7 +129,7 @@ def setup_parser(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
 if __name__ == "__main__":
     configure_logging()
     parser = argparse.ArgumentParser(description="Loads in Program Activity data")
-
+    parser = setup_parser(parser)
     args = parser.parse_args()
     loader = ParkLoader()
     exit_code = loader.load_park_data(force_reload=args.force, export=args.export)
