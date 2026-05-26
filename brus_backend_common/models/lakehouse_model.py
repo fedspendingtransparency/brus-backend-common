@@ -571,18 +571,22 @@ def update_external_data_load_date(model: LakeHouseModel, start_time: datetime, 
     now = datetime.now()
 
     if not df.loc[df.name == model.TABLE_REF].empty:
-        df.loc[df.name == model.TABLE_REF, ['last_load_date_start', 'last_load_date_end', 'updated_at']] = [
-            start, end, now
+        df.loc[df.name == model.TABLE_REF, ["last_load_date_start", "last_load_date_end", "updated_at"]] = [
+            start,
+            end,
+            now,
         ]
     else:
-        new_row = pd.DataFrame({
-            "created_at": [now],
-            "updated_at": [now],
-            "external_data_load_date_id": [edld_model.next_id()],
-            "name": [model.TABLE_REF],
-            "description": [model.DESCRIPTION],
-            "last_load_date_start": [start],
-            "last_load_date_end": [end],
-        })
+        new_row = pd.DataFrame(
+            {
+                "created_at": [now],
+                "updated_at": [now],
+                "external_data_load_date_id": [edld_model.next_id()],
+                "name": [model.TABLE_REF],
+                "description": [model.DESCRIPTION],
+                "last_load_date_start": [start],
+                "last_load_date_end": [end],
+            }
+        )
         df = pd.concat([df, new_row], ignore_index=True)
     edld_model.save(df)
