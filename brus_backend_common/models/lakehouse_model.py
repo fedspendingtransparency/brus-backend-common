@@ -565,28 +565,24 @@ def update_external_data_load_date(model: LakeHouseModel, start_time: datetime, 
             f"ExternalDataLoadDate CSV not found."
             f" Please run initialize recreate or upload the file to {edld_model.CSV_PATH}"
         )
-    last_stored_obj = df[df.name == model.TABLE_REF]
-    if last_stored_obj.empty:
-        new_entry_dict = {
-            "created_at": [convert_timestamp_df(datetime.now())],
-            "updated_at": [None],  # will be updated later
+
+    start = convert_timestamp_df(start_time)
+    end = convert_timestamp_df(end_time)
+    now = datetime.now()
+
+    if not df.loc[df.name == model.TABLE_REF].empty:
+        df.loc[df.name == model.TABLE_REF, ['last_load_date_start', 'last_load_date_end', 'updated_at']] = [
+            start, end, now
+        ]
+    else:
+        new_row = pd.DataFrame({
+            "created_at": [now],
+            "updated_at": [now],
             "external_data_load_date_id": [edld_model.next_id()],
             "name": [model.TABLE_REF],
             "description": [model.DESCRIPTION],
-            "last_load_date_start": [None],  # will be updated later
-            "last_load_date_end": [None],  # will be updated later
-        }
-        new_entry = pd.DataFrame(new_entry_dict)
-
-        last_stored_obj = pd.concat([df, new_entry])[lambda x: x.name == model.TABLE_REF]
-
-    last_stored_obj["last_load_date_start"] = convert_timestamp_df(start_time)
-    last_stored_obj["last_load_date_end"] = convert_timestamp_df(end_time)
-    last_stored_obj["updated_at"] = convert_timestamp_df(datetime.now())
-
-    df.set_index(edld_model.PK, inplace=True)
-    last_stored_obj.set_index(edld_model.PK, inplace=True)
-    df.update(last_stored_obj)
-    df.reset_index(inplace=True)
-
+            "last_load_date_start": [start],
+            "last_load_date_end": [end],
+        })
+        df = pd.concat([df, new_row], ignore_index=True)
     edld_model.save(df)
