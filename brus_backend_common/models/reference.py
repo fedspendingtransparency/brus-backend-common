@@ -219,3 +219,37 @@ class FONGold(CSVModel):
             SchemaField("internal_id", SchemaType.INTEGER, True),
         ]
     )
+
+
+class ProgramActivityGold(CSVModel):
+    BUCKET_NAME = CONFIG.LAKEHOUSE_REFERENCE_BUCKET
+    DATABASE_NAME = LakeHouseDatabase.GOLD
+    TABLE_NAME = "program_activity"
+    DESCRIPTION = "Historical program activity data (PAC/PAN) before PARK."
+    CSV_NAME = "program_activity.csv"
+    PK = "program_activity_id"
+    UNIQUE_CONSTRAINTS = [
+        (
+            "fiscal_year_period",
+            "agency_id",
+            "allocation_transfer_id",
+            "account_number",
+            "program_activity_code",
+            "program_activity_name",
+        )
+    ]
+    MIGRATION_HISTORY = []
+
+    STRUCTURE = BaseSchema(
+        [
+            SchemaField("created_at", SchemaType.TIMESTAMP, True),
+            SchemaField("updated_at", SchemaType.TIMESTAMP, True),
+            SchemaField("program_activity_id", SchemaType.INTEGER, False),
+            SchemaField("fiscal_year_period", SchemaType.STRING, False),
+            SchemaField("agency_id", SchemaType.STRING, False),
+            SchemaField("allocation_transfer_id", SchemaType.STRING, True),
+            SchemaField("account_number", SchemaType.STRING, False),
+            SchemaField("program_activity_code", SchemaType.STRING, False),
+            SchemaField("program_activity_name", SchemaType.STRING, False),
+        ]
+    )
