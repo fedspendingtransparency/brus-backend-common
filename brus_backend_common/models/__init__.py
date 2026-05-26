@@ -1,29 +1,31 @@
 from brus_backend_common.models.lakehouse_model import LakeHouseCurrentMigration, ExternalDataLoadDate
 
 from brus_backend_common.models.reference import (
+    AgencyBronze,
+    CGACGold,
     DEFCBronze,
     DEFCGold,
     DEFCGroup,
     FONBronze,
     FONGold,
-    AgencyBronze,
-    CGACGold,
     FRECGold,
+    ProgramActivityParkBronze,
+    ProgramActivityParkGold,
     SubTierAgencyGold,
 )
 
 LAKEHOUSE_MODEL_CLASSES = [
     AgencyBronze,
     CGACGold,
-    FRECGold,
-    SubTierAgencyGold,
     DEFCBronze,
     DEFCGroup,
     DEFCGold,
+    ExternalDataLoadDate,
     FONBronze,
     FONGold,
+    FRECGold,
     LakeHouseCurrentMigration,
-    ExternalDataLoadDate,
+    SubTierAgencyGold,
 ]
 LAKEHOUSE_MODELS = {}
 for model in LAKEHOUSE_MODEL_CLASSES:

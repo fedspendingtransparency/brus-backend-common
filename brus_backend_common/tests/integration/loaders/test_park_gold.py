@@ -20,7 +20,7 @@ def upload_park(s3_unittest_data_bucket):
 
     yield
 
-    s3_client.delete_object(Bucket=bronze.BUCKET_NAME, Key=bronze.RELATIVE_CSV_PATH)
+    s3_client.delete_object(Bucket=s3_unittest_data_bucket, Key=bronze.RELATIVE_CSV_PATH)
 
 
 def test_load_park(s3_unittest_data_bucket, hive_unittest_metastore_db, upload_park):
