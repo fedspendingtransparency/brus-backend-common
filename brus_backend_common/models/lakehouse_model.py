@@ -461,6 +461,8 @@ class CSVModel(LakeHouseModel):
             "dtype": {k: v for k, v in dtypes.items() if v != "datetime64[ns]"},
             "parse_dates": [k for k, v in dtypes.items() if v == "datetime64[ns]"],
             "usecols": list(self.STRUCTURE.columns),
+            # to initially accept 'n/a's provided in raw files
+            "na_filter": False,
         }
         params.update(kwargs)
 
