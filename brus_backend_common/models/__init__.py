@@ -25,6 +25,8 @@ LAKEHOUSE_MODEL_CLASSES = [
     FONGold,
     FRECGold,
     LakeHouseCurrentMigration,
+    ProgramActivityParkBronze,
+    ProgramActivityParkGold,
     SubTierAgencyGold,
 ]
 LAKEHOUSE_MODELS = {}
