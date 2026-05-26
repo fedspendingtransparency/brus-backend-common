@@ -88,7 +88,7 @@ class BaseSchema:
         SchemaType.INTEGER: TypeFormat(spark_type=IntegerType, pandas_type=pa.int64()),
         SchemaType.LIST: TypeFormat(spark_type=ArrayType, pandas_type=pa.list_),
         SchemaType.STRING: TypeFormat(spark_type=StringType, pandas_type=pa.string()),
-        SchemaType.TIMESTAMP: TypeFormat(spark_type=TimestampType, pandas_type=pa.timestamp('ns')),
+        SchemaType.TIMESTAMP: TypeFormat(spark_type=TimestampType, pandas_type=pa.timestamp("ns")),
     }
 
     def __init__(self, schema_definition: list[SchemaField]) -> None:
@@ -114,9 +114,11 @@ class BaseSchema:
         """Convert to Pandas dtype mapping"""
         return {
             schema_field.name: (
-                pd.ArrowDtype(self.TYPE_MAP[schema_field.type].pandas_type(
-                    self.TYPE_MAP[schema_field.sub_type].pandas_type,
-                ))
+                pd.ArrowDtype(
+                    self.TYPE_MAP[schema_field.type].pandas_type(
+                        self.TYPE_MAP[schema_field.sub_type].pandas_type,
+                    )
+                )
                 if schema_field.type == SchemaType.LIST
                 else pd.ArrowDtype(self.TYPE_MAP[schema_field.type].pandas_type)
             )

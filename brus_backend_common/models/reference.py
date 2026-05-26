@@ -130,19 +130,21 @@ class ProgramActivityParkBronze(CSVModel):
     DESCRIPTION = "Raw program activity park data"
     CSV_NAME = "PARK_PROGRAM_ACTIVITY.csv"
     PK = "PARK"
-    STRUCTURE = BaseSchema([
-        SchemaField("FY", SchemaType.STRING),
-        SchemaField("PD", SchemaType.STRING),
-        SchemaField("ALLOC_XFER_AGENCY", SchemaType.STRING),
-        SchemaField("AID", SchemaType.STRING),
-        SchemaField("MAIN_ACCT", SchemaType.STRING),
-        SchemaField("SUB_ACCT", SchemaType.STRING),
-        SchemaField("COMPOUND_KEY", SchemaType.STRING),
-        SchemaField("PARK", SchemaType.STRING),
-        SchemaField("PARK_NAME", SchemaType.STRING),
-        SchemaField("RECORD_UPDATE_TS", SchemaType.STRING),
-        SchemaField("FILE_UPDATE_TS", SchemaType.STRING),
-    ])
+    STRUCTURE = BaseSchema(
+        [
+            SchemaField("FY", SchemaType.STRING),
+            SchemaField("PD", SchemaType.STRING),
+            SchemaField("ALLOC_XFER_AGENCY", SchemaType.STRING),
+            SchemaField("AID", SchemaType.STRING),
+            SchemaField("MAIN_ACCT", SchemaType.STRING),
+            SchemaField("SUB_ACCT", SchemaType.STRING),
+            SchemaField("COMPOUND_KEY", SchemaType.STRING),
+            SchemaField("PARK", SchemaType.STRING),
+            SchemaField("PARK_NAME", SchemaType.STRING),
+            SchemaField("RECORD_UPDATE_TS", SchemaType.STRING),
+            SchemaField("FILE_UPDATE_TS", SchemaType.STRING),
+        ]
+    )
 
 
 class ProgramActivityParkGold(CSVModel):
@@ -152,15 +154,17 @@ class ProgramActivityParkGold(CSVModel):
     DESCRIPTION = "Program activity park data after initial processing"
     CSV_NAME = "PROGRAM_ACTIVITY_PARK.csv"
     PK = "park_code"
-    STRUCTURE = BaseSchema([
-        SchemaField("created_at", SchemaType.TIMESTAMP),
-        SchemaField("updated_at", SchemaType.TIMESTAMP),
-        SchemaField("fiscal_year", SchemaType.INTEGER),
-        SchemaField("period", SchemaType.INTEGER),
-        SchemaField("allocation_transfer_id", SchemaType.STRING),
-        SchemaField("agency_id", SchemaType.STRING),
-        SchemaField("main_account_number", SchemaType.STRING),
-        SchemaField("sub_account_number", SchemaType.STRING),
-        SchemaField("park_code", SchemaType.STRING),
-        SchemaField("park_name", SchemaType.STRING),
-    ])
+    STRUCTURE = BaseSchema(
+        [
+            SchemaField("created_at", SchemaType.TIMESTAMP),
+            SchemaField("updated_at", SchemaType.TIMESTAMP),
+            SchemaField("fiscal_year", SchemaType.INTEGER),
+            SchemaField("period", SchemaType.INTEGER),
+            SchemaField("allocation_transfer_id", SchemaType.STRING),
+            SchemaField("agency_id", SchemaType.STRING),
+            SchemaField("main_account_number", SchemaType.STRING),
+            SchemaField("sub_account_number", SchemaType.STRING),
+            SchemaField("park_code", SchemaType.STRING),
+            SchemaField("park_name", SchemaType.STRING),
+        ]
+    )
