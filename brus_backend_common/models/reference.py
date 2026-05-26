@@ -256,7 +256,7 @@ class ProgramActivityParkGold(CSVModel):
     DATABASE_NAME = LakeHouseDatabase.GOLD
     TABLE_NAME = "program_activity_park"
     DESCRIPTION = "Program activity park data after initial processing"
-    CSV_NAME = "PROGRAM_ACTIVITY_PARK.csv"
+    CSV_NAME = "park.csv"
     PK = "park_code"
     STRUCTURE = BaseSchema(
         [

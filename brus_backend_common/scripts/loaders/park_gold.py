@@ -2,15 +2,17 @@ import argparse
 import json
 import logging
 from datetime import datetime
-from enum import Enum
 
 import pandas as pd
 
 from brus_backend_common.helpers.aws import _get_boto3
+from brus_backend_common.helpers.generic import get_utc_now
 from brus_backend_common.helpers.scripts import (
     clean_data,
+    ErrorCodes,
     exit_if_nonlocal,
 )
+from brus_backend_common.logging import configure_logging
 from brus_backend_common.models.lakehouse_model import ExternalDataLoadDate, update_external_data_load_date
 from brus_backend_common.models.reference import ProgramActivityParkBronze, ProgramActivityParkGold
 
@@ -19,10 +21,6 @@ logger = logging.getLogger(__name__)
 
 
 class ParkLoader:
-
-    class ErrorCodes(Enum):
-        EMPTY_DATA = 4
-        SKIPPED = 6
 
     def __init__(self):
         self.s3 = _get_boto3("client", "s3")
@@ -62,7 +60,7 @@ class ParkLoader:
         if not edld.exists():
             edld.initialize(recreate=True)
         df = edld.to_pandas_df()
-        last_stored_obj = df[df.name == ProgramActivityParkGold().TABLE_REF]
+        last_stored_obj = df.loc[df.name == ProgramActivityParkGold().TABLE_REF]
         return (
             None
             if last_stored_obj.empty
@@ -92,8 +90,8 @@ class ParkLoader:
     ) -> int | None:
         start_time = datetime.now()
         metrics_json = {
-            "script_name": "load_park.py",
-            "start_time": str(start_time),
+            "script_name": "park_gold.py",
+            "start_time": get_utc_now(),
             "records_deleted": 0,
             "records_inserted": 0,
         }
@@ -102,32 +100,36 @@ class ParkLoader:
             try:
                 df = self.transformed_df()
             except pd.errors.EmptyDataError:
-                return self.ErrorCodes.EMPTY_DATA.value
+                return ErrorCodes.EMPTY_DATA.value
             if export:
                 self.export_public_park(df)
-            papg = ProgramActivityParkGold()
-            if not papg.exists():
-                papg.initialize(recreate=True)
-            metrics_json["records_deleted"] = papg.count()
-            papg.save(df)
-            end_time = datetime.now()
-            update_external_data_load_date(papg, start_time, end_time)
-            num_records = papg.count()
-            logger.info("{} records inserted to {}".format(num_records, papg.TABLE_REF))
+            pap_gold = ProgramActivityParkGold()
+            metrics_json["records_deleted"] = pap_gold.count()
+            pap_gold.save(df)
+            end_time = get_utc_now()
+            update_external_data_load_date(pap_gold, start_time, end_time)
+            num_records = pap_gold.count()
+            logger.info("{} records inserted to {}".format(num_records, pap_gold.TABLE_REF))
             metrics_json["records_inserted"] = num_records
             metrics_json["duration"] = str(end_time - start_time)
         with open("load_park_metrics.json", "w+") as metrics_file:
-            json.dump(metrics_json, metrics_file)
+            json.dump(metrics_json, metrics_file, default=str)
         if skipped:
-            return self.ErrorCodes.SKIPPED.value
+            return ErrorCodes.SKIPPED.value
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Loads in Program Activity data")
+def setup_parser(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     parser.add_argument(
         "-e", "--export", help="If provided, exports a public version of the file locally", action="store_true"
     )
     parser.add_argument("-f", "--force", help="If provided, forces a reload", action="store_true")
+    return parser
+
+
+if __name__ == "__main__":
+    configure_logging()
+    parser = argparse.ArgumentParser(description="Loads in Program Activity data")
+
     args = parser.parse_args()
     loader = ParkLoader()
     exit_code = loader.load_park_data(force_reload=args.force, export=args.export)

@@ -8,7 +8,7 @@ from brus_backend_common.config import _SRC_ROOT_DIR
 from brus_backend_common.helpers.aws import _get_boto3
 from brus_backend_common.models.lakehouse_model import ExternalDataLoadDate
 from brus_backend_common.models.reference import ProgramActivityParkBronze, ProgramActivityParkGold
-from brus_backend_common.scripts.loaders.load_park import ParkLoader
+from brus_backend_common.scripts.loaders.park_gold import ParkLoader
 
 
 @pytest.fixture(scope="function")
