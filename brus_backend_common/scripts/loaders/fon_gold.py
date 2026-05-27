@@ -134,7 +134,7 @@ if __name__ == "__main__":
 
     now = datetime.datetime.now()
     metrics = {
-        "script_name": "load_fon_gold.py",
+        "script_name": "fon_gold.py",
         "start_time": str(now),
         "records_deleted": 0,
         "records_inserted": 0,
