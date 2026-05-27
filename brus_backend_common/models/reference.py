@@ -219,3 +219,62 @@ class FONGold(CSVModel):
             SchemaField("internal_id", SchemaType.INTEGER, True),
         ]
     )
+
+
+class ProgramActivityBronze(CSVModel):
+    BUCKET_NAME = CONFIG.LAKEHOUSE_REFERENCE_BUCKET
+    DATABASE_NAME = LakeHouseDatabase.BRONZE
+    TABLE_NAME = "program_activity"
+    DESCRIPTION = "Last export of the raw historical program activity (PAC/PAN) data before PARK."
+    CSV_NAME = "program_activity_bronze.csv"
+    PK = ""
+    UNIQUE_CONSTRAINTS = []
+    MIGRATION_HISTORY = []
+
+    STRUCTURE = BaseSchema(
+        [
+            SchemaField("REPORTING_PERIOD", SchemaType.STRING, False),
+            SchemaField("AGENCY_IDENTIFIER_CODE", SchemaType.STRING, False),
+            SchemaField("AGENCY_IDENTIFIER_NAME", SchemaType.STRING, False),
+            SchemaField("ALLOCATION_TRANSFER_AGENCY_IDENTIFIER_CODE", SchemaType.STRING, True),
+            SchemaField("MAIN_ACCOUNT_CODE", SchemaType.STRING, False),
+            SchemaField("PROGRAM_ACTIVITY_CODE", SchemaType.STRING, False),
+            SchemaField("PROGRAM_ACTIVITY_NAME", SchemaType.STRING, False),
+            SchemaField("OMB_BUREAU_TITLE_OPTNL", SchemaType.STRING, True),
+            SchemaField("OMB_ACCOUNT_TITLE_OPTNL", SchemaType.STRING, True),
+        ]
+    )
+
+
+class ProgramActivityGold(CSVModel):
+    BUCKET_NAME = CONFIG.LAKEHOUSE_REFERENCE_BUCKET
+    DATABASE_NAME = LakeHouseDatabase.GOLD
+    TABLE_NAME = "program_activity"
+    DESCRIPTION = "Processed program activity data (PAC/PAN) data from ProgramActivityBronze"
+    CSV_NAME = "program_activity_gold.csv"
+    PK = "program_activity_id"
+    UNIQUE_CONSTRAINTS = [
+        (
+            "fiscal_year_period",
+            "agency_id",
+            "allocation_transfer_id",
+            "account_number",
+            "program_activity_code",
+            "program_activity_name",
+        )
+    ]
+    MIGRATION_HISTORY = []
+
+    STRUCTURE = BaseSchema(
+        [
+            SchemaField("created_at", SchemaType.TIMESTAMP, True),
+            SchemaField("updated_at", SchemaType.TIMESTAMP, True),
+            SchemaField("program_activity_id", SchemaType.INTEGER, False),
+            SchemaField("fiscal_year_period", SchemaType.STRING, False),
+            SchemaField("agency_id", SchemaType.STRING, False),
+            SchemaField("allocation_transfer_id", SchemaType.STRING, True),
+            SchemaField("account_number", SchemaType.STRING, False),
+            SchemaField("program_activity_code", SchemaType.STRING, False),
+            SchemaField("program_activity_name", SchemaType.STRING, False),
+        ]
+    )

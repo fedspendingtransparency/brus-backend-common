@@ -342,7 +342,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     metrics_json = {
-        "script_name": "load_defc.py",
+        "script_name": "defc_gold.py",
         "records_received": 0,
         "new_defc": [],
         "total_defc_count": 0,

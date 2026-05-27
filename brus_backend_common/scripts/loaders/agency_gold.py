@@ -275,7 +275,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     metrics_json = {
-        "script_name": "load_agency.py",
+        "script_name": "agency_gold.py",
         "cgac_loaded": 0,
         "frec_loaded": 0,
         "subtiers_loaded": 0,
