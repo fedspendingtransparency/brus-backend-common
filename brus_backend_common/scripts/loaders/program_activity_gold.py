@@ -169,7 +169,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     metrics = {
-        "script_name": "load_program_activity_gold.py",
+        "script_name": "program_activity_gold.py",
         "start_time": get_utc_now(),
         "records_deleted": 0,
         "records_inserted": 0,
