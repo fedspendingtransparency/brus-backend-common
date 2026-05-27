@@ -79,7 +79,7 @@ def main(local_file: os.PathLike = False, force_reload: bool = False, metrics: d
     if local_file:
         pa_bronze_data = pd.read_csv(local_file, dtype=str, na_filter=False)
     else:
-        pa_bronze_data = pa_bronze.to_pandas_df()
+        pa_bronze_data = pa_bronze.to_pandas_df(na_filter=False)
 
     pa_clean_data = (
         pa_bronze_data.pipe(
@@ -111,7 +111,7 @@ def main(local_file: os.PathLike = False, force_reload: bool = False, metrics: d
 
     diff_found = check_dataframe_diff(
         new_data=pa_clean_data,
-        current_data=pa_gold.to_pandas_df(),
+        current_data=pa_gold.to_pandas_df(na_filter=False),
         del_cols=["program_activity_id"],
         sort_cols=[
             "fiscal_year_period",
