@@ -219,3 +219,43 @@ class FONGold(CSVModel):
             SchemaField("internal_id", SchemaType.INTEGER, True),
         ]
     )
+
+
+class ObjectClassBronze(CSVModel):
+    BUCKET_NAME = CONFIG.LAKEHOUSE_REFERENCE_BUCKET
+    DATABASE_NAME = LakeHouseDatabase.BRONZE
+    TABLE_NAME = "object_class"
+    DESCRIPTION = "Internal raw object class data"
+    CSV_NAME = "object_class.csv"
+    PK = "MAX OC Code"
+    UNIQUE_CONSTRAINTS = []
+    MIGRATION_HISTORY = []
+
+    STRUCTURE = BaseSchema(
+        [
+            SchemaField("MAX OC Code", SchemaType.STRING, False),
+            SchemaField("MAX Object Class Major", SchemaType.STRING, True),
+            SchemaField("MAX Object Class name", SchemaType.STRING, True),
+        ]
+    )
+
+
+class ObjectClassGold(CSVModel):
+    BUCKET_NAME = CONFIG.LAKEHOUSE_REFERENCE_BUCKET
+    DATABASE_NAME = LakeHouseDatabase.GOLD
+    TABLE_NAME = "object_class"
+    DESCRIPTION = "Processed object class data from ObjectClassBronze"
+    CSV_NAME = "object_class_gold.csv"
+    PK = "object_class_id"
+    UNIQUE_CONSTRAINTS = ["object_class_code"]
+    MIGRATION_HISTORY = []
+
+    STRUCTURE = BaseSchema(
+        [
+            SchemaField("created_at", SchemaType.TIMESTAMP, True),
+            SchemaField("updated_at", SchemaType.TIMESTAMP, True),
+            SchemaField("object_class_id", SchemaType.INTEGER, False),
+            SchemaField("object_class_code", SchemaType.STRING, False),
+            SchemaField("object_class_name", SchemaType.STRING, True),
+        ]
+    )

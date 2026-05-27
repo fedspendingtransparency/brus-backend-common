@@ -9,6 +9,8 @@ from brus_backend_common.models.reference import (
     AgencyBronze,
     CGACGold,
     FRECGold,
+    ObjectClassBronze,
+    ObjectClassGold,
     SubTierAgencyGold,
 )
 
@@ -22,6 +24,8 @@ LAKEHOUSE_MODEL_CLASSES = [
     DEFCGold,
     FONBronze,
     FONGold,
+    ObjectClassBronze,
+    ObjectClassGold,
     LakeHouseCurrentMigration,
     ExternalDataLoadDate,
 ]
