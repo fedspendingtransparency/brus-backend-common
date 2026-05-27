@@ -464,7 +464,9 @@ class CSVModel(LakeHouseModel):
         }
         params.update(kwargs)
 
-        return pd.read_csv(io.BytesIO(self._s3_object), **params)[list(self.STRUCTURE.columns)] if self.exists() else None  # type: ignore
+        return (
+            pd.read_csv(io.BytesIO(self._s3_object), **params)[list(self.STRUCTURE.columns)] if self.exists() else None
+        )  # type: ignore
 
     def to_polars_df(self, **kwargs: Any) -> pl.DataFrame | pl.Series | None:
         return pl.read_csv(self.CSV_PATH, **kwargs) if self.exists() else None

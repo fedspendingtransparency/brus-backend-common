@@ -23,7 +23,7 @@ ASSISTANCE_TYPE = [
     LookupType("04", "project grant (B)"),
     LookupType("05", "cooperative agreement (B)"),
     LookupType(
-        "06", "direct payment for specified use, as a subsidy or other non-reimbursable direct financial aid " "(C)"
+        "06", "direct payment for specified use, as a subsidy or other non-reimbursable direct financial aid (C)"
     ),
     LookupType("07", "direct loan (E)"),
     LookupType("08", "guaranteed/insured loan (F)"),

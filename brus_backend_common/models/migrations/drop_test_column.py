@@ -1,5 +1,6 @@
 from brus_backend_common.models.lakehouse_model import DeltaModel
 
+
 def migrate(model: DeltaModel):
     if model.spark:
         sql_string = f"""
@@ -15,6 +16,7 @@ def migrate(model: DeltaModel):
             ALTER TABLE {model.TABLE_REF}_copy RENAME TO {model.TABLE_REF};
         """
         model.spark.sql(sql_string)
+
 
 def reverse_migrate(model: DeltaModel):
     if model.spark:
