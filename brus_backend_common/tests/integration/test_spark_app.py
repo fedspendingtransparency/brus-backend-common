@@ -101,7 +101,7 @@ def test_spark_write_csv_app_run(spark: SparkSession, s3_unittest_data_bucket):
 
     df = spark.createDataFrame([Row(**data_row) for data_row in data])
     # NOTE! NOTE! NOTE! MinIO locally does not support a TRAILING SLASH after object (folder) name
-    df.write.option("header", True).csv(f"s3a://{s3_unittest_data_bucket}" f"/write_to_s3")
+    df.write.option("header", True).csv(f"s3a://{s3_unittest_data_bucket}/write_to_s3")
 
     # Verify there are *.csv part files in the chosen bucket
     s3_client = _get_boto3("client", "s3")

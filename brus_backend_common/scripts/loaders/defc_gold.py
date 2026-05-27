@@ -261,7 +261,6 @@ def main(local_file: str | None = None, force_reload: bool = False, metrics_json
         clean_df, gold_model.to_pandas_df(), ["defc_id"], ["code"], date_format="%Y-%m-%d"
     )
     if force_reload or diff_found:
-
         # The only diff should be whenever a new code is added. Noting it here
         if diff_found:
             incoming_defcs = list(clean_df["code"])

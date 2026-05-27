@@ -13,9 +13,7 @@ SCHEMA_HELP_TEXT = """
     Internet RFC on Relative Uniform Resource Locators
     Format: scheme://netloc/path;parameters?query#fragment
     List of supported schemes: {}
-    """.format(
-    supported_schemes
-)
+    """.format(supported_schemes)
 
 
 def parse_http_url(http_url: str) -> Tuple[Any, Any | None, Any]:

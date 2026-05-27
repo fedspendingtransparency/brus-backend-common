@@ -1,5 +1,6 @@
 from brus_backend_common.models.lakehouse_model import DeltaModel
 
+
 def migrate(model: DeltaModel):
     if model.spark:
         sql_string = f"""
@@ -7,6 +8,7 @@ def migrate(model: DeltaModel):
             ADD COLUMNS (test_column STRING);
         """
         model.spark.sql(sql_string)
+
 
 def reverse_migrate(model: DeltaModel):
     if model.spark:
