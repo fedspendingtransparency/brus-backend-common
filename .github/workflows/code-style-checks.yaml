@@ -29,8 +29,7 @@ jobs:
 #      - name: Run mypy
 #        run: mypy ./
 
-      - name: Run Flake8
-        run: flake8
-
-      - name: Run Black
-        run: black --check --diff .
+      # changed-python-files could be an empty string, which would cause `ruff check` to be run against the entire project.
+      - name: Run Ruff Linter
+        if: steps.changed-python-files.outputs.all_changed_files != ''
+        run: ruff check ${{ steps.changed-python-files.outputs.all_changed_files }}
