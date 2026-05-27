@@ -1,0 +1,69 @@
+MAX OC Code,MAX Object Class Major,MAX Object Class name
+111,Personnel Compensation and Benefits,Full-time permanent
+113,Personnel Compensation and Benefits,Other than full-time permanent
+115,Personnel Compensation and Benefits,Other personnel compensation
+116,Personnel Compensation and Benefits,Military personnel - basic allowance for housing
+117,Personnel Compensation and Benefits,Military personnel
+118,Personnel Compensation and Benefits,Special personal services payments
+121,Personnel Compensation and Benefits,Civilian personnel benefits
+122,Personnel Compensation and Benefits,Military personnel benefits
+130,Personnel Compensation and Benefits,Benefits for former personnel
+210,Contractual Services and Supplies,Travel and transportation of persons
+220,Contractual Services and Supplies,Transportation of things
+231,Contractual Services and Supplies,Rental payments to GSA
+232,Contractual Services and Supplies,Rental payments to others
+233,Contractual Services and Supplies,"Communications, utilities, and miscellaneous charges"
+240,Contractual Services and Supplies,Printing and reproduction
+251,Contractual Services and Supplies,Advisory and assistance services
+252,Contractual Services and Supplies,Other services from non-Federal sources
+253,Contractual Services and Supplies,Other goods and services from Federal sources
+254,Contractual Services and Supplies,Operation and maintenance of facilities
+255,Contractual Services and Supplies,Research and development contracts
+256,Contractual Services and Supplies,Medical care
+257,Contractual Services and Supplies,Operation and maintenance of equipment
+258,Contractual Services and Supplies,Subsistence and support of persons
+260,Contractual Services and Supplies,Supplies and materials
+310,Acquisition of Capital Assets,Equipment
+320,Acquisition of Capital Assets,Land and structures
+330,Acquisition of Capital Assets,Investments and loans
+410,Grants and Fixed Charges,"Grants, subsidies, and contributions"
+420,Grants and Fixed Charges,Insurance claims and indemnities
+430,Grants and Fixed Charges,Interest and dividends
+440,Grants and Fixed Charges,Refunds
+910,Other,Unvouchered
+920,Other,Undistributed (use with OMB permission only)
+940,Other,Financial transfers (use with OMB permission only)
+1110,Personnel Compensation and Benefits,Full-time permanent
+1130,Personnel Compensation and Benefits,Other than full-time permanent
+1150,Personnel Compensation and Benefits,Other personnel compensation
+1160,Personnel Compensation and Benefits,Military personnel - basic allowance for housing
+1170,Personnel Compensation and Benefits,Military personnel
+1180,Personnel Compensation and Benefits,Special personal services payments
+1210,Personnel Compensation and Benefits,Civilian personnel benefits
+1220,Personnel Compensation and Benefits,Military personnel benefits
+1300,Personnel Compensation and Benefits,Benefits for former personnel
+2100,Contractual Services and Supplies,Travel and transportation of persons
+2200,Contractual Services and Supplies,Transportation of things
+2310,Contractual Services and Supplies,Rental payments to GSA
+2320,Contractual Services and Supplies,Rental payments to others
+2330,Contractual Services and Supplies,"Communications, utilities, and miscellaneous charges"
+2400,Contractual Services and Supplies,Printing and reproduction
+2510,Contractual Services and Supplies,Advisory and assistance services
+2520,Contractual Services and Supplies,Other services from non-Federal sources
+2530,Contractual Services and Supplies,Other goods and services from Federal sources
+2540,Contractual Services and Supplies,Operation and maintenance of facilities
+2550,Contractual Services and Supplies,Research and development contracts
+2560,Contractual Services and Supplies,Medical care
+2570,Contractual Services and Supplies,Operation and maintenance of equipment
+2580,Contractual Services and Supplies,Subsistence and support of persons
+2600,Contractual Services and Supplies,Supplies and materials
+3100,Acquisition of Capital Assets,Equipment
+3200,Acquisition of Capital Assets,Land and structures
+3300,Acquisition of Capital Assets,Investments and loans
+4100,Grants and Fixed Charges,"Grants, subsidies, and contributions"
+4200,Grants and Fixed Charges,Insurance claims and indemnities
+4300,Grants and Fixed Charges,Interest and dividends
+4400,Grants and Fixed Charges,Refunds
+9100,Other,Unvouchered
+9200,Other,Undistributed (use with OMB permission only)
+9400,Other,Financial transfers (use with OMB permission only)
