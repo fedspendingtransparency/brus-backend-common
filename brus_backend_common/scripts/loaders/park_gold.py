@@ -88,10 +88,10 @@ class ParkLoader:
         force_reload: bool = False,
         export: bool = False,
     ) -> int | None:
-        start_time = datetime.now()
+        start_time = get_utc_now()
         metrics_json = {
             "script_name": "park_gold.py",
-            "start_time": get_utc_now(),
+            "start_time": start_time,
             "records_deleted": 0,
             "records_inserted": 0,
         }
