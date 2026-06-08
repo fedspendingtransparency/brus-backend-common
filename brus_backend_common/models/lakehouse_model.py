@@ -37,8 +37,7 @@ from pyspark.sql.types import (
 from brus_backend_common.config import _SRC_ROOT_DIR, CONFIG
 from brus_backend_common.helpers.aws import _get_boto3, get_storage_options
 from brus_backend_common.helpers.pandas import convert_timestamp_df
-from brus_backend_common.helpers.generic import step
-
+from brus_backend_common.helpers.generic import step, get_utc_now
 
 logger = logging.getLogger(__name__)
 
@@ -568,7 +567,7 @@ def update_external_data_load_date(model: LakeHouseModel, start_time: datetime, 
 
     start = convert_timestamp_df(start_time)
     end = convert_timestamp_df(end_time)
-    now = convert_timestamp_df(datetime.now())
+    now = convert_timestamp_df(get_utc_now())
 
     if not df.loc[df.name == model.TABLE_REF].empty:
         df.loc[df.name == model.TABLE_REF, ["last_load_date_start", "last_load_date_end", "updated_at"]] = [
