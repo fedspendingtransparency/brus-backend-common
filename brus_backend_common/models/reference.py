@@ -236,17 +236,17 @@ class ProgramActivityParkBronze(CSVModel):
     PK = "PARK"
     STRUCTURE = BaseSchema(
         [
-            SchemaField("FY", SchemaType.STRING),
-            SchemaField("PD", SchemaType.STRING),
-            SchemaField("ALLOC_XFER_AGENCY", SchemaType.STRING),
-            SchemaField("AID", SchemaType.STRING),
-            SchemaField("MAIN_ACCT", SchemaType.STRING),
-            SchemaField("SUB_ACCT", SchemaType.STRING),
-            SchemaField("COMPOUND_KEY", SchemaType.STRING),
-            SchemaField("PARK", SchemaType.STRING),
-            SchemaField("PARK_NAME", SchemaType.STRING),
-            SchemaField("RECORD_UPDATE_TS", SchemaType.STRING),
-            SchemaField("FILE_UPDATE_TS", SchemaType.STRING),
+            SchemaField("FY", SchemaType.STRING, False),
+            SchemaField("PD", SchemaType.STRING, False),
+            SchemaField("ALLOC_XFER_AGENCY", SchemaType.STRING, True),
+            SchemaField("AID", SchemaType.STRING, False),
+            SchemaField("MAIN_ACCT", SchemaType.STRING, False),
+            SchemaField("SUB_ACCT", SchemaType.STRING, True),
+            SchemaField("COMPOUND_KEY", SchemaType.STRING, False),
+            SchemaField("PARK", SchemaType.STRING, False),
+            SchemaField("PARK_NAME", SchemaType.STRING, False),
+            SchemaField("RECORD_UPDATE_TS", SchemaType.STRING, True),
+            SchemaField("FILE_UPDATE_TS", SchemaType.STRING, True),
         ]
     )
 
