@@ -260,19 +260,6 @@ class ProgramActivityParkGold(CSVModel):
     PK = "park_code"
     STRUCTURE = BaseSchema(
         [
-            SchemaField("created_at", SchemaType.TIMESTAMP),
-            SchemaField("updated_at", SchemaType.TIMESTAMP),
-            SchemaField("fiscal_year", SchemaType.INTEGER),
-            SchemaField("period", SchemaType.INTEGER),
-            SchemaField("allocation_transfer_id", SchemaType.STRING),
-            SchemaField("agency_id", SchemaType.STRING),
-            SchemaField("main_account_number", SchemaType.STRING),
-            SchemaField("sub_account_number", SchemaType.STRING),
-            SchemaField("park_code", SchemaType.STRING),
-            SchemaField("park_name", SchemaType.STRING),
-        ]
-    STRUCTURE = BaseSchema(
-        [
             SchemaField("created_at", SchemaType.TIMESTAMP, True),
             SchemaField("updated_at", SchemaType.TIMESTAMP, True),
             SchemaField("fiscal_year", SchemaType.INTEGER, False),
