@@ -3,6 +3,7 @@ import logging
 import requests
 import time
 import xmltodict
+from enum import Enum
 from typing import Any, Callable, Literal, Protocol
 
 import numpy as np
@@ -308,3 +309,8 @@ def clean_data(
     if return_dropped_count and not dropped.empty:
         return len(dropped), clean_df
     return clean_df
+
+
+class ErrorCodes(Enum):
+    EMPTY_DATA = 4
+    SKIPPED = 6

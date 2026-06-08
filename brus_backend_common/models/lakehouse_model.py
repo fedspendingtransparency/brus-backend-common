@@ -7,15 +7,16 @@ import sys
 import tempfile
 from abc import ABC
 from argparse import ArgumentTypeError
-from enum import Enum
-from typing import Any, Callable, Dict, List, NamedTuple
+from dataclasses import dataclass
 from datetime import datetime
+from enum import Enum
+from typing import Any, Callable, NamedTuple
 
 import deltalake
 import pyarrow as pa
 import pandas as pd
 import polars as pl
-from deltalake import DeltaTable, QueryBuilder  # Field, schema
+from deltalake import DeltaTable, QueryBuilder
 from deltalake.writer import write_deltalake
 from mypy_boto3_s3 import S3Client
 from pyspark.sql import DataFrame, SparkSession
@@ -36,56 +37,60 @@ from pyspark.sql.types import (
 from brus_backend_common.config import _SRC_ROOT_DIR, CONFIG
 from brus_backend_common.helpers.aws import _get_boto3, get_storage_options
 from brus_backend_common.helpers.pandas import convert_timestamp_df
-from brus_backend_common.helpers.generic import step
-
+from brus_backend_common.helpers.generic import step, get_utc_now
 
 logger = logging.getLogger(__name__)
 
 
 class LakeHouseModelFormat(Enum):
-    DELTA = "delta"
-    CSV = "csv"
+    DELTA: str = "delta"
+    CSV: str = "csv"
 
 
 class LakeHouseDatabase(Enum):
-    BRONZE = "bronze"
-    SILVER = "silver"
-    GOLD = "gold"
+    BRONZE: str = "bronze"
+    SILVER: str = "silver"
+    GOLD: str = "gold"
 
 
 class SchemaType(Enum):
-    LIST = "list"
-    STRING = "string"
-    INTEGER = "integer"
-    FLOAT = "float"
-    BOOLEAN = "bool"
-    TIMESTAMP = "timestamp"
+    LIST: str = "list"
+    STRING: str = "string"
+    INTEGER: str = "integer"
+    FLOAT: str = "float"
+    BOOLEAN: str = "bool"
+    TIMESTAMP: str = "timestamp"
 
 
-class SchemaField(NamedTuple):
+@dataclass
+class SchemaField:
     name: str
     type: SchemaType
-    nullable: bool
+    nullable: bool = True
     sub_type: SchemaType | None = None
-    sub_nullable: bool | None = None
+    sub_nullable: bool = True
+
+    def __post_init__(self):
+        if self.type == SchemaType.LIST and self.sub_type is None:
+            raise ValueError(f"sub_type must be provided when type is LIST for field '{self.name}'")
 
 
 class TypeFormat(NamedTuple):
     spark_type: DataType
-    pandas_type: str
+    pandas_type: pa.DataType
 
 
 class BaseSchema:
-    TYPE_MAP = {
-        SchemaType.BOOLEAN: TypeFormat(spark_type=BooleanType, pandas_type="bool"),
-        SchemaType.FLOAT: TypeFormat(spark_type=DoubleType, pandas_type="float64"),
-        SchemaType.INTEGER: TypeFormat(spark_type=IntegerType, pandas_type="Int64"),
-        SchemaType.LIST: TypeFormat(spark_type=ArrayType, pandas_type="object"),
-        SchemaType.STRING: TypeFormat(spark_type=StringType, pandas_type="object"),
-        SchemaType.TIMESTAMP: TypeFormat(spark_type=TimestampType, pandas_type="datetime64[ns]"),
+    TYPE_MAP: dict[SchemaType, TypeFormat] = {
+        SchemaType.BOOLEAN: TypeFormat(spark_type=BooleanType, pandas_type=pa.bool_()),
+        SchemaType.FLOAT: TypeFormat(spark_type=DoubleType, pandas_type=pa.float64()),
+        SchemaType.INTEGER: TypeFormat(spark_type=IntegerType, pandas_type=pa.int64()),
+        SchemaType.LIST: TypeFormat(spark_type=ArrayType, pandas_type=pa.list_),
+        SchemaType.STRING: TypeFormat(spark_type=StringType, pandas_type=pa.string()),
+        SchemaType.TIMESTAMP: TypeFormat(spark_type=TimestampType, pandas_type=pa.timestamp("ns")),
     }
 
-    def __init__(self, schema_definition: List[SchemaField]) -> None:
+    def __init__(self, schema_definition: list[SchemaField]) -> None:
         """Returns list of (column_name, type_key, nullable)"""
         self.schema_definition = schema_definition
 
@@ -94,37 +99,48 @@ class BaseSchema:
         fields = []
         for schema_field in self.schema_definition:
             spark_type = (
-                self.TYPE_MAP[schema_field.type].spark_type(schema_field.sub_type, schema_field.sub_nullable)
-                if SchemaType == SchemaType.LIST
+                self.TYPE_MAP[schema_field.type].spark_type(
+                    self.TYPE_MAP[schema_field.sub_type].spark_type(),
+                    containsNull=schema_field.sub_nullable,
+                )
+                if schema_field.type == SchemaType.LIST
                 else self.TYPE_MAP[schema_field.type].spark_type()
             )
             fields.append(StructField(schema_field.name, spark_type, schema_field.nullable))
         return StructType(fields)
 
-    def to_pandas_dtypes(self) -> Dict[str, str]:
+    def to_pandas_dtypes(self) -> dict[str, pd.ArrowDtype]:
         """Convert to Pandas dtype mapping"""
         return {
-            schema_field.name: self.TYPE_MAP[schema_field.type].pandas_type for schema_field in self.schema_definition
+            schema_field.name: (
+                pd.ArrowDtype(
+                    self.TYPE_MAP[schema_field.type].pandas_type(
+                        self.TYPE_MAP[schema_field.sub_type].pandas_type,
+                    )
+                )
+                if schema_field.type == SchemaType.LIST
+                else pd.ArrowDtype(self.TYPE_MAP[schema_field.type].pandas_type)
+            )
+            for schema_field in self.schema_definition
         }
 
     @property
-    def columns(self) -> Dict[str, SchemaField]:
+    def columns(self) -> dict[str, SchemaField]:
         """Get dict of column names with their schema fields"""
         return {schema_field.name: schema_field for schema_field in self.schema_definition}
 
 
 class LakeHouseModel(ABC):
     BUCKET_NAME: str
-    RELATIVE_LAKEHOUSE_PATH = "data"
+    RELATIVE_LAKEHOUSE_PATH: str = "data"
     DATABASE_NAME: LakeHouseDatabase
     TABLE_NAME: str
     DESCRIPTION: str
     CSV_NAME: str
     FORMAT: LakeHouseModelFormat
     PK: str
-    UNIQUE_CONSTRAINTS: List[(str,)]
-    MIGRATION_HISTORY: List[str]  # must be ordered by earliest to latest
-
+    UNIQUE_CONSTRAINTS: list[str | tuple[str]] | None = None
+    MIGRATION_HISTORY: list[str] | None = None  # must be ordered by earliest to latest
     # The schema/structure of the delta table as StructType with StructFields
     STRUCTURE: BaseSchema
 
@@ -223,14 +239,15 @@ class LakeHouseModel(ABC):
 
 class DeltaModel(LakeHouseModel):
     FORMAT = LakeHouseModelFormat.DELTA
+    STRUCTURE: StructType
 
     # Used to repopulate the table from scratch
     # If the text is too large for the model, pull the text from a separate script.
-    REPOPULATE_QUERIES: List[str | Callable[[SparkSession, str, str], None]]
+    REPOPULATE_QUERIES: list[str | Callable[[SparkSession, str, str], None]]
 
     # Used to increment to the table
     # If the text is too large for the model, pull the text from a separate script.
-    INCREMENT_QUERIES: List[str | Callable[[SparkSession, str, str], None]]
+    INCREMENT_QUERIES: list[str | Callable[[SparkSession, str, str], None]]
 
     def __init__(self, spark: SparkSession | None = None) -> None:
         super().__init__(spark=spark)
@@ -381,7 +398,6 @@ class DeltaModel(LakeHouseModel):
 
 class CSVModel(LakeHouseModel):
     FORMAT = LakeHouseModelFormat.CSV
-
     CSV_NAME: str
 
     def __init__(self, spark: SparkSession | None = None) -> None:
@@ -456,15 +472,16 @@ class CSVModel(LakeHouseModel):
                 converters[col.name] = safe_literal_eval
 
         dtypes = self.STRUCTURE.to_pandas_dtypes()
+        cols = list(self.STRUCTURE.columns)
         params = {
             "converters": converters,
             "dtype": {k: v for k, v in dtypes.items() if v != "datetime64[ns]"},
             "parse_dates": [k for k, v in dtypes.items() if v == "datetime64[ns]"],
-            "usecols": list(self.STRUCTURE.columns),
+            "usecols": cols,
         }
         params.update(kwargs)
 
-        return pd.read_csv(io.BytesIO(self._s3_object), **params)[list(self.STRUCTURE.columns)] if self.exists() else None  # type: ignore
+        return pd.read_csv(io.BytesIO(self._s3_object), **params)[cols] if self.exists() else None  # type: ignore
 
     def to_polars_df(self, **kwargs: Any) -> pl.DataFrame | pl.Series | None:
         return pl.read_csv(self.CSV_PATH, **kwargs) if self.exists() else None
@@ -547,29 +564,28 @@ def update_external_data_load_date(model: LakeHouseModel, start_time: datetime, 
             f"ExternalDataLoadDate CSV not found."
             f" Please run initialize recreate or upload the file to {edld_model.CSV_PATH}"
         )
-    last_stored_obj = df[df.name == model.TABLE_REF]
-    if last_stored_obj.empty:
-        new_entry_dict = {
-            "created_at": [convert_timestamp_df(datetime.now())],
-            "updated_at": [None],  # will be updated later
-            "external_data_load_date_id": [edld_model.next_id()],
-            "name": [model.TABLE_REF],
-            "description": [model.DESCRIPTION],
-            "last_load_date_start": [None],  # will be updated later
-            "last_load_date_end": [None],  # will be updated later
-        }
-        new_entry = pd.DataFrame(new_entry_dict)
 
-        df = pd.concat([df, new_entry])
-        last_stored_obj = df[df.name == model.TABLE_REF]
+    start = convert_timestamp_df(start_time)
+    end = convert_timestamp_df(end_time)
+    now = convert_timestamp_df(get_utc_now())
 
-    last_stored_obj["last_load_date_start"] = convert_timestamp_df(start_time)
-    last_stored_obj["last_load_date_end"] = convert_timestamp_df(end_time)
-    last_stored_obj["updated_at"] = convert_timestamp_df(datetime.now())
-
-    df.set_index(edld_model.PK, inplace=True)
-    last_stored_obj.set_index(edld_model.PK, inplace=True)
-    df.update(last_stored_obj)
-    df.reset_index(inplace=True)
-
+    if not df.loc[df.name == model.TABLE_REF].empty:
+        df.loc[df.name == model.TABLE_REF, ["last_load_date_start", "last_load_date_end", "updated_at"]] = [
+            start,
+            end,
+            now,
+        ]
+    else:
+        new_row = pd.DataFrame(
+            {
+                "created_at": [now],
+                "updated_at": [now],
+                "external_data_load_date_id": [edld_model.next_id()],
+                "name": [model.TABLE_REF],
+                "description": [model.DESCRIPTION],
+                "last_load_date_start": [start],
+                "last_load_date_end": [end],
+            }
+        )
+        df = pd.concat([df, new_row], ignore_index=True)
     edld_model.save(df)

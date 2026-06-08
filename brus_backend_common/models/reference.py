@@ -158,7 +158,13 @@ class DEFCGold(CSVModel):
             SchemaField("defc_id", SchemaType.INTEGER, False),
             SchemaField("code", SchemaType.STRING, False),
             SchemaField("public_laws", SchemaType.LIST, True, SchemaType.STRING, True),
-            SchemaField("public_law_short_titles", SchemaType.LIST, SchemaType.STRING, True),
+            SchemaField(
+                name="public_law_short_titles",
+                type=SchemaType.LIST,
+                nullable=True,
+                sub_type=SchemaType.STRING,
+                sub_nullable=True,
+            ),
             SchemaField("group", SchemaType.STRING, True),
             SchemaField("urls", SchemaType.LIST, True, SchemaType.STRING, True),
             SchemaField("is_valid", SchemaType.BOOLEAN, False),
@@ -217,5 +223,52 @@ class FONGold(CSVModel):
             SchemaField("close_date", SchemaType.TIMESTAMP, True),
             SchemaField("doc_type", SchemaType.STRING, True),
             SchemaField("internal_id", SchemaType.INTEGER, True),
+        ]
+    )
+
+
+class ProgramActivityParkBronze(CSVModel):
+    BUCKET_NAME = CONFIG.LAKEHOUSE_REFERENCE_BUCKET
+    DATABASE_NAME = LakeHouseDatabase.BRONZE
+    TABLE_NAME = "program_activity_park"
+    DESCRIPTION = "Raw program activity park data"
+    CSV_NAME = "PARK_PROGRAM_ACTIVITY.csv"
+    PK = "PARK"
+    STRUCTURE = BaseSchema(
+        [
+            SchemaField("FY", SchemaType.STRING, False),
+            SchemaField("PD", SchemaType.STRING, False),
+            SchemaField("ALLOC_XFER_AGENCY", SchemaType.STRING, True),
+            SchemaField("AID", SchemaType.STRING, False),
+            SchemaField("MAIN_ACCT", SchemaType.STRING, False),
+            SchemaField("SUB_ACCT", SchemaType.STRING, True),
+            SchemaField("COMPOUND_KEY", SchemaType.STRING, False),
+            SchemaField("PARK", SchemaType.STRING, False),
+            SchemaField("PARK_NAME", SchemaType.STRING, False),
+            SchemaField("RECORD_UPDATE_TS", SchemaType.STRING, True),
+            SchemaField("FILE_UPDATE_TS", SchemaType.STRING, True),
+        ]
+    )
+
+
+class ProgramActivityParkGold(CSVModel):
+    BUCKET_NAME = CONFIG.LAKEHOUSE_REFERENCE_BUCKET
+    DATABASE_NAME = LakeHouseDatabase.GOLD
+    TABLE_NAME = "program_activity_park"
+    DESCRIPTION = "Program activity park data after initial processing"
+    CSV_NAME = "park.csv"
+    PK = "park_code"
+    STRUCTURE = BaseSchema(
+        [
+            SchemaField("created_at", SchemaType.TIMESTAMP, True),
+            SchemaField("updated_at", SchemaType.TIMESTAMP, True),
+            SchemaField("fiscal_year", SchemaType.INTEGER, False),
+            SchemaField("period", SchemaType.INTEGER, False),
+            SchemaField("allocation_transfer_id", SchemaType.STRING, True),
+            SchemaField("agency_id", SchemaType.STRING, False),
+            SchemaField("main_account_number", SchemaType.STRING, True),
+            SchemaField("sub_account_number", SchemaType.STRING, False),
+            SchemaField("park_code", SchemaType.STRING, False),
+            SchemaField("park_name", SchemaType.STRING, False),
         ]
     )
