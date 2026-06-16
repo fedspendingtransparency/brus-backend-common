@@ -34,6 +34,7 @@ def get_with_exception_hand(
     resp_type: Literal["json", "xml"] = "json",
     namespaces: dict | None = None,
     validate_response: Callable[[dict], bool] | None = None,
+    params: dict | None = None,
 ) -> dict[Any, Any] | requests.Response | None:
     """Retrieve data from a feed, allow for multiple retries, checks, and timeouts
 
@@ -68,7 +69,7 @@ def get_with_exception_hand(
     while current_retries < len(retry_sleep_times):
         resp = None
         try:
-            resp = requests.get(url_string, timeout=request_timeout)
+            resp = requests.get(url_string, params=params, timeout=request_timeout)
             resp.raise_for_status()
 
             if not decode:
