@@ -230,7 +230,7 @@ class OfficeLoader:
                 )
             )
         )
-        if not "effectivestartdate" in result:
+        if "effectivestartdate" not in result:
             result["effective_start_date"] = "2000-01-01 00:00"
         else:
             result = result.assign(
