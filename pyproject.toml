@@ -136,6 +136,7 @@ markers = [
     # These are "auto" marked based on fixture usage. See conftest.py pytest_collection_modifyitems
     "spark: Mark all tests using the spark fixture. Can be selected with -m spark or deselected with -m (not spark)",
 ]
+asyncio_mode = "auto"
 pythonpath = [
   "."
 ]
@@ -152,3 +153,8 @@ exclude = [
     'brus_backend_common/*/migrations/*'
 ]
 max-line-length = 120
+
+[dependency-groups]
+dev = [
+    "pytest-asyncio>=1.3.0",
+]

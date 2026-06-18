@@ -56,6 +56,8 @@ def sample_office_dataframe():
             "contract_awards_office": [False, True],
             "financial_assistance_awards_office": [False, False],
             "financial_assistance_funding_office": [False, False],
+            "created_at": ["2023-01-01 00:00", "2023-01-01 00:00"],
+            "updated_at": ["2023-01-01 00:00", "2023-01-01 00:00"],
         }
     )
 
@@ -68,6 +70,7 @@ def upload_office_test_data(s3_unittest_data_bucket):
     csv_file_path = os.path.join(_SRC_ROOT_DIR, "tests", "integration", "data", "test_offices.csv")
     test_df = pd.DataFrame(
         {
+            "office_id": [1],
             "office_code": ["OLD001"],
             "office_name": ["Old Office"],
             "sub_tier_code": ["XYZ"],
@@ -126,7 +129,7 @@ class TestOfficeLoader:
         assert result["office_name"].iloc[0] == "Test Office"
         assert result["sub_tier_code"].iloc[0] == "ABC"
         assert result["agency_code"].iloc[0] == "012"
-        assert result["contract_funding_office"].iloc[0] is True
+        assert result["contract_funding_office"].iloc[0]
 
     def test_parse_raw_office_missing_columns(self):
         """Test parsing with missing required columns"""
@@ -147,6 +150,7 @@ class TestOfficeLoader:
                 "agencycode": ["ABC"],
                 "cgaclist": [[{"cgac": "012"}]],
                 "status": ["ACTIVE"],
+                "effectiveenddate": ["2020-01-02 00:00"],
             }
         )
 
@@ -165,6 +169,7 @@ class TestOfficeLoader:
                     "agencycode": ["ABC"],
                     "cgaclist": [[{"cgac": military_code}]],
                     "status": ["ACTIVE"],
+                    "effectiveenddate": ["2020-01-02 00:00"],
                 }
             )
 
@@ -217,7 +222,7 @@ class TestOfficeLoader:
         loader = OfficeLoader()
 
         with patch(
-            "brus_backend_common.scripts.loaders.load_federal_hierarchy.async_get_with_exception_hand",
+            "brus_backend_common.scripts.loaders.office_gold.async_get_with_exception_hand",
             new_callable=AsyncMock,
         ) as mock_get:
             mock_get.return_value = mock_sam_api_response
@@ -246,9 +251,11 @@ class TestOfficeLoader:
         with (
             patch.object(OfficeGold, "BUCKET_NAME", s3_unittest_data_bucket),
             patch.object(ExternalDataLoadDate, "BUCKET_NAME", s3_unittest_data_bucket),
-            patch("brus_backend_common.scripts.loaders.load_federal_hierarchy.get_with_exception_hand") as mock_get,
+            patch("brus_backend_common.scripts.loaders.office_gold.get_with_exception_hand") as mock_get,
             patch.object(OfficeLoader, "pull_offices", new_callable=AsyncMock) as mock_pull,
         ):
+            edld_model = ExternalDataLoadDate()
+            edld_model.initialize(recreate=True)
             mock_get.return_value = {"totalrecords": 1}
             mock_pull.return_value = [
                 {
@@ -277,13 +284,193 @@ class TestOfficeLoader:
             assert not df.loc[df["name"] == office_model.TABLE_REF].empty
 
     def test_dedupe_offices_pull_all(self, sample_office_dataframe):
-        """Test deduplication logic for full pull"""
+        """Test deduplication logic for full pull removes duplicates"""
         loader = OfficeLoader()
 
+        # Create a DataFrame with duplicate office codes
+        duplicate_offices = pd.DataFrame(
+            {
+                "office_code": ["TEST001", "TEST001", "TEST002"],
+                "office_name": ["Test Office 1", "Test Office 1 Updated", "Test Office 2"],
+                "sub_tier_code": ["ABC", "ABC", "DEF"],
+                "agency_code": ["012", "012", "013"],
+                "effective_start_date": pd.to_datetime(["2020-01-01", "2019-01-01", "2019-01-01"]),
+                "effective_end_date": [pd.NaT, pd.NaT, pd.to_datetime("2023-12-31")],
+                "contract_funding_office": [True, False, False],
+                "contract_awards_office": [False, True, True],
+                "financial_assistance_awards_office": [False, False, False],
+                "financial_assistance_funding_office": [False, False, False],
+            }
+        )
+
         with patch.object(OfficeGold, "to_pandas_df") as mock_df:
+            # Mock existing offices in database
             mock_df.return_value = sample_office_dataframe.copy()
 
-            result = loader.dedupe_offices(sample_office_dataframe, pull_all=True, params={})
+            result = loader.dedupe_offices(duplicate_offices, pull_all=True, params={})
 
-            assert "created_at" in result.columns
-            assert "updated_at" in result.columns
+            # Verify duplicates are removed - should only have 2 unique office codes
+            assert len(result) == 2
+            assert result["office_code"].nunique() == 2
+
+            # Verify the earliest start date is kept
+            test001_record = result[result["office_code"] == "TEST001"]
+            assert test001_record["effective_start_date"].iloc[0] == pd.to_datetime("2019-01-01")
+
+            # Verify org types are combined (both should be True)
+            assert test001_record["contract_funding_office"].iloc[0]
+            assert test001_record["contract_awards_office"].iloc[0]
+
+    def test_dedupe_offices_nightly_active_records(self):
+        """Test deduplication logic for nightly load with active records"""
+        loader = OfficeLoader()
+
+        # New active offices
+        new_offices = pd.DataFrame(
+            {
+                "office_code": ["TEST001", "TEST002"],
+                "office_name": ["Test Office 1", "Test Office 2"],
+                "sub_tier_code": ["ABC", "DEF"],
+                "agency_code": ["012", "013"],
+                "effective_start_date": pd.to_datetime(["2024-01-01", "2024-01-01"]),
+                "effective_end_date": [pd.NaT, pd.NaT],
+                "contract_funding_office": [True, False],
+                "contract_awards_office": [False, True],
+                "financial_assistance_awards_office": [False, False],
+                "financial_assistance_funding_office": [False, False],
+            }
+        )
+
+        # Existing offices in database with earlier start dates
+        old_offices = pd.DataFrame(
+            {
+                "office_code": ["TEST001"],
+                "office_name": ["Test Office 1 Old"],
+                "sub_tier_code": ["ABC"],
+                "agency_code": ["012"],
+                "effective_start_date": pd.to_datetime(["2020-01-01"]),
+                "effective_end_date": [pd.NaT],
+                "contract_funding_office": [False],
+                "contract_awards_office": [True],
+                "financial_assistance_awards_office": [False],
+                "financial_assistance_funding_office": [False],
+            }
+        )
+
+        with patch.object(OfficeGold, "to_pandas_df") as mock_df:
+            mock_df.return_value = old_offices.copy()
+
+            result = loader.dedupe_offices(new_offices, pull_all=False, params={})
+
+            # Should have 2 unique offices
+            assert len(result) == 2
+
+            # should have the earlier start date from old record
+            test001_record = result[result["office_code"] == "TEST001"]
+            assert test001_record["effective_start_date"].iloc[0] == pd.to_datetime("2020-01-01")
+
+            # should be new
+            test002_record = result[result["office_code"] == "TEST002"]
+            assert not test002_record.empty
+
+    def test_dedupe_offices_nightly_inactive_records(self):
+        """Test deduplication logic for nightly load with inactive records"""
+        loader = OfficeLoader()
+
+        # New inactive office
+        new_offices = pd.DataFrame(
+            {
+                "office_code": ["TEST001"],
+                "office_name": ["Test Office 1"],
+                "sub_tier_code": ["ABC"],
+                "agency_code": ["012"],
+                "effective_start_date": pd.to_datetime(["2020-01-01"]),
+                "effective_end_date": pd.to_datetime(["2024-12-31"]),
+                "contract_funding_office": [True],
+                "contract_awards_office": [False],
+                "financial_assistance_awards_office": [False],
+                "financial_assistance_funding_office": [False],
+            }
+        )
+
+        # Mock API response for historical records
+        historical_response = [
+            {
+                "orglist": [
+                    {
+                        "aacofficecode": "TEST001",
+                        "fhorgname": "Test Office 1",
+                        "agencycode": "ABC",
+                        "cgaclist": [{"cgac": "012"}],
+                        "status": "INACTIVE",
+                        "effectivestartdate": "2020-01-01 00:00",
+                        "effectiveenddate": "2024-12-31 00:00",
+                        "fhorgofficetypelist": [{"officetype": "Contract Funding"}],
+                    }
+                ]
+            }
+        ]
+
+        with (
+            patch.object(OfficeGold, "to_pandas_df") as mock_df,
+            patch("brus_backend_common.scripts.loaders.office_gold.get_with_exception_hand") as mock_get,
+        ):
+            mock_df.return_value = pd.DataFrame()  # No existing offices
+            mock_get.return_value = historical_response
+
+            result = loader.dedupe_offices(new_offices, pull_all=False, params={"api_key": "test"})
+
+            # Should have the inactive record
+            assert len(result) == 1
+            assert result["office_code"].iloc[0] == "TEST001"
+            assert pd.notna(result["effective_end_date"].iloc[0])
+
+    def test_dedupe_offices_nightly_mixed_active_inactive(self):
+        """Test deduplication when same office code has both active and inactive records"""
+        loader = OfficeLoader()
+
+        # Same office code with both active and inactive records
+        new_offices = pd.DataFrame(
+            {
+                "office_code": ["TEST001", "TEST001"],
+                "office_name": ["Test Office 1", "Test Office 1"],
+                "sub_tier_code": ["ABC", "ABC"],
+                "agency_code": ["012", "012"],
+                "effective_start_date": pd.to_datetime(["2024-01-01", "2020-01-01"]),
+                "effective_end_date": [pd.NaT, pd.to_datetime("2023-12-31")],
+                "contract_funding_office": [True, True],
+                "contract_awards_office": [False, False],
+                "financial_assistance_awards_office": [False, False],
+                "financial_assistance_funding_office": [False, False],
+            }
+        )
+
+        historical_response = [
+            {
+                "orglist": [
+                    {
+                        "aacofficecode": "TEST001",
+                        "fhorgname": "Test Office 1",
+                        "agencycode": "ABC",
+                        "cgaclist": [{"cgac": "012"}],
+                        "status": "INACTIVE",
+                        "effectivestartdate": "2020-01-01 00:00",
+                        "effectiveenddate": "2023-12-31 00:00",
+                        "fhorgofficetypelist": [{"officetype": "Contract Funding"}],
+                    }
+                ]
+            }
+        ]
+
+        with (
+            patch.object(OfficeGold, "to_pandas_df") as mock_df,
+            patch("brus_backend_common.scripts.loaders.office_gold.get_with_exception_hand") as mock_get,
+        ):
+            mock_df.return_value = pd.DataFrame()
+            mock_get.return_value = historical_response
+
+            result = loader.dedupe_offices(new_offices, pull_all=False, params={"api_key": "test"})
+
+            # Active record should be removed from active list since inactive exists
+            # Should only have 1 record after deduplication
+            assert len(result) == 1

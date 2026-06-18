@@ -102,6 +102,7 @@ class OfficeLoader:
                 offices["created_at"] = end_time
                 offices["updated_at"] = end_time
                 og.save(offices)
+
                 update_external_data_load_date(og, start_time, end_time)
 
     def dedupe_offices(self, new_offices: pd.DataFrame, pull_all: bool, params: dict) -> pd.DataFrame:
@@ -110,7 +111,9 @@ class OfficeLoader:
         other_cols = ["office_name", "agency_code", "sub_tier_code"]
         shared_cols = date_cols + type_cols + other_cols
         shared_df_cols = ["office_code"] + shared_cols
-        old_offices = OfficeGold().to_pandas_df().loc[lambda df: df["office_code"].isin(new_offices.office_code)]
+        old_offices = OfficeGold().to_pandas_df()
+        if not old_offices.empty:
+            old_offices = old_offices.loc[old_offices["office_code"].isin(new_offices.office_code)]
         if pull_all:
             merged_offices = self.merge_offices(new_offices, old_offices)
         else:
@@ -204,6 +207,8 @@ class OfficeLoader:
 
     def parse_raw_office(self, df: pd.DataFrame) -> pd.DataFrame:
         required_cols = ["aacofficecode", "agencycode", "cgaclist", "fhorgname"]
+        if "effectiveenddate" not in df.columns:
+            df["effectiveenddate"] = None
         if not all(col in df for col in required_cols):
             return pd.DataFrame()
         result = (
@@ -222,7 +227,7 @@ class OfficeLoader:
                 effective_end_date=lambda x: pd.to_datetime(
                     np.where(x.status == "ACTIVE", x.effectiveenddate, x.effectiveenddate.fillna("2000-01-02 00:00")),
                     errors="coerce",
-                ).fillna("2000-01-02 00:00")
+                )
             )
         )
         if not "effectivestartdate" in result:
