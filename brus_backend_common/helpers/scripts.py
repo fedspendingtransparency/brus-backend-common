@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 import requests
@@ -6,6 +7,7 @@ import xmltodict
 from enum import Enum
 from typing import Any, Callable, Literal, Protocol
 
+import aiohttp
 import numpy as np
 import pandas as pd
 from requests.exceptions import HTTPError, RequestException, ConnectionError, ReadTimeout
@@ -122,6 +124,111 @@ def get_with_exception_hand(
         except Exception as e:
             print(f"An unexpected error occurred: {e}")
             raise e
+    return return_val
+
+
+async def async_get_with_exception_hand(
+    session: aiohttp.ClientSession,
+    url_string: str,
+    max_retries: int = 12,
+    decode: bool = True,
+    resp_type: Literal["json", "xml"] = "json",
+    namespaces: dict | None = None,
+    validate_response: Callable[[dict], bool] | None = None,
+    params: dict | None = None,
+) -> dict[Any, Any] | str | None:
+    """Async version of get_with_exception_hand
+
+    Args:
+        session: aiohttp.ClientSession to reuse for connection pooling
+        url_string: string path to the feed we are getting data from
+        max_retries: maximum number of retries to save time
+        decode: whether to decode the response into a dict
+        resp_type: the format of the response (either 'json' or 'xml')
+        namespaces: dict of namespaces to clean up for the xml parsing
+        validate_response: function to determine if the response is valid
+        params: query parameters for the request
+
+    Returns:
+        The response from the url provided as a dict or string
+
+    Raises:
+        Various exceptions if max retries exceeded
+    """
+    if resp_type not in ["json", "xml"]:
+        raise ValueError("resp_type must be 'xml' or 'json'.")
+    if not 0 <= max_retries <= 12:
+        raise ValueError("max_retries must be 0-12.")
+
+    current_retries = 0
+    retry_sleep_times = [0.5, 1, 5, 30, 60, 180, 300, 360, 420, 480, 540, 600]
+    request_timeout = 60
+    return_val = None
+
+    while current_retries <= max_retries and current_retries < len(retry_sleep_times):
+        resp_text = None
+        try:
+            timeout = aiohttp.ClientTimeout(total=request_timeout)
+            async with session.get(url_string, params=params, timeout=timeout) as resp:
+                resp.raise_for_status()
+
+                if not decode:
+                    return_val = await resp.text()
+                else:
+                    if resp_type == "xml":
+                        resp_text = await resp.text()
+                        resp_dict = xmltodict.parse(resp_text, process_namespaces=True, namespaces=namespaces)
+                    else:
+                        resp_dict = await resp.json()
+
+                    resp_err = resp_dict.get("error")
+                    if resp_err:
+                        message = resp_dict.get("message")
+                        raise ValueError(f"Error processing response: {resp_err} {message}")
+
+                    if validate_response is not None and validate_response(resp_dict) is False:
+                        raise ValueError(f"Invalid response provided: {resp_dict}")
+
+                    return_val = resp_dict
+                break
+
+        except (
+            aiohttp.ClientResponseError,
+            aiohttp.ClientConnectionError,
+            aiohttp.ClientError,
+            asyncio.TimeoutError,
+            json.decoder.JSONDecodeError,
+            ValueError,
+        ) as e:
+            if resp_text:
+                logger.exception(f"Response text: {resp_text}")
+            else:
+                logger.exception(e)
+
+            if current_retries < len(retry_sleep_times) and current_retries < max_retries:
+                logger.info(
+                    f"Sleeping {retry_sleep_times[current_retries]}s and then retrying"
+                    f" with a max wait of {request_timeout}s... (attempt {current_retries + 1}/{max_retries})"
+                )
+                await asyncio.sleep(retry_sleep_times[current_retries])
+                current_retries += 1
+                request_timeout += 60
+            else:
+                logger.error(f"Maximum retry attempts exceeded for {url_string}")
+                raise e
+
+        except xmltodict.expat.ExpatError as e:
+            logger.exception(f"XML parsing error: {e}")
+            if current_retries < len(retry_sleep_times) and current_retries < max_retries:
+                await asyncio.sleep(retry_sleep_times[current_retries])
+                current_retries += 1
+            else:
+                raise e
+
+        except Exception as e:
+            logger.exception(f"An unexpected error occurred: {e}")
+            raise e
+
     return return_val
 
 
