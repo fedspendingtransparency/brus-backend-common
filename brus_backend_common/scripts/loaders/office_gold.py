@@ -180,12 +180,11 @@ class OfficeLoader:
             """Fetch a single page of results with retry logic"""
             request_params = params.copy()
             request_params["offset"] = str(offset)
-            # Use the retry function
             result = await async_get_with_exception_hand(
                 session=session,
                 url_string=self.API_URL,
                 params=request_params,
-                max_retries=5,  # Adjust as needed
+                max_retries=5,
                 decode=True,
                 resp_type="json",
             )
@@ -193,14 +192,12 @@ class OfficeLoader:
             return result if result else {}
 
         async def _fed_hierarchy_async_get(entries_already_processed: int) -> Awaitable[list[dict]]:
-            # Create single session for connection pooling
             async with aiohttp.ClientSession() as session:
                 tasks = []
                 for start_offset in range(self.REQUESTS_AT_ONCE):
                     offset = entries_already_processed + (start_offset * self.LIMIT)
                     tasks.append(_fetch_single(session, offset))
 
-                # Execute all requests concurrently
                 return await asyncio.gather(*tasks)
 
         return await _fed_hierarchy_async_get(entries_processed)
