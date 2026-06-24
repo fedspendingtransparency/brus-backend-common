@@ -19,4 +19,4 @@ This repo contains:
 
 ### Contributing and Installation
 
-If you want to contribute with a local installation, follow the instructions on our [contributing guide](doc/CONTRIBUTING.md) and [install guide](doc/INSTALL.md "INSTALL.md").
+If you want to contribute with a local installation, follow the instructions on our [contributing guide](CONTRIBUTING.md) and [install guide](INSTALL.md "INSTALL.md").
