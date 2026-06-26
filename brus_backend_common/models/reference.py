@@ -274,6 +274,44 @@ class ProgramActivityParkGold(CSVModel):
     )
 
 
+class OfficeBronze(CSVModel):
+    BUCKET_NAME = CONFIG.LAKEHOUSE_REFERENCE_BUCKET
+    DATABASE_NAME = LakeHouseDatabase.BRONZE
+    TABLE_NAME = "office"
+    DESCRIPTION = "Raw office data"
+    CSV_NAME = "office.csv"
+    PK = "fhorgid"
+    STRUCTURE = BaseSchema(
+        [
+            SchemaField("fhorgid", SchemaType.INTEGER, False),
+            SchemaField("fhorgname", SchemaType.STRING, True),
+            SchemaField("fhorgtype", SchemaType.STRING, True),
+            SchemaField("description", SchemaType.STRING, True),
+            SchemaField("level", SchemaType.INTEGER, True),
+            SchemaField("status", SchemaType.STRING, True),
+            SchemaField("region", SchemaType.STRING, True),
+            SchemaField("categoryid", SchemaType.STRING, True),
+            SchemaField("effectivestartdate", SchemaType.TIMESTAMP, True),
+            SchemaField("effectiveenddate", SchemaType.TIMESTAMP, True),
+            SchemaField("createdby", SchemaType.STRING, True),
+            SchemaField("createddate", SchemaType.TIMESTAMP, True),
+            SchemaField("updatedby", SchemaType.STRING, True),
+            SchemaField("lastupdateddate", SchemaType.TIMESTAMP, True),
+            SchemaField("fhdeptindagencyorgid", SchemaType.INTEGER, True),
+            SchemaField("fhagencyorgname", SchemaType.STRING, True),
+            SchemaField("agencycode", SchemaType.STRING, True),
+            SchemaField("oldfpdsofficecode", SchemaType.STRING, True),
+            SchemaField("aacofficecode", SchemaType.STRING, True),
+            SchemaField("cgaclist", SchemaType.LIST, True),
+            SchemaField("fhorgofficetypelist", SchemaType.LIST, True),
+            SchemaField("fhorgaddresslist", SchemaType.LIST, True),
+            SchemaField("fhorgnamehistory", SchemaType.LIST, True),
+            SchemaField("fhorgparenthistory", SchemaType.LIST, True),
+            SchemaField("links", SchemaType.LIST, True),
+        ]
+    )
+
+
 class OfficeGold(CSVModel):
     BUCKET_NAME = CONFIG.LAKEHOUSE_REFERENCE_BUCKET
     DATABASE_NAME = LakeHouseDatabase.GOLD

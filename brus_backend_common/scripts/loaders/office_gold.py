@@ -16,7 +16,7 @@ from brus_backend_common.helpers.generic import get_utc_now
 from brus_backend_common.helpers.scripts import async_get_with_exception_hand, get_with_exception_hand, trim_nested_obj
 from brus_backend_common.logging import configure_logging
 from brus_backend_common.models.lakehouse_model import ExternalDataLoadDate, update_external_data_load_date
-from brus_backend_common.models.reference import SubTierAgencyGold, OfficeGold
+from brus_backend_common.models.reference import SubTierAgencyGold, OfficeBronze, OfficeGold
 
 logger = logging.getLogger(__name__)
 
@@ -55,7 +55,9 @@ class OfficeLoader:
     def export_office(filename: str) -> None:
         OfficeGold().to_pandas_df().to_csv(filename, index=False)
 
-    async def load_offices(self, filename: str | None, update_db: bool, pull_all: bool, updated_date_from: str) -> None:
+    async def load_bronze_offices(
+        self, filename: str | None, update_db: bool, pull_all: bool, updated_date_from: str
+    ) -> None:
         start_time = get_utc_now()
         offices_list = []
         empty_pull_count = 0
@@ -77,11 +79,8 @@ class OfficeLoader:
                     office_data = await self.pull_offices({**params, "level": level}, entries_processed)
                     df = pd.DataFrame([org for office in office_data for org in office["orglist"]])
                     entries_processed += len(df)
-                    new_office = self.parse_raw_office(df)
-                    if not new_office.empty:
-                        offices_list.append(new_office)
-                        self.metrics["missing_cgacs"].append(new_office["agency_code"].tolist())
-                        self.metrics["missing_subtier_codes"].append(new_office["sub_tier_code"].tolist())
+                    if not df.empty:
+                        offices_list.append(df)
                     pbar.update(len(df))
             if entries_processed > total_expected_records:
                 # We have somehow retrieved more records than existed at the beginning of the pull
@@ -92,18 +91,39 @@ class OfficeLoader:
                 sys.exit(2)
         if offices_list:
             offices = pd.concat(offices_list, ignore_index=True)
-            if OfficeGold().exists() and OfficeGold().count() > 0:
-                offices = self.dedupe_offices(offices, pull_all, params)
-            if filename:
-                offices.to_csv(filename, index=False)
+            ob = OfficeBronze()
+            ob.save(offices)
+            # if OfficeGold().exists() and OfficeGold().count() > 0:
+            #     offices = self.dedupe_offices(offices, pull_all, params)
+            # if filename:
+            #     offices.to_csv(filename, index=False)
             if update_db:
-                og = OfficeGold()
+                #     og = OfficeGold()
                 end_time = get_utc_now()
-                offices["created_at"] = end_time
-                offices["updated_at"] = end_time
-                og.save(offices)
+                #     offices["created_at"] = end_time
+                #     offices["updated_at"] = end_time
+                #     og.save(offices)
+                update_external_data_load_date(ob, start_time, end_time)
 
-                update_external_data_load_date(og, start_time, end_time)
+    def load_gold_offices(self, filename: str | None, update_db: bool, pull_all: bool) -> None:
+        start_time = get_utc_now()
+        bronze_df = OfficeBronze().to_pandas_df()
+        gold_df = self.parse_raw_office(bronze_df)
+        params = {"status": "all", "api_key": CONFIG.SAM_API_KEY.get_secret_value()}
+        if pull_all and updated_date_from:
+            params["updatedatefrom"] = updated_date_from
+        if OfficeGold().exists() and OfficeGold().count() > 0:
+            gold_df = self.dedupe_offices(gold_df, pull_all, params)
+        if filename:
+            gold_df.to_csv(filename, index=False)
+        if update_db:
+            og = OfficeGold()
+            end_time = get_utc_now()
+            gold_df["created_at"] = end_time
+            gold_df["updated_at"] = end_time
+            og.save(gold_df)
+
+            update_external_data_load_date(og, start_time, end_time)
 
     def dedupe_offices(self, new_offices: pd.DataFrame, pull_all: bool, params: dict) -> pd.DataFrame:
         date_cols = ["effective_start_date", "effective_end_date"]
