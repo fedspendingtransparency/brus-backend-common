@@ -272,3 +272,67 @@ class ProgramActivityParkGold(CSVModel):
             SchemaField("park_name", SchemaType.STRING, False),
         ]
     )
+
+
+class OfficeBronze(CSVModel):
+    BUCKET_NAME = CONFIG.LAKEHOUSE_REFERENCE_BUCKET
+    DATABASE_NAME = LakeHouseDatabase.BRONZE
+    TABLE_NAME = "office"
+    DESCRIPTION = "Raw office data"
+    CSV_NAME = "office.csv"
+    PK = "fhorgid"
+    STRUCTURE = BaseSchema(
+        [
+            SchemaField("fhorgid", SchemaType.INTEGER, False),
+            SchemaField("fhorgname", SchemaType.STRING, True),
+            SchemaField("fhorgtype", SchemaType.STRING, True),
+            SchemaField("description", SchemaType.STRING, True),
+            SchemaField("level", SchemaType.INTEGER, True),
+            SchemaField("status", SchemaType.STRING, True),
+            SchemaField("region", SchemaType.STRING, True),
+            SchemaField("categoryid", SchemaType.STRING, True),
+            SchemaField("effectivestartdate", SchemaType.TIMESTAMP, True),
+            SchemaField("effectiveenddate", SchemaType.TIMESTAMP, True),
+            SchemaField("createdby", SchemaType.STRING, True),
+            SchemaField("createddate", SchemaType.TIMESTAMP, True),
+            SchemaField("updatedby", SchemaType.STRING, True),
+            SchemaField("lastupdateddate", SchemaType.TIMESTAMP, True),
+            SchemaField("fhdeptindagencyorgid", SchemaType.INTEGER, True),
+            SchemaField("fhagencyorgname", SchemaType.STRING, True),
+            SchemaField("agencycode", SchemaType.STRING, True),
+            SchemaField("oldfpdsofficecode", SchemaType.STRING, True),
+            SchemaField("aacofficecode", SchemaType.STRING, True),
+            SchemaField("cgaclist", SchemaType.LIST, True),
+            SchemaField("fhorgofficetypelist", SchemaType.LIST, True),
+            SchemaField("fhorgaddresslist", SchemaType.LIST, True),
+            SchemaField("fhorgnamehistory", SchemaType.LIST, True),
+            SchemaField("fhorgparenthistory", SchemaType.LIST, True),
+            SchemaField("links", SchemaType.LIST, True),
+        ]
+    )
+
+
+class OfficeGold(CSVModel):
+    BUCKET_NAME = CONFIG.LAKEHOUSE_REFERENCE_BUCKET
+    DATABASE_NAME = LakeHouseDatabase.GOLD
+    TABLE_NAME = "office"
+    DESCRIPTION = "Federal Hierarchy Office Data"
+    CSV_NAME = "office.csv"
+    PK = "office_id"
+    STRUCTURE = BaseSchema(
+        [
+            SchemaField("created_at", SchemaType.TIMESTAMP, True),
+            SchemaField("updated_at", SchemaType.TIMESTAMP, True),
+            SchemaField("office_id", SchemaType.INTEGER, False),
+            SchemaField("office_code", SchemaType.STRING, False),
+            SchemaField("office_name", SchemaType.STRING, True),
+            SchemaField("sub_tier_code", SchemaType.STRING, False),
+            SchemaField("agency_code", SchemaType.STRING, False),
+            SchemaField("effective_start_date", SchemaType.TIMESTAMP, True),
+            SchemaField("effective_end_date", SchemaType.TIMESTAMP, True),
+            SchemaField("contract_awards_office", SchemaType.BOOLEAN, False),
+            SchemaField("contract_funding_office", SchemaType.BOOLEAN, False),
+            SchemaField("financial_assistance_awards_office", SchemaType.BOOLEAN, False),
+            SchemaField("financial_assistance_funding_office", SchemaType.BOOLEAN, False),
+        ]
+    )

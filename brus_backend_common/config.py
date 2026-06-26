@@ -163,6 +163,10 @@ class DefaultConfig(BaseSettings):
     DB1_URL: SecretStr = SecretStr("")
     DB2_URL: SecretStr = SecretStr("")
 
+    # sam.gov
+    SAM_OFFICE_URL: str = ""
+    SAM_API_KEY: SecretStr = SecretStr("")
+
     @property
     def JDBC_DB1_URL(self):
         return get_jdbc_url_from_pg_uri(self.DB1_URL.get_secret_value()) if self.DB1_URL else ""
@@ -179,11 +183,11 @@ class DefaultConfig(BaseSettings):
         return get_jdbc_url_from_pg_uri(self.METASTORE_URL.get_secret_value()) if self.METASTORE_URL else ""
 
     # Spark
-    JAVA_VERSION: str = ""
-    SPARK_VERSION: str = ""
-    HADOOP_VERSION: str = ""
-    SCALA_VERSION: str = ""
-    DELTA_VERSION: str = ""
+    JAVA_VERSION: str = "1.8.0"
+    SPARK_VERSION: str = "3.4.1"
+    HADOOP_VERSION: str = "3.3.4"
+    SCALA_VERSION: str = "2.12"
+    DELTA_VERSION: str = "2.4.0"
 
     SPARK_MASTER_HOST: str = "spark-master"
     SPARK_MASTER_PORT: int = 7077
