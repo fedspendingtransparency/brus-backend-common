@@ -178,7 +178,7 @@ class FONBronze(CSVModel):
     DATABASE_NAME = LakeHouseDatabase.BRONZE
     TABLE_NAME = "funding_opportunity"
     DESCRIPTION = "Raw FON data pulled from Grants.gov"
-    CSV_NAME = "funding_opportunity.csv"
+    CSV_NAME = "funding_opportunity_bronze.csv"
     PK = "id"
     UNIQUE_CONSTRAINTS = [""]
     MIGRATION_HISTORY = []
@@ -204,7 +204,7 @@ class FONGold(CSVModel):
     DATABASE_NAME = LakeHouseDatabase.GOLD
     TABLE_NAME = "funding_opportunity"
     DESCRIPTION = "Processed FON data from FONBronze"
-    CSV_NAME = "funding_opportunity.csv"
+    CSV_NAME = "funding_opportunity_gold.csv"
     PK = "funding_opportunity_id"
     UNIQUE_CONSTRAINTS = []
     MIGRATION_HISTORY = []
